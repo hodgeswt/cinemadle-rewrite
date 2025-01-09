@@ -1,0 +1,5 @@
+{
+    "logLevel": "DEBUG",
+    "filePath": "cinemadle-server.log",
+    "jsonOutput": false
+}

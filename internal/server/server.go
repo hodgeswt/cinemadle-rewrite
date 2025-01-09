@@ -1,66 +1,40 @@
 package server
 
 import (
-	"errors"
+	"flag"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
-	"github.com/hodgeswt/utilw/pkg/argparse"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
 type CinemadleServer struct {
 	server *gin.Engine
 	port   string
-}
-
-func getArgs() []argparse.Argument {
-	x := new(PortArg)
-	return []argparse.Argument{x}
+    logger *logw.Logger
 }
 
 func (it *CinemadleServer) MakeServer() *gin.Engine {
-	fmt.Println("Hello, server!")
+    logger, _ := logw.NewLogger("cinemadle-server", nil)
 
-	it.server = gin.Default()
-
+    it.logger = logger
+    it.server = gin.Default()
 	it.createEndpoints()
 
 	return it.server
 }
 
-func (it *CinemadleServer) Run(args []string) error {
-	logw.Debugf("+server.Run, args: %v", args)
-	defer logw.Debugf("-server.Run")
+func (it *CinemadleServer) Run() error {
+	it.logger.Debugf("+server.Run")
+	defer it.logger.Debugf("-server.Run")
 
-    parsed, err := argparse.Parse(args, getArgs(), true)
+    port := flag.Int("port", 8080, "the port to run the server on")
+    flag.Parse()
 
-    if err != nil {
-        return err
-    }
-
-    allValid := true
-    invalid := []argparse.Argument{}
-    for _, argument := range parsed {
-        if !argument.Valid() {
-            logw.Errorf("Invalid argument: %v", argument)
-            invalid = append(invalid, argument)
-            allValid = false
-        }
-    }
-
-    if !allValid {
-        return errors.New("Invalid arguments provided")
-    }
-
-    if parsed["port"] != nil {
-        it.port = parsed["port"].Value()[0]
-    } else {
-        it.port = "8080"
-    }
-
-	it.server.Run(fmt.Sprintf(":%s", it.port))
+    it.port = strconv.Itoa(*port)
+    it.server.Run(fmt.Sprintf(":%s", it.port))
 
     return nil
 }
