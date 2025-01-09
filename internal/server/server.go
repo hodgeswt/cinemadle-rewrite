@@ -1,47 +1,108 @@
 package server
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
 type CinemadleServer struct {
-	server *gin.Engine
+	router *gin.Engine
+	server *http.Server
 	port   string
-    logger *logw.Logger
+	logger *logw.Logger
+	cache  *cache.Cache
+	ctx    context.Context
+	cancel context.CancelFunc
+	config *datamodel.Config
 }
 
-func (it *CinemadleServer) MakeServer() *gin.Engine {
-    logger, _ := logw.NewLogger("cinemadle-server", nil)
+func (it *CinemadleServer) MakeServer(logger *logw.Logger) error {
+	config, err := datamodel.LoadConfig(logger)
 
-    it.logger = logger
-    it.server = gin.Default()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	it.config = config
+	it.ctx = ctx
+	it.cancel = cancel
+	it.cache = cache.NewCache(ctx, logger, config)
+	it.logger = logger
+	it.router = gin.Default()
 	it.createEndpoints()
 
-	return it.server
+	port := flag.Int("port", 8080, "the port to run the server on")
+	flag.Parse()
+
+	it.port = strconv.Itoa(*port)
+	it.server = &http.Server{
+		Addr:    fmt.Sprintf(":%s", it.port),
+		Handler: it.router.Handler(),
+	}
+
+	return nil
 }
 
-func (it *CinemadleServer) Run() error {
+func (it *CinemadleServer) Run() {
 	it.logger.Debugf("+server.Run")
 	defer it.logger.Debugf("-server.Run")
 
-    port := flag.Int("port", 8080, "the port to run the server on")
-    flag.Parse()
+	httpErr := make(chan error, 1)
+	go func(ch chan<- error) {
+		if err := it.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			ch <- err
+		}
+	}(httpErr)
 
-    it.port = strconv.Itoa(*port)
-    it.server.Run(fmt.Sprintf(":%s", it.port))
+	err := <-httpErr
+	it.logger.Errorf("server.Run: %v", err)
+}
 
-    return nil
+func (it *CinemadleServer) Shutdown() error {
+	it.logger.Debug("+server.Shutdown")
+	defer it.logger.Debug("-server.Shutdown")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := it.server.Shutdown(ctx); err != nil {
+		it.logger.Errorf("server.Shutdown: Error during graceful shutdown: %v", err)
+		return nil
+	}
+
+	it.cancel()
+
+	select {
+	case <-ctx.Done():
+		it.logger.Warn("server.Shutdown: 10s timeout reached during graceful shutdown")
+		return errors.New("ServerShutdownTimeoutErr")
+	default:
+		return nil
+	}
+
 }
 
 func (it *CinemadleServer) createEndpoints() {
-	v1 := it.server.Group("/api/v1")
+	v1 := it.router.Group("/api/v1")
 	{
-		v1.GET("/healthcheck", controllers.HealthCheck)
+		v1.GET("/healthcheck", func(c *gin.Context) {
+			controllers.HealthCheck(c, it.logger)
+		})
+		v1.GET("/media/:type/:date", func(c *gin.Context) {
+			controllers.MediaOfTheDay(c, it.config, it.logger, it.cache)
+		})
 	}
 }
