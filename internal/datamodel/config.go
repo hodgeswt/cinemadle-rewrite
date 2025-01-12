@@ -6,14 +6,16 @@ import (
 	"io"
 	"os"
 
+	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
 type Config struct {
-	CacheAddress string `json:"cacheAddress"`
-	CacheTimeout int    `json:"cacheTimeout"`
-	Location     string `json:"location"`
-	Port         int    `json:"port"`
+	CacheAddress string           `json:"cacheAddress"`
+	CacheTimeout int              `json:"cacheTimeout"`
+	Location     string           `json:"location"`
+	Port         int              `json:"port"`
+	TmdbOptions  tmdb.TmdbOptions `json:"tmdbOptions"`
 }
 
 var ErrLoadingConfig = errors.New("ErrLoadingConfig")
