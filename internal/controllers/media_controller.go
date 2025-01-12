@@ -90,6 +90,7 @@ func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger
 		return
 	}
 
+
 	r := Media{
 		Title: fmt.Sprintf("Now: %v, Requested: %v", now, parsed),
 	}
