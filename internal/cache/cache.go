@@ -36,6 +36,14 @@ func NewCache(ctx context.Context, logger *logw.Logger, config *datamodel.Config
 		DB:       0,
 	})
 
+	pong, err := r.Ping(ctx).Result()
+
+	if err != nil {
+		logger.Errorf("Error connecting to cache: %v", err.Error())
+	} else {
+		logger.Debugf("Cache ping: %s", pong)
+	}
+
 	return &Cache{
 		cache:   r,
 		timeout: config.CacheTimeout,

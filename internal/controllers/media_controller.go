@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,7 +18,7 @@ type Media struct {
 func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
 	mediaType := c.Param("type")
 
-	// only currently supported media type
+	// Only currently supported media type
 	if mediaType != "movie" {
 		logger.Debugf("media_controller.MediaOfTheDay: found unspported media type %s", mediaType)
 		c.JSON(422, datamodel.ErrorResponse{
@@ -33,10 +34,10 @@ func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger
 	}
 
 	logger.Debugf("Converting time for location: %s", location)
-	loc, err := time.LoadLocation(config.Location)
+	loc, err := time.LoadLocation(location)
 
 	if err != nil {
-		logger.Errorf("media_controller.MediaOfTheDay: error loading location: %v", err)
+		logger.Errorf("media_controller.MediaOfTheDay: error loading location %s: %v", location, err)
 		c.JSON(500, datamodel.ErrorResponse{
 			Message: "Unable to load the requested media. Try again later.",
 		})
@@ -49,6 +50,21 @@ func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger
 	dateFormat := "2006-01-02"
 
 	parsed, err := time.ParseInLocation(dateFormat, date, loc)
+
+	cacheKey := fmt.Sprintf("api-v1-media-%s-%s", mediaType, parsed.Format(dateFormat))
+
+	cached, cacheErr := cache.Get(cacheKey)
+
+	if cacheErr == nil {
+		var m Media
+		err = json.Unmarshal([]byte(cached), &m)
+
+		if err == nil {
+			c.JSON(200, m)
+			c.Done()
+			return
+		}
+	}
 
 	if err != nil {
 		logger.Debugf("media_controller.MediaOfTheDay: found invalid date string %s", date)
@@ -76,6 +92,12 @@ func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger
 
 	r := Media{
 		Title: fmt.Sprintf("Now: %v, Requested: %v", now, parsed),
+	}
+
+	j, err := json.Marshal(r)
+
+	if err == nil {
+		cache.Set(cacheKey, string(j))
 	}
 
 	c.JSON(200, r)
