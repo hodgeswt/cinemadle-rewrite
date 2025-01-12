@@ -21,7 +21,13 @@ func LoadConfig(logger *logw.Logger) (*Config, error) {
 	logger.Debug("+config.LoadConfig")
 	defer logger.Debug("-config.LoadConfig")
 
-	f, err := os.Open("config.json")
+	path := "config.json"
+	envPath, ok := os.LookupEnv("CINEMADLE_CONFIG")
+	if ok {
+		path = envPath
+	}
+
+	f, err := os.Open(path)
 
 	if err != nil {
 		logger.Errorf("config.LoadConfig: %v", err)

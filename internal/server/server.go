@@ -17,17 +17,26 @@ import (
 )
 
 type CinemadleServer struct {
-	router *gin.Engine
-	server *http.Server
-	port   string
-	logger *logw.Logger
-	cache  *cache.Cache
-	ctx    context.Context
-	cancel context.CancelFunc
-	config *datamodel.Config
+	router   *gin.Engine
+	server   *http.Server
+	port     string
+	logger   *logw.Logger
+	cache    *cache.Cache
+	ctx      context.Context
+	cancel   context.CancelFunc
+	config   *datamodel.Config
+	testMode bool
 }
 
-func (it *CinemadleServer) MakeServer(logger *logw.Logger) error {
+func (it *CinemadleServer) GetRouter() (*gin.Engine, error) {
+	if !it.testMode {
+		return nil, errors.New("ErrAccessRawRouterOutsideTestMode")
+	}
+
+	return it.router, nil
+}
+
+func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error {
 	config, err := datamodel.LoadConfig(logger)
 
 	if err != nil {
@@ -36,6 +45,7 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	it.testMode = testMode
 	it.config = config
 	it.ctx = ctx
 	it.cancel = cancel

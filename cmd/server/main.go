@@ -14,7 +14,7 @@ func main() {
 	log.Debug("+main.main")
 
 	app := &server.CinemadleServer{}
-	err := app.MakeServer(log)
+	err := app.MakeServer(log, false)
 
 	if err != nil {
 		panic(err)
