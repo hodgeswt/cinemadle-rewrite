@@ -2,6 +2,7 @@ package tmdb
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/cyruzin/golang-tmdb"
@@ -9,16 +10,22 @@ import (
 )
 
 type TmdbClient struct {
-	client         *tmdb.Client
-	selectionCount int
-	pageLimit      int
-	logger         *logw.Logger
+	client          *tmdb.Client
+	selectionCount  int
+	pageLimit       int
+	logger          *logw.Logger
+	discoverOptions map[string]string
 }
 
 type TmdbOptions struct {
-	ApiKey         string `json:"apiKey"`
-	SelectionCount int    `json:"selectionCount"`
-	PageLimit      int    `json:"pageLimit"`
+	ApiKey          string            `json:"apiKey"`
+	SelectionCount  int               `json:"selectionCount"`
+	PageLimit       int               `json:"pageLimit"`
+	DiscoverOptions map[string]string `json:"discoverOptions"`
+}
+
+func (it *TmdbOptions) String() string {
+	return fmt.Sprintf("{SelectionCount: %d, PageLimit: %d, DiscoverOptions: %v}", it.SelectionCount, it.PageLimit, it.DiscoverOptions)
 }
 
 var ErrPageLimitMet = errors.New("ErrPageLimitMet")
@@ -30,10 +37,13 @@ func NewTmdbClient(options *TmdbOptions, logger *logw.Logger) (*TmdbClient, erro
 		return nil, err
 	}
 
+	logger.Debugf("tmdb.NewTmdbClient: received opts %+v", *options)
+
 	return &TmdbClient{
-		client:         client,
-		selectionCount: options.SelectionCount,
-		logger:         logger,
+		client:          client,
+		selectionCount:  options.SelectionCount,
+		logger:          logger,
+		discoverOptions: options.DiscoverOptions,
 	}, nil
 }
 
@@ -63,7 +73,7 @@ func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) (
 	return movies, nil
 }
 
-func (it *TmdbClient) GetTopMovieList(params map[string]string) ([]int64, error) {
+func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 	it.logger.Debug("+tmdb.GetTopMovieList")
 	defer it.logger.Debug("-tmdb.GetTopMovieList")
 
@@ -73,7 +83,7 @@ func (it *TmdbClient) GetTopMovieList(params map[string]string) ([]int64, error)
 	count := 0
 
 	for {
-		next, err := it.getDiscoverMoviePage(params, page)
+		next, err := it.getDiscoverMoviePage(it.discoverOptions, page)
 
 		if err == ErrPageLimitMet {
 			break

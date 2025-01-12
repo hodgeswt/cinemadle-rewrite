@@ -8,14 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/util"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
 type Media struct {
 	Title string `json:"title"`
+	Id    string `json:"id"`
 }
 
-func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
 	mediaType := c.Param("type")
 
 	// Only currently supported media type
@@ -90,9 +93,19 @@ func MediaOfTheDay(c *gin.Context, config *datamodel.Config, logger *logw.Logger
 		return
 	}
 
+	id, err := util.MovieIdFromDate(date, tmdbClient, cache, &config.RandomizerOptions)
+	if err != nil {
+		logger.Errorf("media_controller.MediaOfTheDay: error getting movie id: %v", err)
+		c.JSON(500, datamodel.ErrorResponse{
+			Message: "Unable to get today's movie. Try again later.",
+		})
+		c.Done()
+		return
+	}
 
 	r := Media{
 		Title: fmt.Sprintf("Now: %v, Requested: %v", now, parsed),
+		Id:    fmt.Sprintf("%d", id),
 	}
 
 	j, err := json.Marshal(r)

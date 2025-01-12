@@ -16,7 +16,7 @@ type Config struct {
 	CacheTimeout      int                                     `json:"cacheTimeout"`
 	Location          string                                  `json:"location"`
 	Port              int                                     `json:"port"`
-	TmdbOptions       tmdb.TmdbOptions                        `json:"tmdbOptions"`
+	TmdbOptions       *tmdb.TmdbOptions                        `json:"tmdbOptions"`
 	RandomizerOptions rand.LinearCongruentialGeneratorOptions `json:"randomizerOptions"`
 }
 
@@ -55,6 +55,8 @@ func LoadConfig(logger *logw.Logger) (*Config, error) {
 		logger.Errorf("config.LoadConfig: %v", err)
 		return nil, ErrLoadingConfig
 	}
+
+	logger.Debugf("Loaded config: %+v", config)
 
 	return &config, nil
 }

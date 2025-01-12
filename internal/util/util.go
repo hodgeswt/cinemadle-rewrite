@@ -45,7 +45,6 @@ func MovieIdFromDate(
 	date string,
 	tmdbClient *tmdb.TmdbClient,
 	cache *cache.Cache,
-	params map[string]string,
 	lcgOpts *rand.LinearCongruentialGeneratorOptions,
 ) (int64, error) {
 	movies := []int64{}
@@ -65,7 +64,7 @@ func MovieIdFromDate(
 	}
 
 	if needLoad {
-		movieSplit, err := tmdbClient.GetTopMovieList(params)
+		movieSplit, err := tmdbClient.GetTopMovieList()
 
 		if err != nil {
 			return -1, err
@@ -91,6 +90,8 @@ func MovieIdFromDate(
     if err != nil {
         return -1, err
     }
+
+    i = i % lcg.Modulus
 
 	return movies[lcg.At(i)], nil
 }

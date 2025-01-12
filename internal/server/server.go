@@ -12,19 +12,21 @@ import (
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
 type CinemadleServer struct {
-	router   *gin.Engine
-	server   *http.Server
-	port     string
-	logger   *logw.Logger
-	cache    *cache.Cache
-	ctx      context.Context
-	cancel   context.CancelFunc
-	config   *datamodel.Config
-	testMode bool
+	router     *gin.Engine
+	server     *http.Server
+	port       string
+	logger     *logw.Logger
+	cache      *cache.Cache
+	ctx        context.Context
+	cancel     context.CancelFunc
+	config     *datamodel.Config
+	tmdbClient *tmdb.TmdbClient
+	testMode   bool
 }
 
 func (it *CinemadleServer) GetRouter() (*gin.Engine, error) {
@@ -42,7 +44,13 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+    tmdbClient, err := tmdb.NewTmdbClient(config.TmdbOptions, logger)
+
+    if err != nil {
+        return err
+    }
+
+    ctx, cancel := context.WithCancel(context.Background())
 
 	it.testMode = testMode
 	it.config = config
@@ -51,6 +59,7 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	it.cache = cache.NewCache(ctx, logger, config)
 	it.logger = logger
 	it.router = gin.Default()
+    it.tmdbClient = tmdbClient
 	it.createEndpoints()
 
 	it.port = strconv.Itoa(config.Port)
@@ -108,7 +117,7 @@ func (it *CinemadleServer) createEndpoints() {
 			controllers.HealthCheck(c, it.logger)
 		})
 		v1.GET("/media/:type/:date", func(c *gin.Context) {
-			controllers.MediaOfTheDay(c, it.config, it.logger, it.cache)
+			controllers.MediaOfTheDay(c, it.tmdbClient, it.config, it.logger, it.cache)
 		})
 	}
 }
