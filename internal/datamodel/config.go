@@ -13,6 +13,7 @@ type Config struct {
 	CacheAddress string `json:"cacheAddress"`
 	CacheTimeout int    `json:"cacheTimeout"`
 	Location     string `json:"location"`
+	Port         int    `json:"port"`
 }
 
 var ErrLoadingConfig = errors.New("ErrLoadingConfig")

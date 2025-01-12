@@ -33,7 +33,7 @@ func GetPreviousEnv() *EnvVars {
 }
 
 func PrepareTest(t *testing.T) *server.CinemadleServer {
-	os.Setenv("LOGLEVELW", "ERROR")
+	os.Setenv("LOGLEVELW", "DEBUG")
 	os.Setenv("CINEMADLE_CONFIG", "../../config.json")
 
 	logger, err := logw.NewLogger("cinemadle-unittest", nil)
@@ -46,7 +46,7 @@ func PrepareTest(t *testing.T) *server.CinemadleServer {
 	err = app.MakeServer(logger, true)
 
 	if err != nil {
-		assert.FailNow(t, fmt.Sprintf("Unable to create logger: %v", err.Error()))
+		assert.FailNow(t, fmt.Sprintf("Unable to create server: %v", err.Error()))
 	}
 
 	return app

@@ -16,3 +16,4 @@ go.work.sum
 
 .env
 config.json
+config-release.json

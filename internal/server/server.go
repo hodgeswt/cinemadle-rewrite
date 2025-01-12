@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -54,10 +53,7 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	it.router = gin.Default()
 	it.createEndpoints()
 
-	port := flag.Int("port", 8080, "the port to run the server on")
-	flag.Parse()
-
-	it.port = strconv.Itoa(*port)
+	it.port = strconv.Itoa(config.Port)
 	it.server = &http.Server{
 		Addr:    fmt.Sprintf(":%s", it.port),
 		Handler: it.router.Handler(),
