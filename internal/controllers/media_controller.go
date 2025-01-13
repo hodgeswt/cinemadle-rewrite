@@ -13,11 +13,6 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
-type Media struct {
-	Title string `json:"title"`
-	Id    string `json:"id"`
-}
-
 func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
 	logger.Debug("+media_controller.MediaOfTheDay")
 	defer logger.Debug("-media_controller.MediaOfTheDay")
@@ -62,7 +57,7 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 	cached, cacheErr := cache.Get(cacheKey)
 
 	if cacheErr == nil {
-		var m Media
+		var m datamodel.Media
 		err = json.Unmarshal([]byte(cached), &m)
 
 		if err == nil {
@@ -109,17 +104,24 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 		return
 	}
 
-	r := Media{
-		Title: fmt.Sprintf("Now: %v, Requested: %v", now, parsed),
-		Id:    fmt.Sprintf("%d", id),
+	movie, err := tmdbClient.GetMovie(id)
+
+	if err != nil {
+		logger.Errorf("media_controller.MediaOfTheDay: error getting movie data: %v", err)
+		c.JSON(500, datamodel.ErrorResponse{
+			Message: "Unable to get today's movie. Try again later.",
+		})
+		c.Done()
+		return
+
 	}
 
-	j, err := json.Marshal(r)
+	j, err := json.Marshal(movie)
 
 	if err == nil {
 		cache.Set(cacheKey, string(j))
 	}
 
-	c.JSON(200, r)
+	c.JSON(200, movie)
 	c.Done()
 }

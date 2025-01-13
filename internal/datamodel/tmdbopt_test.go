@@ -16,14 +16,15 @@ func TestApiKeyNotPrinted_NotNested(t *testing.T) {
 	}
 
 	x := &TmdbOptions{
-		ApiKey:          "Do not print",
-		PageLimit:       10,
-		SelectionCount:  10,
-		DiscoverOptions: d,
+		ApiKey:           "Do not print",
+		PageLimit:        10,
+		SelectionCount:   10,
+		DiscoverOptions:  d,
+		CastAndCrewLimit: 3,
 	}
 
 	xStr := fmt.Sprintf("%v", x)
-	assert.Equal(t, "{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue]}", xStr)
+	assert.Equal(t, "{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue], CastAndCrewLimit: 3}", xStr)
 }
 
 func TestApiKeyNotPrinted_Nested(t *testing.T) {
@@ -32,10 +33,11 @@ func TestApiKeyNotPrinted_Nested(t *testing.T) {
 	}
 
 	x := &TmdbOptions{
-		ApiKey:          "Do not print",
-		PageLimit:       10,
-		SelectionCount:  10,
-		DiscoverOptions: d,
+		ApiKey:           "Do not print",
+		PageLimit:        10,
+		SelectionCount:   10,
+		DiscoverOptions:  d,
+		CastAndCrewLimit: 3,
 	}
 
 	y := map[string]*TmdbOptions{
@@ -43,5 +45,5 @@ func TestApiKeyNotPrinted_Nested(t *testing.T) {
 	}
 
 	xStr := fmt.Sprintf("%v", y)
-	assert.Equal(t, "map[options:{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue]}]", xStr)
+	assert.Equal(t, "map[options:{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue], CastAndCrewLimit: 3}]", xStr)
 }
