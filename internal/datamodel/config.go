@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 	"github.com/hodgeswt/utilw/pkg/rand"
 )
@@ -16,7 +15,7 @@ type Config struct {
 	CacheTimeout      int                                     `json:"cacheTimeout"`
 	Location          string                                  `json:"location"`
 	Port              int                                     `json:"port"`
-	TmdbOptions       *tmdb.TmdbOptions                        `json:"tmdbOptions"`
+	TmdbOptions       *TmdbOptions                            `json:"tmdbOptions"`
 	RandomizerOptions rand.LinearCongruentialGeneratorOptions `json:"randomizerOptions"`
 }
 

@@ -47,7 +47,7 @@ func MovieIdFromDate(
 	cache *cache.Cache,
 	lcgOpts *rand.LinearCongruentialGeneratorOptions,
 ) (int64, error) {
-	movies := []int64{}
+    movies := []int64{}
 
 	cacheKey := "topMovies"
 	cachedMovies, cacheErr := cache.Get(cacheKey)

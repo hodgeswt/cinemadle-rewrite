@@ -7,41 +7,25 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hodgeswt/cinemadle-rewrite/internal/unittest"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestApiKeyNotPrinted_NotNested(t *testing.T) {
-	d := map[string]string{
-		"testKey": "testValue",
+const rotsId = 1895
+
+func TestApiKeyValid(t *testing.T) {
+
+	config, logger := unittest.CommonLoadConfig(t)
+
+	tmdbClient, err := NewTmdbClient(config.TmdbOptions, logger)
+
+	if err != nil {
+		assert.FailNow(t, fmt.Sprintf("Unable to initialize tmdb client: %v", err))
 	}
 
-	x := &TmdbOptions{
-		ApiKey:          "Do not print",
-		PageLimit:       10,
-		SelectionCount:  10,
-		DiscoverOptions: d,
-	}
+	assert.True(t, tmdbClient.Initialized)
 
-	xStr := fmt.Sprintf("%v", x)
-	assert.Equal(t, "{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue]}", xStr)
-}
+	_, err = tmdbClient.client.GetMovieDetails(rotsId, nil)
 
-func TestApiKeyNotPrinted_Nested(t *testing.T) {
-	d := map[string]string{
-		"testKey": "testValue",
-	}
-
-	x := &TmdbOptions{
-		ApiKey:          "Do not print",
-		PageLimit:       10,
-		SelectionCount:  10,
-		DiscoverOptions: d,
-	}
-
-	y := map[string]*TmdbOptions{
-		"options": x,
-	}
-
-	xStr := fmt.Sprintf("%v", y)
-    assert.Equal(t, "map[options:{SelectionCount: 10, PageLimit: 10, DiscoverOptions: map[testKey:testValue]}]", xStr)
+	assert.Nil(t, err)
 }

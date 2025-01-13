@@ -2,10 +2,10 @@ package tmdb
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/cyruzin/golang-tmdb"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
@@ -15,35 +15,27 @@ type TmdbClient struct {
 	pageLimit       int
 	logger          *logw.Logger
 	discoverOptions map[string]string
-}
-
-type TmdbOptions struct {
-	ApiKey          string            `json:"apiKey"`
-	SelectionCount  int               `json:"selectionCount"`
-	PageLimit       int               `json:"pageLimit"`
-	DiscoverOptions map[string]string `json:"discoverOptions"`
-}
-
-func (it *TmdbOptions) String() string {
-	return fmt.Sprintf("{SelectionCount: %d, PageLimit: %d, DiscoverOptions: %v}", it.SelectionCount, it.PageLimit, it.DiscoverOptions)
+	Initialized     bool
 }
 
 var ErrPageLimitMet = errors.New("ErrPageLimitMet")
 
-func NewTmdbClient(options *TmdbOptions, logger *logw.Logger) (*TmdbClient, error) {
+func NewTmdbClient(options *datamodel.TmdbOptions, logger *logw.Logger) (*TmdbClient, error) {
 	client, err := tmdb.Init(options.ApiKey)
 
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Debugf("tmdb.NewTmdbClient: received opts %+v", *options)
+	logger.Debugf("tmdb.NewTmdbClient: received opts %+v", options)
 
 	return &TmdbClient{
 		client:          client,
 		selectionCount:  options.SelectionCount,
+		pageLimit:       options.PageLimit,
 		logger:          logger,
 		discoverOptions: options.DiscoverOptions,
+		Initialized:     true,
 	}, nil
 }
 
@@ -52,7 +44,7 @@ func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) (
 	defer it.logger.Debug("-tmdb.getDiscoverMoviePage")
 
 	if page >= it.pageLimit {
-		it.logger.Debug("tmdb.getDiscoverMoviePage: met or exceeded page limit")
+		it.logger.Debugf("tmdb.getDiscoverMoviePage: met or exceeded page limit: %d/%d", page, it.pageLimit)
 		return nil, ErrPageLimitMet
 	}
 
@@ -83,6 +75,7 @@ func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 	count := 0
 
 	for {
+		it.logger.Debugf("tmdb.GetTopMovieList: requesting page %d", page)
 		next, err := it.getDiscoverMoviePage(it.discoverOptions, page)
 
 		if err == ErrPageLimitMet {
