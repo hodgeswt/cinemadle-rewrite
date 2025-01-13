@@ -47,7 +47,7 @@ func MovieIdFromDate(
 	cache *cache.Cache,
 	lcgOpts *rand.LinearCongruentialGeneratorOptions,
 ) (int64, error) {
-    movies := []int64{}
+	movies := []int64{}
 
 	cacheKey := "topMovies"
 	cachedMovies, cacheErr := cache.Get(cacheKey)
@@ -76,22 +76,20 @@ func MovieIdFromDate(
 		movies = movieSplit
 	}
 
-	fmt.Printf("%v\n", movies)
-
-	lcg, err := rand.NewLinearCongruentialGenerator(lcgOpts)
+	lcg, err := rand.NewLinearCongruentialGenerator(*lcgOpts)
 
 	if err != nil {
 		return -1, err
 	}
 
-    stripped := strings.ReplaceAll(date, "-", "")
-    i, err := strconv.ParseInt(stripped, 10, 64)
+	stripped := strings.ReplaceAll(date, "-", "")
+	i, err := strconv.ParseInt(stripped, 10, 64)
 
-    if err != nil {
-        return -1, err
-    }
+	if err != nil {
+		return -1, err
+	}
 
-    i = i % lcg.Modulus
+	i = i % lcg.Modulus
 
 	return movies[lcg.At(i)], nil
 }

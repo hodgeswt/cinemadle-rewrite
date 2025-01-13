@@ -22,7 +22,7 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 	logger.Debug("+media_controller.MediaOfTheDay")
 	defer logger.Debug("-media_controller.MediaOfTheDay")
 
-    mediaType := c.Param("type")
+	mediaType := c.Param("type")
 
 	// Only currently supported media type
 	if mediaType != "movie" {
@@ -96,7 +96,8 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 		return
 	}
 
-    logger.Debugf("media_controller.MediaOfTheDay: tmdbClient initialized?: %t", tmdbClient.Initialized)
+	logger.Debugf("media_controller.MediaOfTheDay: tmdbClient initialized?: %t", tmdbClient.Initialized)
+	logger.Debugf("mediaController.RandomizerOptions: %+v", config.RandomizerOptions)
 
 	id, err := util.MovieIdFromDate(date, tmdbClient, cache, &config.RandomizerOptions)
 	if err != nil {

@@ -40,10 +40,7 @@ func NewTmdbClient(options *datamodel.TmdbOptions, logger *logw.Logger) (*TmdbCl
 }
 
 func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) ([]int64, error) {
-	it.logger.Debug("+tmdb.getDiscoverMoviePage")
-	defer it.logger.Debug("-tmdb.getDiscoverMoviePage")
-
-	if page >= it.pageLimit {
+	if (page - 1) >= it.pageLimit {
 		it.logger.Debugf("tmdb.getDiscoverMoviePage: met or exceeded page limit: %d/%d", page, it.pageLimit)
 		return nil, ErrPageLimitMet
 	}
@@ -69,7 +66,7 @@ func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 	it.logger.Debug("+tmdb.GetTopMovieList")
 	defer it.logger.Debug("-tmdb.GetTopMovieList")
 
-	page := 0
+	page := 1
 
 	movies := []int64{}
 	count := 0
@@ -96,6 +93,8 @@ func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 		if count == it.selectionCount {
 			break
 		}
+
+		page++
 	}
 
 	return movies, nil
