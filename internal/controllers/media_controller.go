@@ -13,20 +13,19 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
-func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
-	logger.Debug("+media_controller.MediaOfTheDay")
-	defer logger.Debug("-media_controller.MediaOfTheDay")
-
-	mediaType := c.Param("type")
+func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) (*datamodel.Media, *datamodel.ErrorBundle) {
+	logger.Debug("+media_controller.GetMediaOfTheDay")
+	defer logger.Debug("-media_controller.GetMediaOfTheDay")
 
 	// Only currently supported media type
 	if mediaType != "movie" {
-		logger.Debugf("media_controller.MediaOfTheDay: found unspported media type %s", mediaType)
-		c.JSON(422, datamodel.ErrorResponse{
-			Message: "Please specify a valid media type. Currently accepted values: 'movie'",
-		})
-		c.Done()
-		return
+		logger.Debugf("media_controller.GetMediaOfTheDay: found unspported media type %s", mediaType)
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Please specify a valid media type. Currently accepted values: 'movie'",
+			},
+			Status: 422,
+		}
 	}
 
 	location := config.Location
@@ -39,14 +38,13 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 
 	if err != nil {
 		logger.Errorf("media_controller.MediaOfTheDay: error loading location %s: %v", location, err)
-		c.JSON(500, datamodel.ErrorResponse{
-			Message: "Unable to load the requested media. Try again later.",
-		})
-		c.Done()
-		return
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Unable to load the requested media. Try again later.",
+			},
+			Status: 500,
+		}
 	}
-
-	date := c.Param("date")
 
 	dateFormat := "2006-01-02"
 
@@ -61,19 +59,18 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 		err = json.Unmarshal([]byte(cached), &m)
 
 		if err == nil {
-			c.JSON(200, m)
-			c.Done()
-			return
+			return &m, nil
 		}
 	}
 
 	if err != nil {
 		logger.Debugf("media_controller.MediaOfTheDay: found invalid date string %s", date)
-		c.JSON(422, datamodel.ErrorResponse{
-			Message: "Invalid date provided. Please follow YYYY-MM-DD format",
-		})
-		c.Done()
-		return
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Invalid date provided. Please follow YYYY-MM-DD format",
+			},
+			Status: 422,
+		}
 	}
 
 	now := time.Now().In(loc)
@@ -84,11 +81,12 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 
 	if parsedMidnight.After(nowMidnight) {
 		logger.Debugf("media_controller.MediaOfTheDay: found future date %s", date)
-		c.JSON(404, datamodel.ErrorResponse{
-			Message: fmt.Sprintf("Why are you requesting a future date? No cheating! Today: %v, Requested: %v", nowMidnight.Format(dateFormat), parsedMidnight.Format(dateFormat)),
-		})
-		c.Done()
-		return
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: fmt.Sprintf("Why are you requesting a future date? No cheating! Today: %v, Requested: %v", nowMidnight.Format(dateFormat), parsedMidnight.Format(dateFormat)),
+			},
+			Status: 404,
+		}
 	}
 
 	logger.Debugf("media_controller.MediaOfTheDay: tmdbClient initialized?: %t", tmdbClient.Initialized)
@@ -97,23 +95,24 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 	id, err := util.MovieIdFromDate(date, tmdbClient, cache, &config.RandomizerOptions)
 	if err != nil {
 		logger.Errorf("media_controller.MediaOfTheDay: error getting movie id: %v", err)
-		c.JSON(500, datamodel.ErrorResponse{
-			Message: "Unable to get today's movie. Try again later.",
-		})
-		c.Done()
-		return
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Unable to get today's movie. Try again later.",
+			},
+			Status: 500,
+		}
 	}
 
 	movie, err := tmdbClient.GetMovie(id)
 
 	if err != nil {
 		logger.Errorf("media_controller.MediaOfTheDay: error getting movie data: %v", err)
-		c.JSON(500, datamodel.ErrorResponse{
-			Message: "Unable to get today's movie. Try again later.",
-		})
-		c.Done()
-		return
-
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Unable to get today's movie. Try again later.",
+			},
+			Status: 500,
+		}
 	}
 
 	j, err := json.Marshal(movie)
@@ -122,6 +121,32 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 		cache.Set(cacheKey, string(j))
 	}
 
-	c.JSON(200, movie)
+	return movie, nil
+}
+
+func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+	logger.Debug("+media_controller.MediaOfTheDay")
+	defer logger.Debug("-media_controller.MediaOfTheDay")
+
+	mediaType := c.Param("type")
+	date := c.Param("date")
+
+	movie, errorBundle := GetMediaOfTheDay(mediaType, date, tmdbClient, config, logger, cache)
+
+	if movie == nil {
+		if errorBundle == nil {
+			c.JSON(500, datamodel.ErrorResponse{
+				Message: "Unexpected server error.",
+			})
+			c.Done()
+			return
+		}
+
+		c.JSON(errorBundle.Status, *errorBundle.Response)
+		c.Done()
+		return
+	}
+
+	c.JSON(200, *movie)
 	c.Done()
 }

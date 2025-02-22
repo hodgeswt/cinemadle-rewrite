@@ -44,13 +44,13 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 		return err
 	}
 
-    tmdbClient, err := tmdb.NewTmdbClient(config.TmdbOptions, logger)
+	tmdbClient, err := tmdb.NewTmdbClient(config.TmdbOptions, logger)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 
 	it.testMode = testMode
 	it.config = config
@@ -59,7 +59,7 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	it.cache = cache.NewCache(ctx, logger, config)
 	it.logger = logger
 	it.router = gin.Default()
-    it.tmdbClient = tmdbClient
+	it.tmdbClient = tmdbClient
 	it.createEndpoints()
 
 	it.port = strconv.Itoa(config.Port)
@@ -116,11 +116,13 @@ func (it *CinemadleServer) createEndpoints() {
 		v1.GET("/healthcheck", func(c *gin.Context) {
 			controllers.HealthCheck(c, it.logger)
 		})
-		v1.GET("/media/:type/:date", func(c *gin.Context) {
-			controllers.MediaOfTheDay(c, it.tmdbClient, it.config, it.logger, it.cache)
+		if it.config.Debug {
+			v1.GET("/media/:type/:date", func(c *gin.Context) {
+				controllers.MediaOfTheDay(c, it.tmdbClient, it.config, it.logger, it.cache)
+			})
+		}
+		v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
+			controllers.Guess(c, it.tmdbClient, it.config, it.logger, it.cache)
 		})
-        v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
-            controllers.HealthCheck(c, it.logger)
-        })
 	}
 }

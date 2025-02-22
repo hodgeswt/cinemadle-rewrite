@@ -124,14 +124,26 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 		it.logger.Errorf("tmdb.GetMovie: error formatting cast")
 		return nil, ErrInTmdbRequest
 	}
-	movie.Cast = cast[0:it.castAndCrewLimit]
+
+	limit := min(it.castAndCrewLimit, len(cast)-1)
+	if limit < 0 {
+		it.logger.Errorf("tmdb.GetMovie: insufficient cast info")
+		return nil, ErrInTmdbRequest
+	}
+	movie.Cast = cast[0:limit]
 
 	crew, err := funct.Map(movieCredits.Crew, personMapper)
 	if err != nil {
 		it.logger.Errorf("tmdb.GetMovie: error formatting crew")
 		return nil, ErrInTmdbRequest
 	}
-	movie.Crew = crew[0:it.castAndCrewLimit]
+
+	limit = min(it.castAndCrewLimit, len(crew)-1)
+	if limit < 0 {
+		it.logger.Errorf("tmdb.GetMovie: insufficient cast info")
+		return nil, ErrInTmdbRequest
+	}
+	movie.Crew = crew[0:limit]
 
 	movie.Rating = "UNK"
 	for _, release := range movieReleases.Results {
@@ -186,7 +198,7 @@ func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) (
 	return movies, nil
 }
 
-// Gets the Top X movives as determined by configuration
+// Gets the Top X movies as determined by configuration
 func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 	it.logger.Debug("+tmdb.GetTopMovieList")
 	defer it.logger.Debug("-tmdb.GetTopMovieList")

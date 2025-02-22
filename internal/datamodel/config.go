@@ -13,6 +13,7 @@ import (
 type Config struct {
 	CacheAddress      string                                  `json:"cacheAddress"`
 	CacheTimeout      int                                     `json:"cacheTimeout"`
+	Debug             bool                                    `json:"debug"`
 	Location          string                                  `json:"location"`
 	Port              int                                     `json:"port"`
 	TmdbOptions       *TmdbOptions                            `json:"tmdbOptions"`
