@@ -119,5 +119,8 @@ func (it *CinemadleServer) createEndpoints() {
 		v1.GET("/media/:type/:date", func(c *gin.Context) {
 			controllers.MediaOfTheDay(c, it.tmdbClient, it.config, it.logger, it.cache)
 		})
+        v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
+            controllers.HealthCheck(c, it.logger)
+        })
 	}
 }

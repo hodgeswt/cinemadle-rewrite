@@ -2,6 +2,7 @@ package tmdb
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -123,14 +124,14 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 		it.logger.Errorf("tmdb.GetMovie: error formatting cast")
 		return nil, ErrInTmdbRequest
 	}
-	movie.Cast = cast
+	movie.Cast = cast[0:it.castAndCrewLimit]
 
 	crew, err := funct.Map(movieCredits.Crew, personMapper)
 	if err != nil {
 		it.logger.Errorf("tmdb.GetMovie: error formatting crew")
 		return nil, ErrInTmdbRequest
 	}
-	movie.Crew = crew
+	movie.Crew = crew[0:it.castAndCrewLimit]
 
 	movie.Rating = "UNK"
 	for _, release := range movieReleases.Results {
@@ -151,6 +152,8 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 			break
 		}
 	}
+
+	movie.ImageUrl = fmt.Sprintf("https://image.tmdb.org/t/p/original%s", movieDetails.BackdropPath)
 
 	return movie, nil
 }
