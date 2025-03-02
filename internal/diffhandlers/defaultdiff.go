@@ -125,13 +125,15 @@ func (it *DefaultDiff) HandleMovieDiff(patch jsondiff.Patch, guess *datamodel.Me
 	yearDirection := mapDirection(yearDiff)
 
 	guessOutput := &datamodel.Guess{
-		Colors: map[string]string{
-			"rating": ratingColor,
-			"year":   yearColor,
-		},
-		Directions: map[string]int{
-			"rating": ratingDirection,
-			"year":   yearDirection,
+		Fields: map[string]datamodel.Field{
+			"rating": datamodel.Field{
+				Color:     ratingColor,
+				Direction: ratingDirection,
+			},
+			"year": datamodel.Field{
+				Color:     yearColor,
+				Direction: yearDirection,
+			},
 		},
 	}
 
