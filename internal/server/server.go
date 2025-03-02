@@ -12,6 +12,7 @@ import (
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/diffhandlers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
@@ -122,7 +123,7 @@ func (it *CinemadleServer) createEndpoints() {
 			})
 		}
 		v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
-			controllers.Guess(c, it.tmdbClient, it.config, it.logger, it.cache)
+			controllers.Guess(c, it.tmdbClient, it.config, it.logger, it.cache, new(diffhandlers.DefaultDiff))
 		})
 	}
 }

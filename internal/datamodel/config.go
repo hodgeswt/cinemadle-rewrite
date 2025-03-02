@@ -18,6 +18,7 @@ type Config struct {
 	Port              int                                     `json:"port"`
 	TmdbOptions       *TmdbOptions                            `json:"tmdbOptions"`
 	RandomizerOptions rand.LinearCongruentialGeneratorOptions `json:"randomizerOptions"`
+	GuessOptions      *GuessOptions                           `json:"guessOptions"`
 }
 
 var ErrLoadingConfig = errors.New("ErrLoadingConfig")
@@ -53,6 +54,11 @@ func LoadConfig(logger *logw.Logger) (*Config, error) {
 
 	if err != nil {
 		logger.Errorf("config.LoadConfig: %v", err)
+		return nil, ErrLoadingConfig
+	}
+
+	if !config.GuessOptions.Validate() {
+		logger.Error("config.LoadConfig: Invalid guess options")
 		return nil, ErrLoadingConfig
 	}
 

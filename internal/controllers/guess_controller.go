@@ -9,12 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/diffhandlers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 	"github.com/wI2L/jsondiff"
 )
 
-func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache, diffHandler diffhandlers.IDiffHandler) {
 	logger.Debug("+guess_controller.Guess")
 	defer logger.Debug("-guess_controller.Guess")
 
@@ -123,14 +124,16 @@ func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config
 
 	}
 
-	patch, err := jsondiff.Compare(media, guessedMedia)
+	patch, err := jsondiff.Compare(guessedMedia, media)
 
-	j, err := json.Marshal(patch)
+	guess, err := diffHandler.HandleMovieDiff(patch, guessedMedia, config.GuessOptions, logger)
+
+	j, err := json.Marshal(guess)
 
 	if err == nil {
 		cache.Set(cacheKey, string(j))
 	}
 
-	c.JSON(200, patch)
+	c.JSON(200, guess)
 	c.Done()
 }
