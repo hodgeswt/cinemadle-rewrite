@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
@@ -60,6 +61,11 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	it.cache = cache.NewCache(ctx, logger, config)
 	it.logger = logger
 	it.router = gin.Default()
+
+	it.router.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+	}))
+
 	it.tmdbClient = tmdbClient
 	it.createEndpoints()
 
