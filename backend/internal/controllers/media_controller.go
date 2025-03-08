@@ -13,6 +13,10 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
+func GetMediaList(c *gin.Context, mediaType string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+
+}
+
 func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) (*datamodel.Media, *datamodel.ErrorBundle) {
 	logger.Debug("+media_controller.GetMediaOfTheDay")
 	defer logger.Debug("-media_controller.GetMediaOfTheDay")

@@ -1,6 +1,8 @@
 services:
   cinemadle-server:
     image: cinemadle-server:latest
+    networks:
+      cinemadle:
     build:
       context: .
       dockerfile: Containerfile
@@ -16,9 +18,15 @@ services:
 
   cache:
     image: redis:alpine
+    networks:
+      cinemadle:
     container_name: cache
     ports:
       - "6379:6379"
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+networks:
+  cinemadle:
+    driver: bridge
