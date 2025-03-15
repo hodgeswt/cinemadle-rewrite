@@ -1,6 +1,21 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 
+export async function getPossibleMovies(): Promise<Result<string[]>> {
+    const data = await get("media/list/movie", null)
+
+    if (data.ok) {
+        const listStr = data.data!
+        try {
+            return ok(JSON.parse(listStr))
+        } catch (e) {
+            return err("Invalid list")
+        }
+    } else {
+        return err(data.error!)
+    }
+}
+
 export async function get(
   endpoint: string,
   queryParams: { [key: string]: string } | null,
