@@ -64,7 +64,7 @@ func MovieIdFromDate(
 	}
 
 	if needLoad {
-		movieSplit, err := tmdbClient.GetTopMovieList()
+		movieSplit, _, err := tmdbClient.GetTopMovieList()
 
 		if err != nil {
 			return -1, err

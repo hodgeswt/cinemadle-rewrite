@@ -13,8 +13,53 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
-func GetMediaList(c *gin.Context, mediaType string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Logger, cache *cache.Cache) ([]string, *datamodel.ErrorBundle) {
+	logger.Debug("+media_controller.GetMediaList")
+	defer logger.Debug("-media_controller.GetMediaList")
 
+	if mediaType != "movie" {
+		logger.Debugf("media_controller.GetMediaList: found unsupported media type %s", mediaType)
+
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Please specify a valid media type. Currently accepted values: 'movie'",
+			},
+			Status: 422,
+		}
+
+	}
+
+	cacheKey := "media_controller.GetMediaList"
+
+	cached, err := cache.Get(cacheKey)
+
+	if err != nil {
+		var m []string
+		err = json.Unmarshal([]byte(cached), &m)
+
+		if err == nil {
+			return m, nil
+		}
+	}
+
+	_, titles, err := tmdbClient.GetTopMovieList()
+
+	if err != nil {
+		return nil, &datamodel.ErrorBundle{
+			Response: &datamodel.ErrorResponse{
+				Message: "Unable to retrieve top movie list",
+			},
+			Status: 500,
+		}
+	}
+
+	j, err := json.Marshal(titles)
+
+	if err != nil {
+		cache.Set(cacheKey, string(j))
+	}
+
+	return titles, nil
 }
 
 func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) (*datamodel.Media, *datamodel.ErrorBundle) {
@@ -97,7 +142,7 @@ func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient
 	logger.Debugf("mediaController.RandomizerOptions: %+v", config.RandomizerOptions)
 
 	id, err := util.MovieIdFromDate(date, tmdbClient, cache, &config.RandomizerOptions)
-	if err != nil {
+	if err !=nil {
 		logger.Errorf("media_controller.MediaOfTheDay: error getting movie id: %v", err)
 		return nil, &datamodel.ErrorBundle{
 			Response: &datamodel.ErrorResponse{
@@ -152,5 +197,31 @@ func MediaOfTheDay(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamode
 	}
 
 	c.JSON(200, *movie)
+	c.Done()
+}
+
+func PossibleMediaTitles(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+	logger.Debug("+media_controller.PossibleMediaTitles")
+	defer logger.Debug("-media_controller.PossibleMediaTitles")
+
+	mediaType := c.Param("type")
+
+	titles, errorBundle := GetMediaList(mediaType, tmdbClient, logger, cache)
+
+	if errorBundle != nil {
+		c.JSON(errorBundle.Status, *errorBundle.Response)
+		c.Done()
+		return
+	}
+
+	if titles == nil {
+		c.JSON(500, datamodel.ErrorResponse{
+			Message: "Unexpected server error.",
+		})
+		c.Done()
+		return
+	}
+
+	c.JSON(200, titles)
 	c.Done()
 }

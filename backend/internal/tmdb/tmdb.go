@@ -23,10 +23,16 @@ type TmdbClient struct {
 	Initialized      bool
 }
 
+type discoverMovie struct {
+	title string
+	id    int64
+}
+
 var (
 	ErrPageLimitMet         = errors.New("ErrPageLimitMet")
 	ErrClientNotInitialized = errors.New("ErrClientNotInitialized")
 	ErrInTmdbRequest        = errors.New("ErrInTmdbRequest")
+	ErrUnsupportedMediaType = errors.New("ErrUnsupportedMediaType")
 )
 
 func NewTmdbClient(options *datamodel.TmdbOptions, logger *logw.Logger) (*TmdbClient, error) {
@@ -171,13 +177,13 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 }
 
 // Gets page of results from discover movie from TMDB api
-func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) ([]int64, error) {
+func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) ([]discoverMovie, error) {
 	if !it.Initialized {
 		return nil, ErrClientNotInitialized
 	}
 
 	if (page - 1) >= it.pageLimit {
-		it.logger.Debugf("tmdb.getDiscoverMoviePage: met or exceeded page limit: %d/%d", page, it.pageLimit)
+		it.logger.Debugf("tmdb.getDiscoverMoviePage: met or exceeded page limit: %d,/%d", page, it.pageLimit)
 		return nil, ErrPageLimitMet
 	}
 
@@ -189,27 +195,53 @@ func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) (
 		return nil, err
 	}
 
-	movies := []int64{}
+	movies := []discoverMovie{}
 
 	for _, movie := range results.Results {
-		movies = append(movies, movie.ID)
+		movies = append(movies, discoverMovie{
+			id: movie.ID,
+			title: movie.Title,
+		})
 	}
 
 	return movies, nil
 }
 
+func (it *TmdbClient) GetNameFromId(id int, mediaType string) (string, error) {
+	it.logger.Debug("+tmdb.IdToname")
+	defer it.logger.Debug("-tmdb.IdToName")
+
+	if !it.Initialized {
+		return "", ErrClientNotInitialized
+	}
+
+	// TODO support other media types
+	if mediaType != "movie" {
+		return "", ErrUnsupportedMediaType
+	}
+
+	movie, err := it.client.GetMovieDetails(id, nil)
+
+	if err != nil {
+		return "", ErrInTmdbRequest
+	}
+
+	return movie.Title, nil
+}
+
 // Gets the Top X movies as determined by configuration
-func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
+func (it *TmdbClient) GetTopMovieList() ([]int64, []string, error) {
 	it.logger.Debug("+tmdb.GetTopMovieList")
 	defer it.logger.Debug("-tmdb.GetTopMovieList")
 
 	if !it.Initialized {
-		return nil, ErrClientNotInitialized
+		return nil, nil, ErrClientNotInitialized
 	}
 
 	page := 1
 
-	movies := []int64{}
+	movieIds := []int64{}
+	titles := []string{}
 	count := 0
 
 	for {
@@ -219,15 +251,16 @@ func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 		if err == ErrPageLimitMet {
 			break
 		} else if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		for _, movieId := range next {
+		for _, movie := range next {
 			if count == it.selectionCount {
 				break
 			}
 
-			movies = append(movies, movieId)
+			movieIds = append(movieIds, movie.id)
+			titles = append(titles, movie.title)
 			count++
 		}
 
@@ -238,5 +271,5 @@ func (it *TmdbClient) GetTopMovieList() ([]int64, error) {
 		page++
 	}
 
-	return movies, nil
+	return movieIds, titles, nil
 }

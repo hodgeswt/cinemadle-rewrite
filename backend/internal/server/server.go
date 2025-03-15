@@ -128,6 +128,9 @@ func (it *CinemadleServer) createEndpoints() {
 				controllers.MediaOfTheDay(c, it.tmdbClient, it.config, it.logger, it.cache)
 			})
 		}
+		v1.GET("/media/list/:type", func(c *gin.Context) {
+			controllers.PossibleMediaTitles(c, it.tmdbClient, it.config, it.logger, it.cache)
+		})
 		v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
 			controllers.Guess(c, it.tmdbClient, it.config, it.logger, it.cache, new(diffhandlers.DefaultDiff))
 		})
