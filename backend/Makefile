@@ -5,3 +5,7 @@ build:
 .PHONY: run
 run:
 	docker compose up
+
+.PHONY: run-local
+run-local:
+	go run ./cmd/server/main.go
