@@ -13,7 +13,7 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
-func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Logger, cache *cache.Cache) ([]string, *datamodel.ErrorBundle) {
+func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Logger, cache *cache.Cache) (map[int64]string, *datamodel.ErrorBundle) {
 	logger.Debug("+media_controller.GetMediaList")
 	defer logger.Debug("-media_controller.GetMediaList")
 
@@ -34,7 +34,7 @@ func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Lo
 	cached, err := cache.Get(cacheKey)
 
 	if err != nil {
-		var m []string
+		var m map[int64]string
 		err = json.Unmarshal([]byte(cached), &m)
 
 		if err == nil {
@@ -42,7 +42,7 @@ func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Lo
 		}
 	}
 
-	_, titles, err := tmdbClient.GetTopMovieList()
+	ids, titles, err := tmdbClient.GetTopMovieList()
 
 	if err != nil {
 		return nil, &datamodel.ErrorBundle{
@@ -53,13 +53,19 @@ func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Lo
 		}
 	}
 
-	j, err := json.Marshal(titles)
+	o := map[int64]string{}
+
+	for i := 0; i < len(ids); i++ {
+		o[ids[i]] = titles[i]
+	}
+
+	j, err := json.Marshal(o)
 
 	if err != nil {
 		cache.Set(cacheKey, string(j))
 	}
 
-	return titles, nil
+	return o, nil
 }
 
 func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) (*datamodel.Media, *datamodel.ErrorBundle) {
@@ -142,7 +148,7 @@ func GetMediaOfTheDay(mediaType string, date string, tmdbClient *tmdb.TmdbClient
 	logger.Debugf("mediaController.RandomizerOptions: %+v", config.RandomizerOptions)
 
 	id, err := util.MovieIdFromDate(date, tmdbClient, cache, &config.RandomizerOptions)
-	if err !=nil {
+	if err != nil {
 		logger.Errorf("media_controller.MediaOfTheDay: error getting movie id: %v", err)
 		return nil, &datamodel.ErrorBundle{
 			Response: &datamodel.ErrorResponse{
