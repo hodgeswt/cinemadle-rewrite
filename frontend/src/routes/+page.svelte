@@ -15,7 +15,9 @@
     let guesses = $state([] as GuessDomain[]);
 
     let possibleGuesses = $state([] as string[]);
-    let filteredGuesses = $derived(find(guessValue, possibleGuesses).filter((x, i) => i < 10));
+    let filteredGuesses = $derived(
+        find(guessValue, possibleGuesses).filter((_, i) => i < 10),
+    );
     let searchOpen = $state(false);
 
     onMount(async () => {
@@ -39,11 +41,11 @@
         }
     }
 
-    async function handleGuess(event: Event): Promise<void> {
-        event.preventDefault();
-
-        let result = await get("/guess/movie/2025-03-08/1825", null);
-
+    async function makeGuess(guess: string): Promise<void> {
+        let result = await get(
+            `/guess/movie/${new Date().toISOString().split("T")[0]}/${guess}`,
+            null,
+        );
         match(
             result,
             () => {
@@ -62,10 +64,22 @@
             },
         );
     }
+
+    async function handleSelect(value: string): Promise<void> {
+        guessValue = "";
+        makeGuess(value);
+    }
+
+    async function handleGuess(event: Event | null): Promise<void> {
+        event?.preventDefault();
+
+        makeGuess(guessValue);
+        guessValue = "";
+    }
 </script>
 
-<div class="bg-red-500 p-4 flex justify-center min-h-screen">
-    <div class="w-1/2 bg-blue-500 p-4">
+<div class="p-4 flex justify-center min-h-screen">
+    <div class="w-1/2 p-4">
         <div class="flex">
             <Input
                 type="text"
@@ -81,17 +95,27 @@
         </div>
 
         {#if filteredGuesses.length > 0}
-            <div class="mt-1 bg-white border border-gray-300 rounded shadow-lg z-10">
+            <ul
+                class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
+            >
                 {#each filteredGuesses as possibleGuess}
-                    <p>{possibleGuess}</p>
+                    <li class="p-2 text-lg">
+                        <button
+                            onclick={() => {
+                                handleSelect(possibleGuess);
+                            }}
+                        >
+                            {possibleGuess}
+                        </button>
+                    </li>
                 {/each}
-            </div>
+            </ul>
         {/if}
 
         {#if errorMessage !== ""}
-            <div class="text-red">
+            <p class="text-red">
                 {errorMessage}
-            </div>
+            </p>
         {/if}
 
         <div class="guesses z-10">

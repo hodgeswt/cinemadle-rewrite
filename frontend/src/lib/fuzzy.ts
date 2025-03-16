@@ -1,8 +1,6 @@
 import Fuse from "fuse.js"
 
 export const find = (input: string, data: string[]): string[] => {
-    console.log(`Finding ${input}`)
-
     if (input === "" || input === undefined || data === undefined || data.length === 0) {
         return [] as string[]
     }
