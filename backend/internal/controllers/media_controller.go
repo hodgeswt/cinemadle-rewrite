@@ -33,13 +33,15 @@ func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Lo
 
 	cached, err := cache.Get(cacheKey)
 
-	if err != nil {
+	if err == nil {
 		var m map[int64]string
 		err = json.Unmarshal([]byte(cached), &m)
 
 		if err == nil {
 			return m, nil
 		}
+	} else {
+		logger.Debug("media_controller.GetMediaList: cache miss")
 	}
 
 	ids, titles, err := tmdbClient.GetTopMovieList()
@@ -55,13 +57,13 @@ func GetMediaList(mediaType string, tmdbClient *tmdb.TmdbClient, logger *logw.Lo
 
 	o := map[int64]string{}
 
-	for i := 0; i < len(ids); i++ {
+	for i := range len(ids) {
 		o[ids[i]] = titles[i]
 	}
 
 	j, err := json.Marshal(o)
 
-	if err != nil {
+	if err == nil {
 		cache.Set(cacheKey, string(j))
 	}
 

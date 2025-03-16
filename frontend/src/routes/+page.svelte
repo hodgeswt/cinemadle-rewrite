@@ -29,7 +29,7 @@
 
     onMount(async () => {
         try {
-            const result = await getPossibleMovies();
+            const result = await getPossibleMovies(uid);
 
             if (result.ok) {
                 possibleGuesses = result.data!;
@@ -55,7 +55,7 @@
 
     async function makeGuess(guess: string): Promise<void> {
         const id = possibleGuesses[guess];
-        let result = await get(`/guess/movie/${isoDateNoTime()}/${id}`, null);
+        let result = await get(`/guess/movie/${isoDateNoTime()}/${id}`, null, uid);
         match(
             result,
             () => {

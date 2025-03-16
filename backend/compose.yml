@@ -16,6 +16,22 @@ services:
       - GIN_MODE=release
       - LOGLEVELW=ERROR
 
+  db:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+      POSTGRES_DB: cinemadle
+    volumes:
+      - ./volumes/db:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      cinemadle:
+    restart: unless-stopped
+
   cache:
     image: redis:alpine
     networks:
@@ -26,6 +42,16 @@ services:
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+  redis-commander:
+    container_name: redis-commander
+    image: rediscommander/redis-commander:latest
+    hostname: redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=192.168.0.23
+    ports:
+      - "8888:8081"
 
 networks:
   cinemadle:

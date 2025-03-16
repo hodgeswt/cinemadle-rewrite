@@ -62,9 +62,13 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	it.logger = logger
 	it.router = gin.Default()
 
-	it.router.Use(cors.New(cors.Config{
+	c := cors.Config{
 		AllowAllOrigins: true,
-	}))
+	}
+
+	c.AddAllowHeaders("x-uuid")
+
+	it.router.Use(cors.New(c))
 
 	it.tmdbClient = tmdbClient
 	it.createEndpoints()
