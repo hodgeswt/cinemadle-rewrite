@@ -3,13 +3,13 @@ import type { CardDomain, GuessDomain, PossibleMediaDomain } from "$lib/domain";
 import { isPossibleMediaDomain } from "$lib/domain";
 import { err, ok, type Result } from "$lib/result";
 
-export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
+export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain> {
     if (!isGuessDto(guess)) {
         return err("Invalid data type");
     }
 
     let out = {
-        title: "Unknown",
+        title: title,
         cards: [],
     } as GuessDomain;
 

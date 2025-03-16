@@ -51,7 +51,7 @@
             result,
             () => {
                 let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto);
+                let domain = GuessDtoToDomain(dto, guess);
 
                 if (domain.ok) {
                     guesses.push(domain.data as GuessDomain);
