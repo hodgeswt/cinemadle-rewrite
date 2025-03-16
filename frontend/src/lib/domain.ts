@@ -11,6 +11,7 @@ export type GuessDomain = {
 
 export type CardDomain = {
     color: string;
+    title: string;
     data: string[];
 };
 
