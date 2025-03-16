@@ -1,28 +1,44 @@
 <script lang="ts">
     import Guess from "$lib/Guess.svelte";
+    import { Input } from "$lib/components/ui/input";
+    import { Search } from "@lucide/svelte";
+    import { Button } from "$lib/components/ui/button";
+    import * as Popover from "$lib/components/ui/popover";
     import { match } from "$lib/result";
     import { get, getPossibleMovies } from "$lib/middleware";
     import { type GuessDomain } from "$lib/domain";
     import { GuessDtoToDomain } from "$lib/mappers";
     import { onMount } from "svelte";
+    import { find } from "$lib/fuzzy";
 
     let guessValue = $state("");
     let errorMessage = $state("");
     let guesses = $state([] as GuessDomain[]);
 
     let possibleGuesses = $state([] as string[]);
+    let filteredGuesses = $derived(find(guessValue, possibleGuesses))
+    let searchOpen = $state(true);
 
     onMount(async () => {
         try {
             const result = await getPossibleMovies();
 
             if (result.ok) {
-                possibleGuesses = result.data!
+                possibleGuesses = result.data!;
             }
         } catch (e) {
             console.error(e);
         }
     });
+
+    function guessChange(_event: Event): void {
+        console.log(filteredGuesses)
+        if (guessValue !== "") {
+            searchOpen = true;
+        } else {
+            searchOpen = false;
+        }
+    }
 
     async function handleGuess(event: Event): Promise<void> {
         event.preventDefault();
@@ -49,21 +65,41 @@
     }
 </script>
 
-<form onsubmit={handleGuess}>
-    <input type="text" bind:value={guessValue} placeholder="Guess..." />
-    <button type="submit">Submit</button>
-</form>
+<div class="bg-red-500 p-4 flex justify-center min-h-screen">
+    <div class="w-1/2 bg-blue-500 p-4 flex">
+        <Input
+            type="text"
+            placeholder="Guess..."
+            bind:value={guessValue}
+            onchange={guessChange}
+            class="m-1"
+        />
 
-{#if errorMessage !== ""}
-    <div class={"red"}>
-        {errorMessage}
+        <Button type="submit" size="icon" onclick={handleGuess} class="m-1">
+            <Search />
+        </Button>
+
+        <Popover.Root bind:open={searchOpen}>
+            <Popover.Trigger></Popover.Trigger>
+            <Popover.Content class="w-lg">
+                {#each filteredGuesses as possibleGuess}
+                    <p>{possibleGuess}</p>
+                {/each}
+            </Popover.Content>
+        </Popover.Root>
     </div>
-{/if}
 
-<div class="guesses">
-    {#each guesses as guess}
-        <Guess props={guess} />
-    {/each}
+    {#if errorMessage !== ""}
+        <div class={"red"}>
+            {errorMessage}
+        </div>
+    {/if}
+
+    <div class="guesses">
+        {#each guesses as guess}
+            <Guess props={guess} />
+        {/each}
+    </div>
 </div>
 
 <style>
