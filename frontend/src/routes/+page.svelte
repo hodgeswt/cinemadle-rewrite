@@ -9,6 +9,9 @@
     import { GuessDtoToDomain } from "$lib/mappers";
     import { onMount } from "svelte";
     import { find } from "$lib/fuzzy";
+    import { isoDateNoTime } from "$lib/util";
+    import { browser } from "$app/environment";
+    import { v4 as uuidv4 } from "uuid";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -20,6 +23,10 @@
     );
     let searchOpen = $state(false);
 
+    let uid = $state(
+        (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
+    );
+
     onMount(async () => {
         try {
             const result = await getPossibleMovies();
@@ -29,6 +36,11 @@
             }
         } catch (e) {
             console.error(e);
+        }
+        if (browser && (!uid || uid === "")) {
+            uid = uuidv4();
+            console.log(uid);
+            localStorage.setItem("cinemadleUuid", uid);
         }
     });
 
@@ -42,11 +54,8 @@
     }
 
     async function makeGuess(guess: string): Promise<void> {
-        const id = possibleGuesses[guess]
-        let result = await get(
-            `/guess/movie/${new Date().toISOString().split("T")[0]}/${id}`,
-            null,
-        );
+        const id = possibleGuesses[guess];
+        let result = await get(`/guess/movie/${isoDateNoTime()}/${id}`, null);
         match(
             result,
             () => {
@@ -80,7 +89,13 @@
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
-    <div class="w-1/2 p-4">
+    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
+        <h1 class="m-4 text-4xl font-extrabold leading-none tracking-tight">
+            cinemadle
+        </h1>
+        <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+            {isoDateNoTime()}
+        </h2>
         <div class="flex">
             <Input
                 type="text"

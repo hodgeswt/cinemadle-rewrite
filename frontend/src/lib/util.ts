@@ -15,3 +15,8 @@ export function isArray(obj: any, type: string): boolean {
     (element: any) => hasValue(element) && typeof element === type,
   );
 }
+
+export function isoDateNoTime(): string {
+    return (new Date()).toISOString().split('T')[0]
+}
+
