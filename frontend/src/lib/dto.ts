@@ -1,5 +1,9 @@
 import { isArray, hasValue } from "$lib/util";
 
+export type PossibleMediaDto = {
+    [key: string]: string;
+}
+
 export type GuessDto = {
   fields: { [key: string]: Field };
 };
@@ -9,6 +13,20 @@ export type Field = {
   direction: number;
   values: string[];
 };
+
+export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    for (const key in obj) {
+        if (typeof key !== 'string' || typeof obj[key] !== 'string') {
+            return false
+        }
+    }
+
+    return true
+}
 
 export function isGuessDto(obj: any): obj is GuessDto {
   if (!hasValue(obj) || !hasValue(obj.fields)) {

@@ -1,9 +1,29 @@
+import { hasValue } from "./util";
+
+export type PossibleMediaDomain = {
+    [key: string]: string;
+}
+
 export type GuessDomain = {
-  title: string;
-  cards: CardDomain[];
+    title: string;
+    cards: CardDomain[];
 };
 
 export type CardDomain = {
-  color: string;
-  data: string[];
+    color: string;
+    data: string[];
 };
+
+export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    for (const key in obj) {
+        if (typeof key !== 'string' || typeof obj[key] !== 'string') {
+            return false
+        }
+    }
+
+    return true
+}

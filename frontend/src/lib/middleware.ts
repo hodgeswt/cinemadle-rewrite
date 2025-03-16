@@ -1,15 +1,24 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
+import type { PossibleMediaDomain } from "./domain";
+import { PossibleMediaDtoToDomain } from "./mappers";
 
-export async function getPossibleMovies(): Promise<Result<string[]>> {
+export async function getPossibleMovies(): Promise<Result<PossibleMediaDomain>> {
     const data = await get("media/list/movie", null)
 
     if (data.ok) {
-        const listStr = data.data!
+        const raw = data.data!
         try {
-            return ok(JSON.parse(listStr))
+            let dto = JSON.parse(raw)
+            let domain = PossibleMediaDtoToDomain(dto)
+
+            if (domain.ok) {
+                return ok(domain.data!)
+            } else {
+                return err("Invalid data")
+            }
         } catch (e) {
-            return err("Invalid list")
+            return err("Invalid data")
         }
     } else {
         return err(data.error!)

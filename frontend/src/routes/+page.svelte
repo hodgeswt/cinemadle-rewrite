@@ -5,7 +5,7 @@
     import { Button } from "$lib/components/ui/button";
     import { match } from "$lib/result";
     import { get, getPossibleMovies } from "$lib/middleware";
-    import { type GuessDomain } from "$lib/domain";
+    import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { GuessDtoToDomain } from "$lib/mappers";
     import { onMount } from "svelte";
     import { find } from "$lib/fuzzy";
@@ -14,9 +14,9 @@
     let errorMessage = $state("");
     let guesses = $state([] as GuessDomain[]);
 
-    let possibleGuesses = $state([] as string[]);
+    let possibleGuesses = $state({} as PossibleMediaDomain);
     let filteredGuesses = $derived(
-        find(guessValue, possibleGuesses).filter((_, i) => i < 10),
+        find(guessValue, Object.keys(possibleGuesses)).filter((_, i) => i < 10),
     );
     let searchOpen = $state(false);
 
@@ -42,8 +42,9 @@
     }
 
     async function makeGuess(guess: string): Promise<void> {
+        const id = possibleGuesses[guess]
         let result = await get(
-            `/guess/movie/${new Date().toISOString().split("T")[0]}/${guess}`,
+            `/guess/movie/${new Date().toISOString().split("T")[0]}/${id}`,
             null,
         );
         match(
