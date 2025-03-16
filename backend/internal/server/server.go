@@ -8,11 +8,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/controllers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/db"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/diffhandlers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
@@ -28,6 +29,7 @@ type CinemadleServer struct {
 	cancel     context.CancelFunc
 	config     *datamodel.Config
 	tmdbClient *tmdb.TmdbClient
+	db         db.Db
 	testMode   bool
 }
 
@@ -72,6 +74,13 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 
 	it.tmdbClient = tmdbClient
 	it.createEndpoints()
+
+	it.db = &db.Pg{}
+	it.db.Init(it.logger)
+
+	if !it.db.Ping() {
+		panic(errors.New("Unable to connect to database"))
+	}
 
 	it.port = strconv.Itoa(config.Port)
 	it.server = &http.Server{
