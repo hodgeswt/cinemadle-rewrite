@@ -16,7 +16,7 @@ export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
     const v = guess.fields[k];
 
     let card = {
-      color: v.color,
+      color: v.color === "grey" ? "gray" : v.color,
       data: v.values,
     } as CardDomain;
 

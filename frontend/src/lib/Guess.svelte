@@ -8,19 +8,17 @@
     };
 </script>
 
-<Card.Root>
-    <Card.Header><Card.Title>{props.title}</Card.Title></Card.Header>
-    <Card.Content>
+<div class="bg-gray-400 min-w-3xl w-full">
+    <div class="h-1 m-8">
+        {props.title}
+    </div>
+    <div class="grid grid-cols-2">
         {#each props.cards as { color, data }}
-            {#each data as datum}
-                <Card.Root>
-                    <Card.Content>
-                        <div class="bg-{color} mg-4">
-                            {datum}
-                        </div>
-                    </Card.Content>
-                </Card.Root>
-            {/each}
+            <div class={`min-w-3xl w-1/2 h-1/2 bg-${color}-400`}>
+                {#each data as datum}
+                    <p>{datum}</p>
+                {/each}
+            </div>
         {/each}
-    </Card.Content>
-</Card.Root>
+    </div>
+</div>
