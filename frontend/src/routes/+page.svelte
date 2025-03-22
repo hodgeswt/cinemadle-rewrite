@@ -18,16 +18,24 @@
     import { browser } from "$app/environment";
     import { v4 as uuidv4 } from "uuid";
     import { Skeleton } from "$lib/components/ui/skeleton";
+    import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import { writable } from "svelte/store";
 
     let guessValue = $state("");
     let errorMessage = $state("");
+    let openError = writable(false);
     let guesses = $state([] as GuessDomain[]);
 
     let searchOpen = $state(false);
 
     let possibleGuesses = $state({} as PossibleMediaDomain);
+
+    let titles = $derived(guesses.map((x) => x.title));
+
     let filteredGuesses = $derived(
-        find(guessValue, Object.keys(possibleGuesses)).filter((_, i) => i < 10),
+        find(guessValue, Object.keys(possibleGuesses))
+            .filter((_, i) => i < 10)
+            .filter((x) => !titles.includes(x)),
     );
 
     let uid = $state(
@@ -77,18 +85,17 @@
 
             loading = false;
         } catch (e) {
-            console.error(e);
+            errorMessage = "Unable to contact server.";
+            openError.set(true);
         }
 
         if (browser && (!uid || uid === "")) {
             uid = uuidv4();
-            console.log(uid);
             localStorage.setItem("cinemadleUuid", uid);
         }
     });
 
     function guessChange(_event: Event): void {
-        console.log(filteredGuesses);
         if (guessValue !== "") {
             searchOpen = true;
         } else {
@@ -109,6 +116,12 @@
               ) ?? "Unknown")
             : guess;
 
+        if (guesses.filter((x) => x.title === title).length != 0) {
+            errorMessage = "Movie already guessed!";
+            openError.set(true);
+            return;
+        }
+
         let result = await get(
             `/guess/movie/${isoDateNoTime()}/${id}`,
             null,
@@ -124,14 +137,22 @@
                 if (domain.ok) {
                     guesses.push(domain.data as GuessDomain);
                     errorMessage = "";
+                    openError.set(false);
                 } else {
                     errorMessage = "Invalid response from server";
+                    openError.set(true);
                 }
             },
             () => {
                 errorMessage = result.error as string;
+                openError.set(false);
             },
         );
+    }
+
+    function closeDialog() {
+        openError.set(false);
+        errorMessage = "";
     }
 
     async function handleSelect(value: string): Promise<void> {
@@ -149,14 +170,26 @@
 
 <div class="p-4 flex justify-center min-h-screen">
     <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
-        <h1 class="m-4 text-4xl font-extrabold leading-none tracking-tight">
-            cinemadle
-        </h1>
+        <div class="w-full flex justify-between items-center">
+            <h1
+                class="flex-1 m-4 text-4xl font-extrabold leading-none tracking-tight"
+            >
+                cinemadle
+            </h1>
+            <div
+                class="w-full flex-1 flex flex-col m-4 text-right justify-center"
+            >
+                <a href="/about" class="underline">About</a>
+            </div>
+        </div>
+
         <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
             {isoDateNoTime()}
         </h2>
         {#if win}
-            <h2 class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight">
+            <h2
+                class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight"
+            >
                 You win!
             </h2>
         {/if}
@@ -200,11 +233,19 @@
                 </ul>
             {/if}
 
-            {#if errorMessage !== ""}
-                <p class="text-red">
-                    {errorMessage}
-                </p>
-            {/if}
+            <AlertDialog.Root bind:open={$openError}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {errorMessage}
+                    </AlertDialog.Description>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeDialog}
+                            >Ok</AlertDialog.Action
+                        >
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
 
             <div class="guesses z-10">
                 {#each [...guesses].reverse() as guess}
