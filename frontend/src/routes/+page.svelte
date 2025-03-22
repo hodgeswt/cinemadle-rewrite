@@ -209,7 +209,7 @@
 
         {#if serverDown}
             <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
-                Server down -- try again later
+                Server down. Please try again later
             </h2>
         {/if}
     </div>

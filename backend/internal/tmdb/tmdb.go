@@ -20,6 +20,7 @@ type TmdbClient struct {
 	logger           *logw.Logger
 	discoverOptions  map[string]string
 	castAndCrewLimit int
+	genreLimit       int
 	Initialized      bool
 }
 
@@ -51,6 +52,7 @@ func NewTmdbClient(options *datamodel.TmdbOptions, logger *logw.Logger) (*TmdbCl
 		logger:           logger,
 		discoverOptions:  options.DiscoverOptions,
 		castAndCrewLimit: options.CastAndCrewLimit,
+		genreLimit:       options.GenreLimit,
 		Initialized:      true,
 	}, nil
 }
@@ -123,7 +125,12 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 		it.logger.Errorf("tmdb.GetMovie: error formatting genres")
 		return nil, ErrInTmdbRequest
 	}
-	movie.Genres = mappedGenres
+	limit := min(it.genreLimit, len(mappedGenres)-1)
+	if limit < 0 {
+		it.logger.Errorf("tmdb.GetMovie: insufficient cast info")
+		return nil, ErrInTmdbRequest
+	}
+	movie.Genres = mappedGenres[0:limit]
 
 	cast, err := funct.Map(movieCredits.Cast, personMapper)
 	if err != nil {
@@ -131,7 +138,7 @@ func (it *TmdbClient) GetMovie(movieId int64) (*datamodel.Media, error) {
 		return nil, ErrInTmdbRequest
 	}
 
-	limit := min(it.castAndCrewLimit, len(cast)-1)
+	limit = min(it.castAndCrewLimit, len(cast)-1)
 	if limit < 0 {
 		it.logger.Errorf("tmdb.GetMovie: insufficient cast info")
 		return nil, ErrInTmdbRequest
@@ -199,7 +206,7 @@ func (it *TmdbClient) getDiscoverMoviePage(params map[string]string, page int) (
 
 	for _, movie := range results.Results {
 		movies = append(movies, discoverMovie{
-			id: movie.ID,
+			id:    movie.ID,
 			title: movie.Title,
 		})
 	}
