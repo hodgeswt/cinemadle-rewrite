@@ -11,6 +11,7 @@ import (
 type Db interface {
 	Init(logger *logw.Logger)
 	Ping() bool
+	Exec(statement string, args ...any) bool
 }
 
 type Pg struct {
@@ -34,6 +35,32 @@ func (it *Pg) Init(logger *logw.Logger) {
 	it.connStr = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", it.host, it.port, it.user, it.password, it.dbName)
 
 	it.initialized = true
+}
+
+func (it *Pg) Exec(statement string, args ...any) bool {
+	it.logger.Debug("+db.Exec")
+	defer it.logger.Debug("-db.Exec")
+
+	if !it.initialized {
+		it.logger.Error("db.Exec: connection not initialized")
+		return false
+	}
+
+	db, err := sql.Open("postgres", it.connStr)
+
+	if err != nil {
+		it.logger.Errorf("Error connecting to db: %v", err)
+		return false
+	}
+
+	_, err = db.Exec(statement, args...)
+
+	if err != nil {
+		it.logger.Errorf("Error executing statement: %v", err)
+		return false
+	}
+
+	return true
 }
 
 func (it *Pg) Ping() bool {

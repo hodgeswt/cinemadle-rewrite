@@ -9,15 +9,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/cache"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
+	"github.com/hodgeswt/cinemadle-rewrite/internal/db"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/diffhandlers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
 	"github.com/wI2L/jsondiff"
 )
 
-func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache, diffHandler diffhandlers.IDiffHandler) {
+func saveGuess(db db.Db, uid string, guessId string, targetId string, logger *logw.Logger) bool {
+	logger.Debug("+guess_controller.saveGuess")
+	defer logger.Debug("-guess_controller.saveGuess")
+
+	if db.Exec("INSERT INTO guesses (guid, guess_id, target_id, datetime) VALUES ($1, $2, $3, $4)", uid, guessId, targetId, time.Now()) {
+		return true
+	}
+
+	logger.Errorf("guess_controller: Failed to insert guess %s for user %s into DB", guessId, uid)
+	return false
+}
+
+func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache, diffHandler diffhandlers.IDiffHandler) {
 	logger.Debug("+guess_controller.Guess")
 	defer logger.Debug("-guess_controller.Guess")
+
+	uid := c.GetHeader("x-uuid")
 
 	mediaType := c.Param("type")
 	logger.Debug(fmt.Sprintf("guess_controller.Guess: mediaType %s", mediaType))
@@ -103,6 +118,8 @@ func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config
 		err = json.Unmarshal([]byte(cached), &g)
 
 		if err == nil {
+			_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+
 			c.JSON(200, g)
 			c.Done()
 			return
@@ -134,6 +151,7 @@ func Guess(c *gin.Context, tmdbClient *tmdb.TmdbClient, config *datamodel.Config
 		cache.Set(cacheKey, string(j))
 	}
 
+	_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
 	c.JSON(200, guess)
 	c.Done()
 }

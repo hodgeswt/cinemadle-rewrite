@@ -89,7 +89,9 @@ module Migrate
     file_path = "sql/#{d}_#{file_description}.sql"
 
     File.open(file_path, 'w') do |f|
-      f.write("-- DB migration #{description} generated on #{DateTime.now}\nINSERT INTO migration_history (migration) VALUES ('#{d}_#{file_description}')")
+      insert = "\n\nINSERT INTO migration_history (migration)"
+      insert = "#{insert}\nVALUES ('#{d}_#{file_description}')\nON CONFLICT (migration) DO NOTHING;"
+      f.write("-- DB migration #{description} generated on #{DateTime.now}#{insert}")
     end
 
     puts "Generated migration #{file_path}"
