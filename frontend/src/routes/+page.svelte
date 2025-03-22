@@ -4,7 +4,12 @@
     import { Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
     import { match } from "$lib/result";
-    import { get, getPossibleMovies } from "$lib/middleware";
+    import {
+        get,
+        getPossibleMovies,
+        loadPreviousGuesses,
+        ping,
+    } from "$lib/middleware";
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { GuessDtoToDomain } from "$lib/mappers";
     import { onMount } from "svelte";
@@ -12,31 +17,65 @@
     import { isoDateNoTime } from "$lib/util";
     import { browser } from "$app/environment";
     import { v4 as uuidv4 } from "uuid";
+    import { Skeleton } from "$lib/components/ui/skeleton";
 
     let guessValue = $state("");
     let errorMessage = $state("");
     let guesses = $state([] as GuessDomain[]);
 
+    let searchOpen = $state(false);
+
     let possibleGuesses = $state({} as PossibleMediaDomain);
     let filteredGuesses = $derived(
         find(guessValue, Object.keys(possibleGuesses)).filter((_, i) => i < 10),
     );
-    let searchOpen = $state(false);
 
     let uid = $state(
         (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
     );
 
+    let loading = $state(true);
+    let healthPing = $state(0);
+
+    let serverDown = $state(false);
+
     onMount(async () => {
         try {
+            let alive = await ping();
+
+            while (!alive) {
+                if (healthPing == 10) {
+                    serverDown = true;
+                    return;
+                }
+                alive = await ping();
+                healthPing += 1;
+                await new Promise((x) => setTimeout(x, 1000));
+            }
+
             const result = await getPossibleMovies(uid);
 
             if (result.ok) {
                 possibleGuesses = result.data!;
+            } else {
+                throw new Error(result.error!);
             }
+
+            const prev = await loadPreviousGuesses(uid);
+
+            if (prev.ok) {
+                for (const id of prev.data!) {
+                    await makeGuess(id, true);
+                }
+            } else {
+                throw new Error(prev.error!);
+            }
+
+            loading = false;
         } catch (e) {
             console.error(e);
         }
+
         if (browser && (!uid || uid === "")) {
             uid = uuidv4();
             console.log(uid);
@@ -53,14 +92,26 @@
         }
     }
 
-    async function makeGuess(guess: string): Promise<void> {
-        const id = possibleGuesses[guess];
-        let result = await get(`/guess/movie/${isoDateNoTime()}/${id}`, null, uid);
+    async function makeGuess(guess: string, skipMap?: boolean): Promise<void> {
+        const skip = skipMap === true;
+        const id = skip ? guess : possibleGuesses[guess];
+        const title = skip
+            ? (Object.keys(possibleGuesses).find(
+                  (x) => possibleGuesses[x] === guess,
+              ) ?? "Unknown")
+            : guess;
+
+        let result = await get(
+            `/guess/movie/${isoDateNoTime()}/${id}`,
+            null,
+            uid,
+            skip ? { "x-duplicate": "true" } : null,
+        );
         match(
             result,
             () => {
                 let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto, guess);
+                let domain = GuessDtoToDomain(dto, title);
 
                 if (domain.ok) {
                     guesses.push(domain.data as GuessDomain);
@@ -96,48 +147,70 @@
         <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
             {isoDateNoTime()}
         </h2>
-        <div class="flex">
-            <Input
-                type="text"
-                placeholder="Guess..."
-                bind:value={guessValue}
-                onchange={guessChange}
-                class="m-1"
-            />
+        {#if !loading && !serverDown}
+            <div class="flex">
+                <Input
+                    type="text"
+                    placeholder="Guess..."
+                    bind:value={guessValue}
+                    onchange={guessChange}
+                    class="m-1"
+                />
 
-            <Button type="submit" size="icon" onclick={handleGuess} class="m-1">
-                <Search />
-            </Button>
-        </div>
+                <Button
+                    type="submit"
+                    size="icon"
+                    onclick={handleGuess}
+                    class="m-1"
+                >
+                    <Search />
+                </Button>
+            </div>
 
-        {#if filteredGuesses.length > 0}
-            <ul
-                class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
-            >
-                {#each filteredGuesses as possibleGuess}
-                    <li class="p-2 text-lg">
-                        <button
-                            onclick={() => {
-                                handleSelect(possibleGuess);
-                            }}
-                        >
-                            {possibleGuess}
-                        </button>
-                    </li>
+            {#if filteredGuesses.length > 0}
+                <ul
+                    class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
+                >
+                    {#each filteredGuesses as possibleGuess}
+                        <li class="p-2 text-lg">
+                            <button
+                                onclick={() => {
+                                    handleSelect(possibleGuess);
+                                }}
+                            >
+                                {possibleGuess}
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+
+            {#if errorMessage !== ""}
+                <p class="text-red">
+                    {errorMessage}
+                </p>
+            {/if}
+
+            <div class="guesses z-10">
+                {#each [...guesses].reverse() as guess}
+                    <Guess props={guess} />
                 {/each}
-            </ul>
+            </div>
+        {:else if loading && !serverDown}
+            <div class="min-w-3xl w-full">
+                <Skeleton class="h-12 w-full mb-4" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                {#each [1, 2, 3, 4] as _}
+                    <Skeleton class="flex-grow h-24 w-full rounded-rect" />
+                {/each}
+            </div>
         {/if}
 
-        {#if errorMessage !== ""}
-            <p class="text-red">
-                {errorMessage}
-            </p>
+        {#if serverDown}
+            <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+                Server down -- try again later
+            </h2>
         {/if}
-
-        <div class="guesses z-10">
-            {#each guesses as guess}
-                <Guess props={guess} />
-            {/each}
-        </div>
     </div>
 </div>

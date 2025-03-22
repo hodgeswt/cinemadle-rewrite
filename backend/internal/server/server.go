@@ -69,6 +69,7 @@ func (it *CinemadleServer) MakeServer(logger *logw.Logger, testMode bool) error 
 	}
 
 	c.AddAllowHeaders("x-uuid")
+	c.AddAllowHeaders("x-duplicate")
 
 	it.router.Use(cors.New(c))
 
@@ -146,6 +147,9 @@ func (it *CinemadleServer) createEndpoints() {
 		})
 		v1.GET("/guess/:type/:date/:id", func(c *gin.Context) {
 			controllers.Guess(c, it.db, it.tmdbClient, it.config, it.logger, it.cache, new(diffhandlers.DefaultDiff))
+		})
+		v1.GET("/users/guesses", func(c *gin.Context) {
+			controllers.LoadGuesses(c, it.db, it.logger)
 		})
 	}
 }

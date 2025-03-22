@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,6 +10,22 @@ import (
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/rand"
 )
+
+func MapToStruct[T any](m map[string]any, ptr *T) error {
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(b, ptr)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func IntCsvToIntArr(intCsv string) ([]int64, error) {
 	intStrs := strings.Split(intCsv, ",")

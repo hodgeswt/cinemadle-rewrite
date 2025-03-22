@@ -2,16 +2,25 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"os"
+
 	"github.com/hodgeswt/utilw/pkg/logw"
 	_ "github.com/lib/pq"
-	"os"
+)
+
+var (
+	ErrNotInitialized = errors.New("ErrNotInitialized")
+	ErrConnection     = errors.New("ErrConnection")
+	ErrDb             = errors.New("ErrDb")
 )
 
 type Db interface {
 	Init(logger *logw.Logger)
 	Ping() bool
 	Exec(statement string, args ...any) bool
+	Query(query string, args ...any) ([]map[string]any, error)
 }
 
 type Pg struct {
@@ -60,7 +69,78 @@ func (it *Pg) Exec(statement string, args ...any) bool {
 		return false
 	}
 
+	defer db.Close()
+
 	return true
+}
+
+func (it *Pg) Query(query string, args ...any) ([]map[string]any, error) {
+	it.logger.Debug("+db.Query")
+	defer it.logger.Debug("-db.Query")
+
+	if !it.initialized {
+		it.logger.Error("db.Query: connection not initialized")
+		return nil, ErrNotInitialized
+	}
+
+	db, err := sql.Open("postgres", it.connStr)
+
+	if err != nil {
+		it.logger.Errorf("db.Query: issue opening connection: %v", err)
+		return nil, ErrConnection
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(query, args...)
+
+	if err != nil {
+		it.logger.Errorf("db.Query: error executing query: %v", err)
+		return nil, ErrDb
+	}
+
+	out := []map[string]any{}
+
+	cols, err := rows.Columns()
+
+	if err != nil {
+		return nil, ErrDb
+	}
+
+	for rows.Next() {
+		vals := make([]any, len(cols))
+		ptrs := make([]any, len(cols))
+
+		for i := range vals {
+			ptrs[i] = &vals[i]
+		}
+
+		if err := rows.Scan(ptrs...); err != nil {
+			it.logger.Errorf("db.Query: unable to read row: %v", err)
+			return nil, ErrDb
+		}
+
+		row := make(map[string]any)
+
+		for i, col := range cols {
+			v := vals[i]
+
+			if byteV, ok := v.([]byte); ok {
+				row[col] = string(byteV)
+			} else {
+				row[col] = v
+			}
+		}
+
+		out = append(out, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		it.logger.Errorf("db.Query: Error scanning rows: %v", err)
+		return nil, ErrDb
+	}
+
+	return out, nil
 }
 
 func (it *Pg) Ping() bool {

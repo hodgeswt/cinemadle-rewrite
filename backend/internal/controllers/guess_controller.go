@@ -33,6 +33,7 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 	defer logger.Debug("-guess_controller.Guess")
 
 	uid := c.GetHeader("x-uuid")
+	dupe := c.GetHeader("x-duplicate") == "true"
 
 	mediaType := c.Param("type")
 	logger.Debug(fmt.Sprintf("guess_controller.Guess: mediaType %s", mediaType))
@@ -118,7 +119,9 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 		err = json.Unmarshal([]byte(cached), &g)
 
 		if err == nil {
-			_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+			if !dupe {
+				_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+			}
 
 			c.JSON(200, g)
 			c.Done()
@@ -151,7 +154,10 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 		cache.Set(cacheKey, string(j))
 	}
 
-	_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+	if !dupe {
+		_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+	}
+
 	c.JSON(200, guess)
 	c.Done()
 }
