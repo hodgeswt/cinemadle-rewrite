@@ -18,3 +18,4 @@ go.work.sum
 config.json
 config-release.json
 volumes/
+**/credentials.yaml
