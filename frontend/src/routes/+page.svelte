@@ -34,6 +34,8 @@
         (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
     );
 
+    let done = $derived(guesses.length >= 10);
+
     let loading = $state(true);
     let healthPing = $state(0);
 
@@ -93,6 +95,10 @@
     }
 
     async function makeGuess(guess: string, skipMap?: boolean): Promise<void> {
+        if (done || guess.trim() === "") {
+            return;
+        }
+
         const skip = skipMap === true;
         const id = skip ? guess : possibleGuesses[guess];
         const title = skip
@@ -155,6 +161,7 @@
                     bind:value={guessValue}
                     onchange={guessChange}
                     class="m-1"
+                    disabled={done}
                 />
 
                 <Button
@@ -162,6 +169,7 @@
                     size="icon"
                     onclick={handleGuess}
                     class="m-1"
+                    disabled={done || guessValue.trim() === ""}
                 >
                     <Search />
                 </Button>
