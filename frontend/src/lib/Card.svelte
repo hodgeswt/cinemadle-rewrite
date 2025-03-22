@@ -6,8 +6,6 @@
         title: "Unknown Movie",
         data: [],
     };
-
-    console.log(props.color);
 </script>
 
 <div class="p-2 h-full">

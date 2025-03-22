@@ -7,10 +7,10 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
     if (!isGuessDto(guess)) {
         return err("Invalid data type");
     }
-
     let out = {
         title: title,
         cards: [],
+        win: Object.values(guess.fields).every((x) => x.color === "green"),
     } as GuessDomain;
 
     for (const k in guess.fields) {

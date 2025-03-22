@@ -7,6 +7,7 @@ export type PossibleMediaDomain = {
 export type GuessDomain = {
     title: string;
     cards: CardDomain[];
+    win: boolean;
 };
 
 export type CardDomain = {

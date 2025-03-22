@@ -65,8 +65,8 @@ func mapDistance(field string, distance int, guessOptions *datamodel.GuessOption
 		return "", ErrFieldDistanceMap
 	}
 
-	if c < 0 {
-		c = c * -1
+	if distance < 0 {
+		distance = distance * -1
 	}
 
 	if distance == 0 {
@@ -116,8 +116,8 @@ func (it *DefaultDiff) HandleMovieDiff(patch jsondiff.Patch, guess *datamodel.Me
 				return nil, ErrIntParse
 			}
 
-			logger.Debugf("defaultDiff.HandleMovieDiff: Found guessed year %d and target year %d", guessedYear, targetYear)
 			yearDiff = int(guessedYear - targetYear)
+			logger.Debugf("defaultDiff.HandleMovieDiff: Found guessed year %d and target year %d, diff: %d", guessedYear, targetYear, yearDiff)
 
 			continue
 		}

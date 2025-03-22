@@ -34,7 +34,9 @@
         (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
     );
 
-    let done = $derived(guesses.length >= 10);
+    let win = $derived(guesses.filter((x) => x.win).length > 0);
+
+    let done = $derived(guesses.length >= 10 || win);
 
     let loading = $state(true);
     let healthPing = $state(0);
@@ -153,6 +155,11 @@
         <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
             {isoDateNoTime()}
         </h2>
+        {#if win}
+            <h2 class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight">
+                You win!
+            </h2>
+        {/if}
         {#if !loading && !serverDown}
             <div class="flex">
                 <Input
