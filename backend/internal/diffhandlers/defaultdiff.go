@@ -8,7 +8,6 @@ import (
 	"github.com/hodgeswt/cinemadle-rewrite/internal/datamodel"
 	"github.com/hodgeswt/utilw/pkg/funct"
 	"github.com/hodgeswt/utilw/pkg/logw"
-	"github.com/wI2L/jsondiff"
 )
 
 var (
@@ -55,12 +54,6 @@ func mapDistance(field string, distance int, guessOptions *datamodel.GuessOption
 		c = guessOptions.RatingYellowThreshold
 	case "year":
 		c = guessOptions.YearYellowThreshold
-	case "genre":
-		c = guessOptions.GenreYellowThreshold
-	case "crew":
-		c = guessOptions.CrewYellowThreshold
-	case "cast":
-		c = guessOptions.CastYellowThreshold
 	default:
 		return "", ErrFieldDistanceMap
 	}
@@ -88,67 +81,64 @@ func personToName(a any) (string, error) {
 	return person.Name, nil
 }
 
-func (it *DefaultDiff) HandleMovieDiff(patch jsondiff.Patch, guess *datamodel.Media, guessOptions *datamodel.GuessOptions, logger *logw.Logger) (*datamodel.Guess, error) {
+func listComp[T comparable](a []T, b []T) string {
+	if len(a) == len(b) {
+		match := true
+
+		for i := range a {
+			if a[i] != b[i] {
+				match = false
+				break
+			}
+		}
+
+		if match {
+			return "green"
+		}
+	}
+
+	m := map[T]struct{}{}
+
+	for _, x := range b {
+		m[x] = struct{}{}
+	}
+
+	for _, x := range a {
+		if _, ok := m[x]; ok {
+			return "yellow"
+		}
+	}
+
+	return "grey"
+}
+
+func (it *DefaultDiff) HandleMovieDiff(guess *datamodel.Media, target *datamodel.Media, guessOptions *datamodel.GuessOptions, logger *logw.Logger) (*datamodel.Guess, error) {
 	logger.Debug("+defaultdiff.HandleMovieDiff")
 	defer logger.Debug("-defaultdiff.HandleMovieDiff")
 
-	yearDiff := 0
-	ratingDiff := 0
-	castDiff := 0
-	genreDiff := 0
+	castColor := listComp(guess.Cast, target.Cast)
+	genreColor := listComp(guess.Genres, target.Genres)
 
-	for _, v := range patch {
-		logger.Debugf("defaultdiff.HandleMovieDiff: Considering patch: %v", v)
+	targetYear, err := strconv.ParseInt(target.Year, 10, 64)
 
-		if strings.Contains(v.Path, "year") {
-			logger.Debugf("defaultDiff.HandleMovieDiff: Handling year %v", v.Value)
-			targetYear, err := strconv.ParseInt(v.Value.(string), 10, 64)
-
-			if err != nil {
-				logger.Errorf("Error parsing target year from patch: %v", err)
-				return nil, ErrIntParse
-			}
-
-			guessedYear, err := strconv.ParseInt(guess.Year, 10, 64)
-
-			if err != nil {
-				logger.Errorf("Error parsing guessed year from struct: %v", err)
-				return nil, ErrIntParse
-			}
-
-			yearDiff = int(guessedYear - targetYear)
-			logger.Debugf("defaultDiff.HandleMovieDiff: Found guessed year %d and target year %d, diff: %d", guessedYear, targetYear, yearDiff)
-
-			continue
-		}
-
-		if strings.Contains(v.Path, "rating") {
-			logger.Debugf("defaultDiff.HandleMovieDiff: Handling rating: %v", v.Value)
-
-			targetRating := mapRating(v.Value.(string))
-			guessedRating := mapRating(guess.Rating)
-
-			logger.Debugf("defaultDiff.HandleMovieDiff: Found guessed rating %d and target rating %d", guessedRating, targetRating)
-
-			ratingDiff = guessedRating - targetRating
-			continue
-		}
-
-		if strings.Contains(v.Path, "cast") {
-			logger.Debugf("defaultDiff.HandleMovieDiff: Handling cast: %v", v.Value)
-
-			castDiff++
-			continue
-		}
-
-		if strings.Contains(v.Path, "genre") {
-			logger.Debugf("defaultDiff.HandleMovieDiff: Handling genre: %v", v.Value)
-
-			genreDiff++
-			continue
-		}
-
+	if err != nil {
+		logger.Errorf("Error parsing target year: %v", err)
+		return nil, ErrIntParse
 	}
+
+	guessedYear, err := strconv.ParseInt(guess.Year, 10, 64)
+
+	if err != nil {
+		logger.Errorf("Error parsing guessed year: %v", err)
+		return nil, ErrIntParse
+	}
+
+	yearDiff := int(guessedYear - targetYear)
+
+	targetRating := mapRating(target.Rating)
+	guessedRating := mapRating(guess.Rating)
+
+	ratingDiff := guessedRating - targetRating
 
 	ratingColor, err := mapDistance("rating", ratingDiff, guessOptions)
 	if err != nil {
@@ -156,16 +146,6 @@ func (it *DefaultDiff) HandleMovieDiff(patch jsondiff.Patch, guess *datamodel.Me
 	}
 
 	yearColor, err := mapDistance("year", yearDiff, guessOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	genreColor, err := mapDistance("genre", genreDiff, guessOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	castColor, err := mapDistance("cast", castDiff, guessOptions)
 	if err != nil {
 		return nil, err
 	}

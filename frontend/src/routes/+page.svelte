@@ -23,7 +23,10 @@
 
     let guessValue = $state("");
     let errorMessage = $state("");
+    let shareData = $state([] as string[]);
+
     let openError = writable(false);
+    let openShare = writable(false);
     let guesses = $state([] as GuessDomain[]);
 
     let searchOpen = $state(false);
@@ -95,6 +98,45 @@
         }
     });
 
+    function showShareSheet(_event: Event): void {
+        shareData = guesses.map((x) =>
+            x.cards
+                .map((y) => {
+                    switch (y.color) {
+                        case "green":
+                            return "🟩";
+                        case "yellow":
+                            return "🟨";
+                        default:
+                            return "⬛";
+                    }
+                })
+                .join(""),
+        );
+        openShare.set(true);
+    }
+
+    function closeShare(_event: Event): void {
+        shareData = "";
+        openShare.set(false);
+    }
+
+    function deviceShare(_event: Event): void {
+        if (navigator.share) {
+            navigator.share({
+                title: "cinemadle",
+                text: shareData,
+                url: "http://cinemadle.hodgeswill.com",
+            });
+        } else {
+            openShare.set(false);
+            shareData = "";
+
+            errorMessage = "Share permissions not provided.";
+            openError.set(true);
+        }
+    }
+
     function guessChange(_event: Event): void {
         if (guessValue !== "") {
             searchOpen = true;
@@ -122,6 +164,12 @@
             return;
         }
 
+        if (id === undefined) {
+            errorMessage = "Unable to make that guess! Try another option";
+            openError.set(true);
+            return;
+        }
+
         let result = await get(
             `/guess/movie/${isoDateNoTime()}/${id}`,
             null,
@@ -139,13 +187,14 @@
                     errorMessage = "";
                     openError.set(false);
                 } else {
+                    console.log("error");
                     errorMessage = "Invalid response from server";
                     openError.set(true);
                 }
             },
             () => {
-                errorMessage = result.error as string;
-                openError.set(false);
+                errorMessage = "Error making that guess! Try another option";
+                openError.set(true);
             },
         );
     }
@@ -187,11 +236,16 @@
             {isoDateNoTime()}
         </h2>
         {#if win}
-            <h2
-                class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight"
-            >
-                You win!
-            </h2>
+            <div class="flex items-center">
+                <h2
+                    class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight"
+                >
+                    You win!
+                </h2>
+                <Button class="bg-green-400" on:click={showShareSheet}
+                    >Share</Button
+                >
+            </div>
         {/if}
         {#if !loading && !serverDown}
             <div class="flex">
@@ -243,6 +297,25 @@
                         <AlertDialog.Action on:click={closeDialog}
                             >Ok</AlertDialog.Action
                         >
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <AlertDialog.Root bind:open={$openShare}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>Your Results</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {#each shareData as line}
+                            <p class="m-0">{line}</p>
+                        {/each}
+                    </AlertDialog.Description>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeShare} class="m-2">
+                            Close
+                        </AlertDialog.Action>
+                        <AlertDialog.Action on:click={deviceShare} class="m-2">
+                            Share
+                        </AlertDialog.Action>
                     </AlertDialog.Footer>
                 </AlertDialog.Content>
             </AlertDialog.Root>

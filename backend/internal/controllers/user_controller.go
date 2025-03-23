@@ -25,7 +25,7 @@ func LoadGuesses(c *gin.Context, db db.Db, logger *logw.Logger) {
 		return
 	}
 
-	statement := "SELECT * FROM guesses WHERE guid = $1 AND datetime < CURRENT_DATE + 1 AND datetime > CURRENT_DATE -1"
+	statement := "SELECT * FROM guesses WHERE guid = $1 AND datetime::date = CURRENT_DATE"
 	rows, err := db.Query(statement, uid)
 
 	if err != nil {

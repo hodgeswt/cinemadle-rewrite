@@ -13,7 +13,6 @@ import (
 	"github.com/hodgeswt/cinemadle-rewrite/internal/diffhandlers"
 	"github.com/hodgeswt/cinemadle-rewrite/internal/tmdb"
 	"github.com/hodgeswt/utilw/pkg/logw"
-	"github.com/wI2L/jsondiff"
 )
 
 func saveGuess(db db.Db, uid string, guessId string, targetId string, logger *logw.Logger) bool {
@@ -144,9 +143,7 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 
 	}
 
-	patch, err := jsondiff.Compare(guessedMedia, media)
-
-	guess, err := diffHandler.HandleMovieDiff(patch, guessedMedia, config.GuessOptions, logger)
+	guess, err := diffHandler.HandleMovieDiff(guessedMedia, media, config.GuessOptions, logger)
 
 	j, err := json.Marshal(guess)
 
