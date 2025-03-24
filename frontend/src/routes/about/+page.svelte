@@ -67,12 +67,7 @@
             />
         </div>
 
-        <p class="m-4">
-            code: <a
-                href="https://github.com/hodgeswt/cinemadle-rewrite"
-                class="underline">will hodges</a
-            >
-        </p>
+        <p class="m-4">code: will hodges</p>
 
         <p class="m-4">design: will hodges and myke yunis</p>
     </div>

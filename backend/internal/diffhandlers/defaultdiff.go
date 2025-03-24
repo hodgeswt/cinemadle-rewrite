@@ -34,18 +34,6 @@ func mapRating(rating string) int {
 	return v
 }
 
-func mapDirection(diff int) int {
-	if diff == 0 {
-		return 0
-	}
-
-	if diff < 0 {
-		return 1
-	}
-
-	return -1
-}
-
 func mapDistance(field string, distance int, guessOptions *datamodel.GuessOptions) (string, error) {
 	c := -1
 
@@ -155,14 +143,23 @@ func (it *DefaultDiff) HandleMovieDiff(guess *datamodel.Media, target *datamodel
 		return nil, err
 	}
 
-	ratingDirection := mapDirection(ratingDiff)
-	yearDirection := mapDirection(yearDiff)
+	yearDirection := 0
+
+	if yearDiff < -1 * guessOptions.YearTwoArrow {
+		yearDirection = 2
+	} else if yearDiff < 0 {
+		yearDirection = 1
+	} else if yearDiff > guessOptions.YearTwoArrow {
+		yearDirection = -2
+	} else if yearDiff > 0 {
+		yearDirection = -1
+	}
 
 	guessOutput := &datamodel.Guess{
 		Fields: map[string]datamodel.Field{
 			"rating": datamodel.Field{
 				Color:     ratingColor,
-				Direction: ratingDirection,
+				Direction: 0, // Don't show direction on rating
 				Values:    []string{guess.Rating},
 			},
 			"year": datamodel.Field{
@@ -172,12 +169,12 @@ func (it *DefaultDiff) HandleMovieDiff(guess *datamodel.Media, target *datamodel
 			},
 			"genre": datamodel.Field{
 				Color:     genreColor,
-				Direction: -2,
+				Direction: 0, // Don't show direction on genre
 				Values:    guess.Genres,
 			},
 			"cast": datamodel.Field{
 				Color:     castColor,
-				Direction: -2,
+				Direction: 0, // Don't show direction on cast
 				Values:    castNames,
 			},
 		},

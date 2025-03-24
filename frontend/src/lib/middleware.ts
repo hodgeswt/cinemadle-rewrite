@@ -1,12 +1,34 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
-import type { PossibleMediaDomain } from "./domain";
-import { PossibleMediaDtoToDomain } from "./mappers";
+import type { GuessDomain, PossibleMediaDomain } from "./domain";
+import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
+import { isoDateNoTime } from "./util";
 
 export async function ping(): Promise<boolean> {
     const data = await get("healthcheck", null, "")
 
     return data.ok
+}
+
+export async function getAnswer(uid: string): Promise<Result<GuessDomain>> {
+    const data = await get(`guess/movie/${isoDateNoTime()}/answer`, null, uid)
+
+    if (data.ok) {
+        const raw = data.data!
+        try {
+            let dto = JSON.parse(raw)
+            let domain = MediaDtoToGuessDomain(dto, true)
+            if (domain.ok) {
+                return ok(domain.data!)
+            } else {
+                return err("Invalid data")
+            }
+        } catch (_e) {
+            return err("Invalid data")
+        }
+    } else {
+        return err(data.error!)
+    }
 }
 
 export async function getPossibleMovies(uid: string): Promise<Result<PossibleMediaDomain>> {

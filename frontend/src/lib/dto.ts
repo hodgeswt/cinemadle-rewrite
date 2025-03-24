@@ -5,14 +5,65 @@ export type PossibleMediaDto = {
 }
 
 export type GuessDto = {
-  fields: { [key: string]: Field };
+    fields: { [key: string]: Field };
 };
 
 export type Field = {
-  color: string;
-  direction: number;
-  values: string[];
+    color: string;
+    direction: number;
+    values: string[];
 };
+
+export type MediaDto = {
+    title: string;
+    id: number;
+    imageUrl: string;
+    cast: PersonDto[];
+    crew: PersonDto[];
+    genres: string[];
+    year: number;
+    rating: string;
+};
+
+export type PersonDto = {
+    name: string;
+    role: string;
+}
+
+export function isMediaDto(obj: any): obj is MediaDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    const basic =
+        typeof obj.title === 'string'
+        && typeof obj.id === 'number'
+        && typeof obj.imageUrl === 'string'
+        && isArray(obj.genres, 'string')
+        && typeof obj.year === 'string'
+        && typeof obj.rating === 'string';
+
+    if (!basic) {
+        return false;
+    }
+
+    return Array.isArray(obj.cast)
+        && obj.cast.every((x: any) => isPersonDto(x))
+        && Array.isArray(obj.crew)
+        && obj.crew.every((x: any) => isPersonDto(x));
+}
+
+export function isPersonDto(obj: any): obj is PersonDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    if (typeof obj.name !== 'string' || typeof obj.role !== 'string') {
+        return false;
+    }
+
+    return true;
+}
 
 export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
     if (!hasValue(obj)) {
@@ -29,34 +80,34 @@ export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
 }
 
 export function isGuessDto(obj: any): obj is GuessDto {
-  if (!hasValue(obj) || !hasValue(obj.fields)) {
-    return false;
-  }
-
-  let valid = true;
-
-  for (const key in obj.fields) {
-    if (typeof key !== "string") {
-      valid = false;
-      break;
+    if (!hasValue(obj) || !hasValue(obj.fields)) {
+        return false;
     }
 
-    if (!isField(obj.fields[key])) {
-      valid = false;
-      break;
-    }
-  }
+    let valid = true;
 
-  return valid;
+    for (const key in obj.fields) {
+        if (typeof key !== "string") {
+            valid = false;
+            break;
+        }
+
+        if (!isField(obj.fields[key])) {
+            valid = false;
+            break;
+        }
+    }
+
+    return valid;
 }
 
 export function isField(obj: any): obj is Field {
-  return (
-    hasValue(obj) &&
-    hasValue(obj.color) &&
-    typeof obj.color === "string" &&
-    hasValue(obj.direction) &&
-    typeof obj.direction === "number" &&
-    isArray(obj.values, "string")
-  );
+    return (
+        hasValue(obj) &&
+        hasValue(obj.color) &&
+        typeof obj.color === "string" &&
+        hasValue(obj.direction) &&
+        typeof obj.direction === "number" &&
+        isArray(obj.values, "string")
+    );
 }

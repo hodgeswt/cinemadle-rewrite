@@ -1,4 +1,4 @@
-import { isGuessDto, isPossibleMediaDto } from "$lib/dto";
+import { isGuessDto, isPossibleMediaDto, isMediaDto } from "$lib/dto";
 import type { CardDomain, GuessDomain, PossibleMediaDomain } from "$lib/domain";
 import { isPossibleMediaDomain } from "$lib/domain";
 import { err, ok, type Result } from "$lib/result";
@@ -19,6 +19,7 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
         let card = {
             color: v.color === "grey" ? "gray" : v.color,
             data: v.values,
+            direction: v.direction,
             title: k,
         } as CardDomain;
 
@@ -26,6 +27,47 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
     }
 
     return ok(out);
+}
+
+export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDomain> {
+    if (!isMediaDto(media)) {
+        return err("Invalid data type");
+    }
+
+    let o = {} as GuessDomain;
+
+    o.win = win;
+    o.title = media.title;
+
+    const color = win ? "green" : "gray";
+
+    const cast = {
+        title: "cast",
+        data: media.cast.map((x) => x.name),
+        color: color,
+    } as CardDomain;
+
+    const genre = {
+        title: "genre",
+        data: media.genres,
+        color: color,
+    } as CardDomain;
+
+    const year = {
+        title: "year",
+        data: [`${media.year}`] as string[],
+        color: color,
+    } as CardDomain;
+
+    const rating = {
+        title: "rating",
+        data: [media.rating] as string[],
+        color: color,
+    } as CardDomain;
+
+    o.cards = [cast, genre, year, rating] as CardDomain[];
+
+    return ok(o);
 }
 
 export function PossibleMediaDtoToDomain(possibleMedia: any): Result<PossibleMediaDomain> {

@@ -15,16 +15,120 @@ import (
 	"github.com/hodgeswt/utilw/pkg/logw"
 )
 
-func saveGuess(db db.Db, uid string, guessId string, targetId string, logger *logw.Logger) bool {
+func saveGuess(db db.Db, uid string, guessId string, targetId string, tz string, logger *logw.Logger) bool {
 	logger.Debug("+guess_controller.saveGuess")
 	defer logger.Debug("-guess_controller.saveGuess")
 
-	if db.Exec("INSERT INTO guesses (guid, guess_id, target_id, datetime) VALUES ($1, $2, $3, $4)", uid, guessId, targetId, time.Now()) {
+	loc, err := time.LoadLocation(tz)
+
+	if err != nil {
+		logger.Errorf("guess_controller.saveGuess: unable to find time in timezone %s", tz)
+		return false
+	}
+
+	if db.Exec("INSERT INTO guesses (guid, guess_id, target_id, datetime) VALUES ($1, $2, $3, $4)", uid, guessId, targetId, time.Now().In(loc)) {
 		return true
 	}
 
-	logger.Errorf("guess_controller: Failed to insert guess %s for user %s into DB", guessId, uid)
+	logger.Errorf("guess_controller.saveGuess: Failed to insert guess %s for user %s into DB", guessId, uid)
 	return false
+}
+
+func Answer(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache) {
+	logger.Debug("+guess_controller.Answer")
+	defer logger.Debug("-guess_controller.Answer")
+
+	uid := c.GetHeader("x-uuid")
+	mediaType := c.Param("type")
+
+	if uid == "" {
+		c.JSON(422, datamodel.ErrorResponse{
+			Message: "Provide x-uuid header",
+		})
+		c.Done()
+		return
+	}
+
+	location := config.Location
+	if location == "" {
+		location = "America/New_York"
+	}
+
+	logger.Debugf("guess_controller.Answer: Converting time for location: %s", location)
+	loc, err := time.LoadLocation(location)
+
+	if err != nil {
+		logger.Errorf("guess_controller.Answer: error loading location %s: %v", location, err)
+		c.JSON(500, datamodel.ErrorResponse{
+			Message: "Unable to load guess data for requested media. Try again later.",
+		})
+		c.Done()
+		return
+	}
+
+	date := c.Param("date")
+	logger.Debug(fmt.Sprintf("guess_controller.Answer: date %s", date))
+
+	dateFormat := "2006-01-02"
+
+	parsed, err := time.ParseInLocation(dateFormat, date, loc)
+
+	if err != nil {
+		logger.Debugf("guess_controller.Guess: found invalid date string %s", date)
+		c.JSON(422, datamodel.ErrorResponse{
+			Message: "Invalid date provided. Please follow YYYY-MM-DD format",
+		})
+		c.Done()
+		return
+	}
+
+	rows, err := db.Query("SELECT * FROM guesses WHERE guid = $1 AND (datetime AT TIME ZONE $2)::date = $3", uid, location, parsed)
+
+	if err != nil {
+		logger.Errorf("Error reading from DB: %v", err)
+		c.JSON(500, datamodel.ErrorResponse{
+			Message: "Unexpected error",
+		})
+		c.Done()
+		return
+	}
+
+	if len(rows) < config.GuessOptions.GuessLimit {
+		logger.Debugf("User %s attempted to access answer without making sufficient guesses", uid)
+		c.JSON(422, datamodel.ErrorResponse{
+			Message: "You're not allowed to see the answer until you make sufficient guesses.",
+		})
+		c.Done()
+		return
+	}
+
+	if err != nil {
+		logger.Debugf("guess_controller.Guess: found invalid date string %s", date)
+		c.JSON(422, datamodel.ErrorResponse{
+			Message: "Invalid date provided. Please follow YYYY-MM-DD format",
+		})
+		c.Done()
+		return
+	}
+
+	media, errorBundle := GetMediaOfTheDay(mediaType, date, tmdbClient, config, logger, cache)
+
+	if media == nil {
+		if errorBundle == nil {
+			c.JSON(500, datamodel.ErrorResponse{
+				Message: "Unable to load target media for the day.",
+			})
+			c.Done()
+			return
+		}
+
+		c.JSON(errorBundle.Status, *errorBundle.Response)
+		c.Done()
+		return
+	}
+
+	c.JSON(200, media)
+	c.Done()
 }
 
 func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamodel.Config, logger *logw.Logger, cache *cache.Cache, diffHandler diffhandlers.IDiffHandler) {
@@ -32,6 +136,15 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 	defer logger.Debug("-guess_controller.Guess")
 
 	uid := c.GetHeader("x-uuid")
+
+	if uid == "" {
+		c.JSON(422, datamodel.ErrorResponse{
+			Message: "Provide x-uuid header",
+		})
+		c.Done()
+		return
+	}
+
 	dupe := c.GetHeader("x-duplicate") == "true"
 
 	mediaType := c.Param("type")
@@ -52,7 +165,7 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 		location = "America/New_York"
 	}
 
-	logger.Debugf("Converting time for location: %s", location)
+	logger.Debugf("guess_controller.Guess: Converting time for location: %s", location)
 	loc, err := time.LoadLocation(location)
 
 	if err != nil {
@@ -119,7 +232,7 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 
 		if err == nil {
 			if !dupe {
-				_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+				_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), location, logger)
 			}
 
 			c.JSON(200, g)
@@ -152,7 +265,7 @@ func Guess(c *gin.Context, db db.Db, tmdbClient *tmdb.TmdbClient, config *datamo
 	}
 
 	if !dupe {
-		_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), logger)
+		_ = saveGuess(db, uid, idStr, strconv.Itoa(media.Id), location, logger)
 	}
 
 	c.JSON(200, guess)

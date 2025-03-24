@@ -4,15 +4,17 @@
     import { Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
     import { match } from "$lib/result";
+    import { flip } from "svelte/animate";
     import {
         get,
         getPossibleMovies,
         loadPreviousGuesses,
         ping,
+        getAnswer,
     } from "$lib/middleware";
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { GuessDtoToDomain } from "$lib/mappers";
-    import { onMount } from "svelte";
+    import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
     import { isoDateNoTime } from "$lib/util";
     import { browser } from "$app/environment";
@@ -27,6 +29,7 @@
 
     let openError = writable(false);
     let openShare = writable(false);
+    let showAnswer = writable(false);
     let guesses = $state([] as GuessDomain[]);
 
     let searchOpen = $state(false);
@@ -45,14 +48,37 @@
         (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
     );
 
-    let win = $derived(guesses.filter((x) => x.win).length > 0);
+    const LIMIT = 10;
 
-    let done = $derived(guesses.length >= 10 || win);
+    let remaining = $derived(LIMIT - guesses.length);
+    let win = $derived(guesses.filter((x) => x.win).length > 0);
+    let lose = $derived(guesses.length >= LIMIT && !win);
+
+    let done = $derived(guesses.length >= LIMIT && win);
 
     let loading = $state(true);
     let healthPing = $state(0);
 
     let serverDown = $state(false);
+
+    let answer = $state(null as GuessDomain | null);
+
+    $effect(() => {
+        if (lose) {
+            untrack(async () => {
+                let a = await getAnswer(uid);
+
+                if (a.ok) {
+                    answer = a.data!;
+                    showAnswer.set(true);
+                } else {
+                    errorMessage =
+                        "Unable to pull answer from server. Try again later";
+                    openError.set(true);
+                }
+            });
+        }
+    });
 
     onMount(async () => {
         try {
@@ -117,7 +143,7 @@
     }
 
     function closeShare(_event: Event): void {
-        shareData = "";
+        shareData = [] as string[];
         openShare.set(false);
     }
 
@@ -125,12 +151,12 @@
         if (navigator.share) {
             navigator.share({
                 title: "cinemadle",
-                text: shareData,
+                text: shareData.join("\n"),
                 url: "http://cinemadle.hodgeswill.com",
             });
         } else {
             openShare.set(false);
-            shareData = "";
+            shareData = [] as string[];
 
             errorMessage = "Share permissions not provided.";
             openError.set(true);
@@ -176,6 +202,7 @@
             uid,
             skip ? { "x-duplicate": "true" } : null,
         );
+
         match(
             result,
             () => {
@@ -202,6 +229,10 @@
     function closeDialog() {
         openError.set(false);
         errorMessage = "";
+    }
+
+    function showAnswerButton(_event: Event): void {
+        showAnswer.set(true);
     }
 
     async function handleSelect(value: string): Promise<void> {
@@ -240,34 +271,52 @@
                 <h2
                     class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight"
                 >
-                    You win!
+                    you win!
                 </h2>
-                <Button class="bg-green-400" on:click={showShareSheet}
-                    >Share</Button
-                >
-            </div>
-        {/if}
-        {#if !loading && !serverDown}
-            <div class="flex">
-                <Input
-                    type="text"
-                    placeholder="Guess..."
-                    bind:value={guessValue}
-                    onchange={guessChange}
-                    class="m-1"
-                    disabled={done}
-                />
-
-                <Button
-                    type="submit"
-                    size="icon"
-                    onclick={handleGuess}
-                    class="m-1"
-                    disabled={done || guessValue.trim() === ""}
-                >
-                    <Search />
+                <Button class="bg-green-400" on:click={showShareSheet}>
+                    share
                 </Button>
             </div>
+        {/if}
+        {#if lose}
+            <div class="flex items-center">
+                <h2
+                    class="m-4 text-3xl font-semibold text-red-400 leading-non tracking-tight"
+                >
+                    better luck next time!
+                </h2>
+                <Button class="bg-red-400" on:click={showShareSheet}>
+                    share
+                </Button>
+                <Button class="bg-red-400 ml-4" on:click={showAnswerButton}>
+                    see answer
+                </Button>
+            </div>
+        {/if}
+
+        {#if !loading && !serverDown}
+            {#if remaining > 0}
+                <div class="flex">
+                    <Input
+                        type="text"
+                        placeholder={`Guess... ${remaining} remaining`}
+                        bind:value={guessValue}
+                        onchange={guessChange}
+                        class="m-1"
+                        disabled={done}
+                    />
+
+                    <Button
+                        type="submit"
+                        size="icon"
+                        onclick={handleGuess}
+                        class="m-1"
+                        disabled={done || guessValue.trim() === ""}
+                    >
+                        <Search />
+                    </Button>
+                </div>
+            {/if}
 
             {#if filteredGuesses.length > 0}
                 <ul
@@ -320,9 +369,29 @@
                 </AlertDialog.Content>
             </AlertDialog.Root>
 
+            <AlertDialog.Root bind:open={$showAnswer}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>The answer is...</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {#if answer !== null}
+                            <Guess props={answer} />
+                        {:else}
+                            Unable to pull answer from server
+                        {/if}
+                    </AlertDialog.Description>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeShare} class="m-2">
+                            Close
+                        </AlertDialog.Action>
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
+
             <div class="guesses z-10">
-                {#each [...guesses].reverse() as guess}
-                    <Guess props={guess} />
+                {#each [...guesses].reverse() as guess (guess)}
+                    <div animate:flip={{ duration: 1000 }}>
+                        <Guess props={guess} />
+                    </div>
                 {/each}
             </div>
         {:else if loading && !serverDown}

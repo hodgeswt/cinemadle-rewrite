@@ -6,6 +6,8 @@ type GuessOptions struct {
 	GenreYellowThreshold  int `json:"genreYellowThreshold"`
 	CastYellowThreshold   int `json:"castYellowThreshold"`
 	CrewYellowThreshold   int `json:"crewYellowThreshold"`
+	YearTwoArrow          int `json:"yearTwoArrow"`
+	GuessLimit            int `json:"guessLimit"`
 }
 
 func (it *GuessOptions) Validate() bool {
