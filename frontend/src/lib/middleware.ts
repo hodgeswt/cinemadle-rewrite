@@ -5,13 +5,13 @@ import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
 export async function ping(): Promise<boolean> {
-    const data = await get("healthcheck", null, "")
+    const data = await get("heartbeat", null, "")
 
     return data.ok
 }
 
 export async function getAnswer(uid: string): Promise<Result<GuessDomain>> {
-    const data = await get(`guess/movie/${isoDateNoTime()}/answer`, null, uid)
+    const data = await get(`target`, { date: isoDateNoTime() }, uid)
 
     if (data.ok) {
         const raw = data.data!
@@ -32,7 +32,7 @@ export async function getAnswer(uid: string): Promise<Result<GuessDomain>> {
 }
 
 export async function getPossibleMovies(uid: string): Promise<Result<PossibleMediaDomain>> {
-    const data = await get("media/list/movie", null, uid)
+    const data = await get("movielist", null, uid)
 
     if (data.ok) {
         const raw = data.data!
@@ -70,11 +70,11 @@ export async function get(
     uid: string,
     headers?: { [key: string]: string } | null,
 ): Promise<Result<string>> {
-    let host = "http://192.168.0.23:8080";
+    let host = "http://192.168.0.23:5566";
 
     try {
         endpoint = endpoint.replace(/^\//, "");
-        let uri = `${host}/api/v1/${endpoint}`;
+        let uri = `${host}/api/cinemadle/${endpoint}`;
 
         if (queryParams !== null) {
             let first = true;

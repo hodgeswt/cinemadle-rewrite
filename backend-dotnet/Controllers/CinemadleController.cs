@@ -38,10 +38,10 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("heartbeat")]
-    public ActionResult<string> Heartbeat()
+    public ActionResult<bool> Heartbeat()
     {
         _logger.LogDebug("Heartbeat");
-        return "Success";
+        return true;
     }
 
     [HttpGet("target")]

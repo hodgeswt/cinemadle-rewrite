@@ -13,6 +13,17 @@ public class Program
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddCors(opts =>
+        {
+            opts.AddPolicy("AllowAllOrigins",
+                    builder =>
+                    {
+                        builder
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    });
+        });
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
@@ -40,7 +51,7 @@ public class Program
         app.UseHttpsRedirection();
 
         app.MapControllers();
-
+        app.UseCors("AllowAllOrigins"); ;
         app.Run();
     }
 }
