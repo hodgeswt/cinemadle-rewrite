@@ -54,7 +54,7 @@ export async function getPossibleMovies(uid: string): Promise<Result<PossibleMed
 }
 
 export async function loadPreviousGuesses(uid: string): Promise<Result<string[]>> {
-    const data = await get("users/guesses", null, uid)
+    const data = await get("guesses", { date: isoDateNoTime() }, uid)
 
     if (!data.ok) {
         return err(data.error!)

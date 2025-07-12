@@ -1,8 +1,11 @@
+using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace Cinemadle.Controllers;
 
@@ -14,6 +17,7 @@ public class CinemadleController : ControllerBase
     private ITmdbRepository _tmdbRepo;
     private IGuessRepository _guessRepo;
     private ILogger<CinemadleController> _logger;
+    private DatabaseContext _db;
 
     private bool _isDevelopment;
 
@@ -22,13 +26,15 @@ public class CinemadleController : ControllerBase
             IConfigRepository configRepository,
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
-            IGuessRepository guessRepository
+            IGuessRepository guessRepository,
+            DatabaseContext db
     )
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "CinemadleController";
         _logger.LogDebug("+ctor({type})", type);
 
+        _db = db;
         _config = configRepository.GetConfig();
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
@@ -36,6 +42,12 @@ public class CinemadleController : ControllerBase
 
         _logger.LogDebug("-ctor({type})", type);
     }
+
+    protected string? GetUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+
 
     [HttpGet("heartbeat")]
     public ActionResult<bool> Heartbeat()
@@ -91,6 +103,40 @@ public class CinemadleController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpGet("guesses")]
+    public ActionResult GetPastGuesses(
+        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+    )
+    {
+        _logger.LogDebug("+GetPastGuesses({date})", date);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetPastGuesses({date})", date);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            IEnumerable<UserGuess> guesses = _db.Guesses.Where(
+                x => x.GameId == date && x.UserId == userId
+            )
+            .OrderBy(x => x.SequenceId);
+
+            _logger.LogDebug("-GetPastGuesses({date})", date);
+            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogDebug("-GetPastGuesses({date})", date);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
     [HttpGet("guess/{id}")]
     public async Task<ActionResult> GuessMovie(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
@@ -98,6 +144,13 @@ public class CinemadleController : ControllerBase
     )
     {
         _logger.LogDebug("+GuessMovie({date}, {id})", date, id);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
+            return new UnauthorizedResult();
+        }
+
         try
         {
             MovieDto? guessMovie = await _tmdbRepo.GetMovieById(id);
@@ -125,13 +178,32 @@ public class CinemadleController : ControllerBase
                 return new NotFoundResult();
             }
 
+            UserGuess? x = _db.Guesses.FirstOrDefault(
+                                x => x.GuessMediaId == id && x.GameId == date
+                           );
+
+            if (x is null)
+            {
+                int seqNo = (_db.Guesses.FirstOrDefault(x => x.GameId == date)?.SequenceId ?? 0) + 1;
+                _db.Add(new UserGuess
+                {
+                    GameId = date,
+                    UserId = userId,
+                    GuessMediaId = id,
+                    SequenceId = seqNo,
+                    Inserted = DateTime.Now,
+                });
+
+                await _db.SaveChangesAsync();
+            }
+
             _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
             return new OkObjectResult(guessDto);
 
         }
         catch (Exception ex)
         {
-            _logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
             _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
 
             return new StatusCodeResult(500);

@@ -102,7 +102,7 @@
                 throw new Error(result.error!);
             }
 
-           /* const prev = await loadPreviousGuesses(uid);
+            const prev = await loadPreviousGuesses(uid);
 
             if (prev.ok) {
                 for (const id of prev.data!) {
@@ -110,7 +110,7 @@
                 }
             } else {
                 throw new Error(prev.error!);
-            }*/
+            }
 
             loading = false;
         } catch (e) {

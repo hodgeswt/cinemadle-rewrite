@@ -14,6 +14,8 @@ vendor/
 go.work
 go.work.sum
 
+**/*.db
+
 config.json
 config-release.json
 CinemadleConfig.json
