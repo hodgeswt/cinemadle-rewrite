@@ -25,6 +25,7 @@ public class TmdbRepository : ITmdbRepository
     private readonly string _getMovieCacheKeyTemplate = "TmdbRepository.GetMovie.{0}";
     private readonly string _getMovieByIdCacheKeyTemplate = "TmdbRepository.GetMovieById.{0}";
     private readonly string _getTargetMovieCacheKeyTemplate = "TmdbRepository.GetTargetMovie.{0}";
+    private readonly string _getMovieListCacheKey = "TmdbRepository.GetMovieList";
 
     public TmdbRepository(ILogger<TmdbRepository> logger, IConfigRepository config, ICacheRepository cache)
     {
@@ -49,6 +50,50 @@ public class TmdbRepository : ITmdbRepository
         _ = await _tmdbClient.GetConfigAsync();
     }
 
+    public async Task<Dictionary<string, int>> GetMovieList()
+    {
+        if (_cache.TryGet<Dictionary<string, int>>(_getMovieListCacheKey, out Dictionary<string, int>? movieList) && movieList is not null)
+        {
+            _logger.LogDebug("GetMovieList: using cached movie list");
+            return movieList;
+        }
+
+        DiscoverMovie discover = _tmdbClient.DiscoverMoviesAsync()
+                .OrderBy(DiscoverMovieSortBy.ReleaseDateDesc)
+                .WhereCertificationIsAtMost("US", nameof(Rating.R))
+                .WhereCertificationIsAtLeast("US", nameof(Rating.G))
+                .WhereRuntimeIsAtLeast(_config.MinimumRuntimePossible)
+                .WhereVoteAverageIsAtLeast(_config.MinimumScorePossible)
+                .WhereVoteCountIsAtLeast((int)_config.MinimumVotesPossible)
+                .WithAllOfReleaseTypes(ReleaseDateType.Theatrical)
+                .IncludeAdultMovies(false)
+                .WhereReleaseDateIsAfter(DateTime.ParseExact(_config.OldestMoviePossible, "yyyy-MM-dd", CultureInfo.InvariantCulture));
+
+        Dictionary<string, int> movies = new Dictionary<string, int>();
+
+        int page = 0;
+        CancellationTokenSource c = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        while (movies.Count < 1000 && !c.Token.IsCancellationRequested)
+        {
+            SearchContainer<SearchMovie> results = await discover.Query(page, c.Token);
+            foreach (SearchMovie movie in results.Results)
+            {
+                try
+                {
+                    movies.Add(movie.Title, movie.Id);
+                }
+                catch (Exception)
+                {
+                }
+            }
+            page++;
+        }
+
+        c.Dispose();
+        _cache.Set(_getMovieListCacheKey, movies);
+        return movies;
+    }
+
     public async Task<MovieDto?> GetTargetMovie(string date)
     {
         string cacheKey = string.Format(_getTargetMovieCacheKeyTemplate, date);
@@ -61,38 +106,16 @@ public class TmdbRepository : ITmdbRepository
 
         int seed = int.Parse(date.Replace("-", string.Empty));
         Random r = new Random(seed);
-        int movieIndex = r.Next(0, 364);
+        int movieIndex = r.Next(0, 999);
 
-        DiscoverMovie discover = _tmdbClient.DiscoverMoviesAsync()
-            .OrderBy(DiscoverMovieSortBy.ReleaseDateDesc)
-            .WhereCertificationIsAtMost("US", nameof(Rating.R))
-            .WhereCertificationIsAtLeast("US", nameof(Rating.G))
-            .WhereRuntimeIsAtLeast(_config.MinimumRuntimePossible)
-            .WhereVoteAverageIsAtLeast(_config.MinimumScorePossible)
-            .WhereVoteCountIsAtLeast((int)_config.MinimumVotesPossible)
-            .WithAllOfReleaseTypes(ReleaseDateType.Theatrical)
-            .IncludeAdultMovies(false)
-            .WhereReleaseDateIsAfter(DateTime.ParseExact(_config.OldestMoviePossible, "yyyy-MM-dd", CultureInfo.InvariantCulture));
-
-        List<int> movies = new List<int>();
-
-        int page = 0;
-        CancellationTokenSource c = new CancellationTokenSource(TimeSpan.FromSeconds(90));
-        while (movies.Count < 365 && !c.Token.IsCancellationRequested)
-        {
-            SearchContainer<SearchMovie> results = await discover.Query(page, c.Token);
-            movies.AddRange(results.Results.Select(x => x.Id));
-            page++;
-        }
-
-        c.Dispose();
+        Dictionary<string, int> movies = await GetMovieList();
 
         if (movieIndex > movies.Count - 1)
         {
             movieIndex = r.Next(0, movies.Count - 1);
         }
 
-        return await GetMovieByIdInternal(movies.ElementAt(movieIndex));
+        return await GetMovieByIdInternal(movies.Values.ElementAt(movieIndex));
     }
 
     private async Task<MovieDto?> GetMovieByIdInternal(int id)

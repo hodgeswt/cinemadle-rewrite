@@ -72,6 +72,25 @@ public class CinemadleController : ControllerBase
         }
     }
 
+    [HttpGet("movielist")]
+    public async Task<ActionResult> GetMovieList()
+    {
+        _logger.LogDebug("+GetMovieList");
+
+        try
+        {
+            Dictionary<string, int> movies = await _tmdbRepo.GetMovieList();
+            return new OkObjectResult(movies);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetMovieList Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+
+            _logger.LogDebug("-GetMovieList");
+            return new StatusCodeResult(500);
+        }
+    }
+
     [HttpGet("guess/{id}")]
     public async Task<ActionResult> GuessMovie(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
