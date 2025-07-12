@@ -43,20 +43,60 @@ public class GuessRepository : IGuessRepository
         {
             fields.Add(_ratingKey, ratingOut);
         }
+        else
+        {
+            fields.Add(_ratingKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = new List<string> { guess.Rating.ToString() }
+            });
+        }
 
         if (IsListMismatch(guess.Genres, target.Genres, out FieldDto? genreOut) && genreOut is not null)
         {
             fields.Add(_genreKey, genreOut);
+        }
+        else
+        {
+            fields.Add(_genreKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = guess.Genres
+            });
         }
 
         if (IsListMismatch(guess.Cast.Select(x => x.Name), target.Cast.Select(x => x.Name), out FieldDto? castOut) && castOut is not null)
         {
             fields.Add(_castKey, castOut);
         }
+        else
+        {
+            fields.Add(_castKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = guess.Cast.Select(x => x.Name)
+            });
+        }
 
         if (IsYearMismatch(guess.Year, target.Year, out FieldDto? yearOut) && yearOut is not null)
         {
             fields.Add(_yearKey, yearOut);
+        }
+        else
+        {
+            fields.Add(_yearKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = new List<string> { guess.Year }
+            });
         }
 
         return new GuessDto
