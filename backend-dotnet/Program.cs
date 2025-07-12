@@ -21,8 +21,9 @@ public class Program
 
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
-        builder.Services.AddSingleton<ITmdbRepository, TmdbRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
+        builder.Services.AddSingleton<ITmdbRepository, TmdbRepository>();
+        builder.Services.AddSingleton<IGuessRepository, GuessRepository>();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole();
