@@ -15,6 +15,7 @@ export type CardDomain = {
     title: string;
     data: string[];
     direction: number;
+    modifiers: { [key: string]: string[] };
 };
 
 export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {

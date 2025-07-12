@@ -40,6 +40,11 @@
             category has different criteria to determine these colors.
         </p>
 
+        <p class="m-4">
+            on the genre list and the cast list, a star will indicate
+            which item(s) from your guess are correct.
+        </p>
+
         <div class="m-4">
             <ul class="list-disc">
                 <li>

@@ -21,6 +21,7 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
             data: v.values,
             direction: v.direction,
             title: k,
+            modifiers: v.modifiers,
         } as CardDomain;
 
         out.cards.push(card);
@@ -45,24 +46,28 @@ export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDom
         title: "cast",
         data: media.cast.map((x) => x.name),
         color: color,
+        modifiers: {},
     } as CardDomain;
 
     const genre = {
         title: "genre",
         data: media.genres,
         color: color,
+        modifiers: {},
     } as CardDomain;
 
     const year = {
         title: "year",
         data: [`${media.year}`] as string[],
         color: color,
+        modifiers: {},
     } as CardDomain;
 
     const rating = {
         title: "rating",
         data: [media.rating] as string[],
         color: color,
+        modifiers: {},
     } as CardDomain;
 
     o.cards = [cast, genre, year, rating] as CardDomain[];

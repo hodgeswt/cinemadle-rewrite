@@ -1,4 +1,4 @@
-import { isArray, hasValue } from "$lib/util";
+import { isArray, isDictionary, hasValue } from "$lib/util";
 
 export type PossibleMediaDto = {
     [key: string]: number;
@@ -12,6 +12,7 @@ export type Field = {
     color: string;
     direction: number;
     values: string[];
+    modifiers: { [key: string]: string[]};
 };
 
 export type MediaDto = {
@@ -107,6 +108,7 @@ export function isField(obj: any): obj is Field {
         typeof obj.color === "string" &&
         hasValue(obj.direction) &&
         typeof obj.direction === "number" &&
-        isArray(obj.values, "string")
+        isArray(obj.values, "string") &&
+        isDictionary(obj.modifiers, "string", "string", true)
     );
 }
