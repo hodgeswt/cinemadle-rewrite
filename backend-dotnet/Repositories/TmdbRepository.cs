@@ -73,7 +73,7 @@ public class TmdbRepository : ITmdbRepository
 
         int page = 0;
         CancellationTokenSource c = new CancellationTokenSource(TimeSpan.FromSeconds(90));
-        while (movies.Count < 1000 && !c.Token.IsCancellationRequested)
+        while (movies.Count < 2000 && !c.Token.IsCancellationRequested)
         {
             SearchContainer<SearchMovie> results = await discover.Query(page, c.Token);
             foreach (SearchMovie movie in results.Results)
@@ -106,7 +106,7 @@ public class TmdbRepository : ITmdbRepository
 
         int seed = int.Parse(date.Replace("-", string.Empty));
         Random r = new Random(seed);
-        int movieIndex = r.Next(0, 999);
+        int movieIndex = r.Next(0, 1999);
 
         Dictionary<string, int> movies = await GetMovieList();
 

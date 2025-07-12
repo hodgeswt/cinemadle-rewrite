@@ -1,7 +1,7 @@
 import { isArray, hasValue } from "$lib/util";
 
 export type PossibleMediaDto = {
-    [key: string]: string;
+    [key: string]: number;
 }
 
 export type GuessDto = {
@@ -71,11 +71,10 @@ export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
     }
 
     for (const key in obj) {
-        if (typeof key !== 'string' || typeof obj[key] !== 'string') {
+        if (typeof key !== 'string' || typeof obj[key] !== 'number') {
             return false
         }
     }
-
     return true
 }
 

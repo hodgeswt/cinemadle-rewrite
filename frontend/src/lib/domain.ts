@@ -1,7 +1,7 @@
 import { hasValue } from "./util";
 
 export type PossibleMediaDomain = {
-    [key: string]: string;
+    [key: string]: number;
 }
 
 export type GuessDomain = {
@@ -23,7 +23,7 @@ export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {
     }
 
     for (const key in obj) {
-        if (typeof key !== 'string' || typeof obj[key] !== 'string') {
+        if (typeof key !== 'string' || typeof obj[key] !== 'number') {
             return false
         }
     }

@@ -116,6 +116,7 @@
         } catch (e) {
             errorMessage = "Unable to contact server.";
             openError.set(true);
+            loading = false;
         }
 
         if (browser && (!uid || uid === "")) {

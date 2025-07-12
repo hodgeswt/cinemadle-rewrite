@@ -84,8 +84,8 @@ export function PossibleMediaDtoToDomain(possibleMedia: any): Result<PossibleMed
 
     let o = {} as PossibleMediaDomain
 
-    for (let i = 0; i < values.length; i++) {
-        o[values[i]] = keys[i]
+    for (let i = 0; i < keys.length; i++) {
+        o[keys[i]] = values[i]
     }
 
     return ok(o)
