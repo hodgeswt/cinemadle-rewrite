@@ -29,7 +29,6 @@ export type Field = {
 export type MediaDto = {
     title: string;
     id: number;
-    imageUrl: string;
     cast: PersonDto[];
     genres: string[];
     year: number;
@@ -68,7 +67,6 @@ export function isMediaDto(obj: any): obj is MediaDto {
     const basic =
         typeof obj.title === 'string'
         && typeof obj.id === 'number'
-        && typeof obj.imageUrl === 'string'
         && isArray(obj.genres, 'string')
         && typeof obj.year === 'string'
         && typeof obj.rating === 'string';

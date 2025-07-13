@@ -42,7 +42,6 @@ const createUserStore = () => {
     const defaultJwt = userStoreCached === null ? '' : userStoreCached.jwt;
     const defaultRefreshToken = userStoreCached === null ? '' : userStoreCached.jwt;
     const defaultLoggedIn = userStoreCached === null ? '' : userStoreCached.loggedIn;
-
     const { subscribe, set, update } = writable({
         email: defaultEmail,
         jwt: defaultJwt,

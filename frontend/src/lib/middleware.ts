@@ -19,10 +19,12 @@ export async function getAnswer(): Promise<Result<GuessDomain>> {
         const raw = data.data!
         try {
             let dto = JSON.parse(raw)
+            console.log(dto);
             let domain = MediaDtoToGuessDomain(dto, true)
             if (domain.ok) {
                 return ok(domain.data!)
             } else {
+                console.log('failed parse')
                 return err("Invalid data")
             }
         } catch (_e) {

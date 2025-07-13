@@ -32,6 +32,7 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
 
 export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDomain> {
     if (!isMediaDto(media)) {
+        console.log('failed validate')
         return err("Invalid data type");
     }
 
