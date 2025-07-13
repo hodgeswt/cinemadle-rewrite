@@ -28,7 +28,7 @@ WORKDIR /app
 
 RUN mkdir -p /app/AppData
 COPY --from=builder /app/backend/out ./
-COPY --from=frnotend-builder /app/frontend/build ./wwwroot
+COPY --from=frontend-builder /app/frontend/build ./wwwroot
 
 EXPOSE 5000
 
