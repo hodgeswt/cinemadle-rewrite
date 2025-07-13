@@ -17,11 +17,11 @@
     import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
     import { isoDateNoTime } from "$lib/util";
-    import { browser } from "$app/environment";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { writable } from "svelte/store";
     import { userStore } from "$lib/stores";
+    import { toast } from "svelte-sonner";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -139,19 +139,16 @@
         openShare.set(false);
     }
 
-    function deviceShare(_event: Event): void {
+    async function deviceShare(): Promise<void> {
         if (navigator.share) {
             navigator.share({
                 title: "cinemadle",
                 text: shareData.join("\n"),
-                url: "http://cinemadle.hodgeswill.com",
+                url: "http://cinemadle2.hodgeswill.com",
             });
         } else {
-            openShare.set(false);
-            shareData = [] as string[];
-
-            errorMessage = "Share permissions not provided.";
-            openError.set(true);
+            navigator.clipboard.writeText(shareData.join("\n"));
+            toast("copied to clipboard");
         }
     }
 
@@ -292,7 +289,7 @@
             {/if}
 
             {#if !loading && !serverDown}
-                {#if remaining > 0}
+                {#if remaining > 0 && !win}
                     <div class="flex">
                         <Input
                             type="text"
@@ -349,12 +346,20 @@
 
                 <AlertDialog.Root bind:open={$openShare}>
                     <AlertDialog.Content>
-                        <AlertDialog.Title>Your Results</AlertDialog.Title>
+                        <AlertDialog.Title>your results</AlertDialog.Title>
                         <AlertDialog.Description>
                             {#each shareData as line}
-                                <p class="m-0">{line}</p>
+                                <p class="m-0 p-0">{line}</p>
                             {/each}
-                        </AlertDialog.Description>
+                            <p>cinemadle {isoDateNoTime()}</p>
+                            <p>
+                                play at <a
+                                    href="cinemadle2.hodgeswill.com"
+                                    class="underline"
+                                    >cinemadle2.hodgeswill.com</a
+                                >
+                            </p></AlertDialog.Description
+                        >
                         <AlertDialog.Footer>
                             <AlertDialog.Action
                                 on:click={closeShare}
