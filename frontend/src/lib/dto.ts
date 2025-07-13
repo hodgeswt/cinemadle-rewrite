@@ -31,7 +31,6 @@ export type MediaDto = {
     id: number;
     imageUrl: string;
     cast: PersonDto[];
-    crew: PersonDto[];
     genres: string[];
     year: number;
     rating: string;
@@ -79,9 +78,7 @@ export function isMediaDto(obj: any): obj is MediaDto {
     }
 
     return Array.isArray(obj.cast)
-        && obj.cast.every((x: any) => isPersonDto(x))
-        && Array.isArray(obj.crew)
-        && obj.crew.every((x: any) => isPersonDto(x));
+        && obj.cast.every((x: any) => isPersonDto(x));
 }
 
 export function isPersonDto(obj: any): obj is PersonDto {
