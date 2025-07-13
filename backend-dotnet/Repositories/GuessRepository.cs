@@ -135,13 +135,13 @@ public class GuessRepository : IGuessRepository
 
         int yearDirection = 0;
 
-        if (yearDiffAbs > _config.YearDoubleArrowThreshold)
-        {
-            yearDirection = 2;
-        }
-        else if (yearDiffAbs > _config.YearSingleArrowThreshold)
+        if (yearDiffAbs < _config.YearSingleArrowThreshold)
         {
             yearDirection = 1;
+        }
+        else if (yearDiffAbs < _config.YearDoubleArrowThreshold)
+        {
+            yearDirection = 2;
         }
 
         if (yearDiff > 0)
