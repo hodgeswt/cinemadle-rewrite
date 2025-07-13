@@ -7,7 +7,7 @@ RUN npm ci
 
 COPY frontend/. .
 
-ENV VITE_API_ENDPOINT="http://localhost:5000"
+ENV VITE_API_ENDPOINT="http://192.168.0.23:5000"
 
 RUN npm run build
 
