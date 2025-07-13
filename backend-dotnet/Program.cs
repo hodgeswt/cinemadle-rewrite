@@ -91,7 +91,19 @@ public class Program
         db.Database.EnsureCreated();
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
         identityDb.Database.EnsureCreated();
+        app.UseStatusCodePages(async context =>
+        {
+            var response = context.HttpContext.Response;
 
+            if (response.StatusCode == 404)
+            {
+                response.Clear();
+                response.StatusCode = 302;
+                response.Redirect("/index.html");
+            }
+
+            await System.Threading.Tasks.Task.CompletedTask;
+        });
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
