@@ -11,6 +11,7 @@
         loadPreviousGuesses,
         ping,
         getAnswer,
+        validateAndRefreshToken,
     } from "$lib/middleware";
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { GuessDtoToDomain } from "$lib/mappers";
@@ -22,6 +23,7 @@
     import { writable } from "svelte/store";
     import { userStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
+    import type { LoginDto } from "$lib/dto";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -90,6 +92,27 @@
                 await new Promise((x) => setTimeout(x, 1000));
             }
 
+            if ($userStore.loggedIn) {
+                const refreshed = await validateAndRefreshToken(
+                    $userStore.jwt,
+                    $userStore.refreshToken,
+                );
+
+                if (!refreshed.ok) {
+                    userStore.setLoggedOut();
+                } else {
+                    const j = refreshed.data!;
+                    if (j !== "") {
+                        const loginDto = JSON.parse(j) as LoginDto;
+                        userStore.setLoggedIn(
+                            $userStore.email,
+                            loginDto.accessToken,
+                            loginDto.refreshToken,
+                        );
+                    }
+                }
+            }
+
             const result = await getPossibleMovies();
 
             if (result.ok) {
@@ -98,14 +121,16 @@
                 throw new Error(result.error!);
             }
 
-            const prev = await loadPreviousGuesses($userStore.jwt);
+            if ($userStore.loggedIn) {
+                const prev = await loadPreviousGuesses($userStore.jwt);
 
-            if (prev.ok) {
-                for (const id of prev.data!) {
-                    await makeGuess(id.toString(), true);
+                if (prev.ok) {
+                    for (const id of prev.data!) {
+                        await makeGuess(id.toString(), true);
+                    }
+                } else {
+                    throw new Error(prev.error!);
                 }
-            } else {
-                throw new Error(prev.error!);
             }
 
             loading = false;

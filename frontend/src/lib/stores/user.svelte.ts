@@ -5,6 +5,7 @@ import { browser } from '$app/environment';
 type UserStoreData = {
     email: string;
     jwt: string;
+    refreshToken: string;
     loggedIn: boolean;
 }
 
@@ -16,6 +17,7 @@ function isUserStoreData(obj: any): obj is UserStoreData {
     return typeof obj.email === 'string'
         && typeof obj.jwt === 'string'
         && typeof obj.loggedIn === 'boolean'
+        && typeof obj.refreshToken === 'string'
 }
 
 const createUserStore = () => {
@@ -38,12 +40,14 @@ const createUserStore = () => {
 
     const defaultEmail = userStoreCached === null ? '' : userStoreCached.email;
     const defaultJwt = userStoreCached === null ? '' : userStoreCached.jwt;
+    const defaultRefreshToken = userStoreCached === null ? '' : userStoreCached.jwt;
     const defaultLoggedIn = userStoreCached === null ? '' : userStoreCached.loggedIn;
 
     const { subscribe, set, update } = writable({
         email: defaultEmail,
         jwt: defaultJwt,
         loggedIn: defaultLoggedIn,
+        refreshToken: defaultRefreshToken,
     });
 
     subscribe(user => {
@@ -52,16 +56,18 @@ const createUserStore = () => {
 
     return {
         subscribe,
-        setLoggedIn: (email: string, jwt: string) => update(user => ({
+        setLoggedIn: (email: string, jwt: string, refreshToken: string) => update(user => ({
             ...user,
             email,
             jwt,
-            loggedIn: true
+            loggedIn: true,
+            refreshToken,
         })),
         setLoggedOut: () => update(_ => ({
             email: '',
             jwt: '',
-            loggedIn: false
+            loggedIn: false,
+            refreshToken: ''
         }))
     }
 }

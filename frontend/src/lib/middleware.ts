@@ -1,6 +1,7 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain } from "./domain";
+import { isLoginDto } from "./dto";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
@@ -52,6 +53,25 @@ export async function getPossibleMovies(): Promise<Result<PossibleMediaDomain>> 
     } else {
         return err(data.error!)
     }
+}
+
+export async function validateAndRefreshToken(userToken: string, refreshToken: string): Promise<Result<string>> {
+    const data = await get("validate", null, { "Authorization": userToken });
+
+    if (data.ok && data.data! === "true") {
+        return ok("");
+    }
+
+    const refresh = await post("refresh", true, { refreshToken: refreshToken });
+
+    if (refresh.ok) {
+        const j = JSON.parse(refresh.data!)
+        if (isLoginDto(j)) {
+            return ok(refresh.data!);
+        }
+    }
+
+    return err("unable to login or refresh");
 }
 
 export async function loadPreviousGuesses(userToken: string): Promise<Result<number[]>> {
@@ -107,7 +127,7 @@ export async function post(
                 let j = await response.json();
                 responseData = JSON.stringify(j);
             } catch {
-                responseData = "[]";
+                responseData = "true"
             }
         } else {
             responseData = JSON.stringify(await response.json());
@@ -162,10 +182,15 @@ export async function get(
         let responseData: string;
         let good = true;
         if (response.ok) {
-            if (response.status != 204) {
-                responseData = JSON.stringify(await response.json());
-            } else {
-                responseData = "[]";
+            try {
+                if (response.status != 204) {
+                    responseData = JSON.stringify(await response.json());
+                } else {
+                    responseData = "true";
+                }
+            }
+            catch {
+                responseData = "false";
             }
         } else {
             responseData = `Error: ${response.status} ${response.statusText}`;

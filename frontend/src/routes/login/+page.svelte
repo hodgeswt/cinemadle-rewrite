@@ -24,6 +24,7 @@
             userStore.setLoggedIn(
                 userEmail,
                 `Bearer ${result.data!.accessToken}`,
+                result.data!.refreshToken,
             );
             goto("/");
         } else {

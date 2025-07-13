@@ -48,6 +48,12 @@ public class CinemadleController : ControllerBase
         return User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
+    [Authorize]
+    [HttpGet("validate")]
+    public ActionResult<bool> Validate()
+    {
+        return true;
+    }
 
     [HttpGet("heartbeat")]
     public ActionResult<bool> Heartbeat()
