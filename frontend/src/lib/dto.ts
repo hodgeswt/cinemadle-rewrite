@@ -1,5 +1,16 @@
 import { isArray, isDictionary, hasValue } from "$lib/util";
 
+export type SignUpErrorDto = {
+    errors: { [key: string]: string[] }
+}
+
+export type LoginDto = {
+    tokenType: string,
+    accessToken: string,
+    refreshToken: string,
+    expiresIn: number,
+}
+
 export type PossibleMediaDto = {
     [key: string]: number;
 }
@@ -12,7 +23,7 @@ export type Field = {
     color: string;
     direction: number;
     values: string[];
-    modifiers: { [key: string]: string[]};
+    modifiers: { [key: string]: string[] };
 };
 
 export type MediaDto = {
@@ -29,6 +40,25 @@ export type MediaDto = {
 export type PersonDto = {
     name: string;
     role: string;
+}
+
+export function isSignUpErrorDto(obj: any): obj is SignUpErrorDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return isDictionary(obj.errors, 'string', 'string', true)
+}
+
+export function isLoginDto(obj: any): obj is LoginDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return typeof obj.tokenType === 'string'
+        && typeof obj.accessToken === 'string'
+        && typeof obj.refreshToken === 'string'
+        && typeof obj.expiresIn === 'number'
 }
 
 export function isMediaDto(obj: any): obj is MediaDto {

@@ -102,7 +102,7 @@
                 throw new Error(result.error!);
             }
 
-            const prev = await loadPreviousGuesses(uid);
+            /*const prev = await loadPreviousGuesses(uid);
 
             if (prev.ok) {
                 for (const id of prev.data!) {
@@ -110,7 +110,7 @@
                 }
             } else {
                 throw new Error(prev.error!);
-            }
+            }*/
 
             loading = false;
         } catch (e) {
@@ -181,7 +181,7 @@
         const id = skip ? guess : possibleGuesses[guess];
         const title = skip
             ? (Object.keys(possibleGuesses).find(
-                  (x) => possibleGuesses[x] === guess,
+                  (x) => possibleGuesses[x].toString() === guess,
               ) ?? "Unknown")
             : guess;
 
@@ -260,6 +260,8 @@
             <div
                 class="w-full flex-1 flex flex-col m-4 text-right justify-center"
             >
+                <a href="/login" class="underline">Log In</a>
+                <a href="/signup" class="underline">Sign Up</a>
                 <a href="/about" class="underline">About</a>
             </div>
         </div>

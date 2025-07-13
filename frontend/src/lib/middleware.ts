@@ -64,6 +64,67 @@ export async function loadPreviousGuesses(uid: string): Promise<Result<string[]>
     return ok(JSON.parse(raw))
 }
 
+export async function post(
+    endpoint: string,
+    useNoBase: boolean = false,
+    body?: any | null,
+    headers?: { [key: string]: string } | null,
+    queryParams?: { [key: string]: string } | null,
+): Promise<Result<string>> {
+    let host = "http://192.168.0.23:5566"
+
+    try {
+        endpoint = endpoint.replace(/^\//, "");
+        let uri = useNoBase ? `${host}/${endpoint}` : `${host}/api/cinemadle/${endpoint}`;
+
+        if (queryParams !== null) {
+            let first = true;
+            for (const queryKey in queryParams) {
+                if (!queryParams.hasOwnProperty(queryKey)) {
+                    continue;
+                }
+
+                if (first) {
+                    uri += "?";
+                    first = false;
+                } else {
+                    uri += "&";
+                }
+
+                uri += `${queryKey}=${queryParams[queryKey]}`;
+            }
+        }
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: { ...headers },
+            body: body,
+        });
+        let responseData: string;
+        let good = true;
+        if (response.ok) {
+            let j = await response.text();
+            if (response.status != 204 && j !== "") {
+                responseData = JSON.stringify(await response.json());
+            } else {
+                responseData = "[]";
+            }
+        } else {
+            responseData = JSON.stringify(await response.json());
+            good = false;
+        }
+
+        if (!good) {
+            return err(responseData);
+        }
+
+        return ok(responseData);
+    } catch (e) {
+        console.error(e);
+        return err("unknown error");
+    }
+
+}
+
 export async function get(
     endpoint: string,
     queryParams: { [key: string]: string } | null,
