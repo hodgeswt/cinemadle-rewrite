@@ -18,7 +18,6 @@
     import { find } from "$lib/fuzzy";
     import { isoDateNoTime } from "$lib/util";
     import { browser } from "$app/environment";
-    import { v4 as uuidv4 } from "uuid";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { writable } from "svelte/store";
@@ -45,10 +44,6 @@
             .filter((x) => !titles.includes(x)),
     );
 
-    let uid = $state(
-        (browser ? localStorage.getItem("cinemadleUuid") : null) || "",
-    );
-
     const LIMIT = 10;
 
     let remaining = $derived(LIMIT - guesses.length);
@@ -67,7 +62,7 @@
     $effect(() => {
         if (lose) {
             untrack(async () => {
-                let a = await getAnswer(uid);
+                let a = await getAnswer();
 
                 if (a.ok) {
                     answer = a.data!;
@@ -95,7 +90,7 @@
                 await new Promise((x) => setTimeout(x, 1000));
             }
 
-            const result = await getPossibleMovies(uid);
+            const result = await getPossibleMovies();
 
             if (result.ok) {
                 possibleGuesses = result.data!;
@@ -103,7 +98,7 @@
                 throw new Error(result.error!);
             }
 
-            /*const prev = await loadPreviousGuesses(uid);
+            /*const prev = await loadPreviousGuesses($userStore.jwt);
 
             if (prev.ok) {
                 for (const id of prev.data!) {
@@ -118,11 +113,6 @@
             errorMessage = "Unable to contact server.";
             openError.set(true);
             loading = false;
-        }
-
-        if (browser && (!uid || uid === "")) {
-            uid = uuidv4();
-            localStorage.setItem("cinemadleUuid", uid);
         }
     });
 
@@ -201,8 +191,6 @@
         let result = await get(
             `/guess/${id}`,
             { date: isoDateNoTime() },
-            uid,
-            skip ? { "x-duplicate": "true" } : null,
         );
 
         match(

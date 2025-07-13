@@ -6,13 +6,13 @@ import { isoDateNoTime } from "./util";
 
 
 export async function ping(): Promise<boolean> {
-    const data = await get("heartbeat", null, "")
+    const data = await get("heartbeat", null)
 
     return data.ok
 }
 
-export async function getAnswer(uid: string): Promise<Result<GuessDomain>> {
-    const data = await get(`target`, { date: isoDateNoTime() }, uid)
+export async function getAnswer(): Promise<Result<GuessDomain>> {
+    const data = await get(`target`, { date: isoDateNoTime() })
 
     if (data.ok) {
         const raw = data.data!
@@ -32,8 +32,8 @@ export async function getAnswer(uid: string): Promise<Result<GuessDomain>> {
     }
 }
 
-export async function getPossibleMovies(uid: string): Promise<Result<PossibleMediaDomain>> {
-    const data = await get("movielist", null, uid)
+export async function getPossibleMovies(): Promise<Result<PossibleMediaDomain>> {
+    const data = await get("movielist", null)
 
     if (data.ok) {
         const raw = data.data!
@@ -54,8 +54,8 @@ export async function getPossibleMovies(uid: string): Promise<Result<PossibleMed
     }
 }
 
-export async function loadPreviousGuesses(uid: string): Promise<Result<string[]>> {
-    const data = await get("guesses", { date: isoDateNoTime() }, uid)
+export async function loadPreviousGuesses(userToken: string): Promise<Result<string[]>> {
+    const data = await get("guesses", { date: isoDateNoTime() }, { "Authorization": userToken })
 
     if (!data.ok) {
         return err(data.error!)
@@ -129,7 +129,6 @@ export async function post(
 export async function get(
     endpoint: string,
     queryParams: { [key: string]: string } | null,
-    uid: string,
     headers?: { [key: string]: string } | null,
 ): Promise<Result<string>> {
     let host = "http://192.168.0.23:5566";
@@ -157,7 +156,6 @@ export async function get(
         }
         const response = await fetch(uri, {
             headers: {
-                "x-uuid": uid,
                 ...headers,
             },
         });
