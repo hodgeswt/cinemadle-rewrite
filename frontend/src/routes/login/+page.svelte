@@ -1,5 +1,37 @@
 <script lang="ts">
-    import { isoDateNoTime } from "$lib/util";
+    import { logIn } from "$lib/auth";
+    import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input";
+    import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import { writable } from "svelte/store";
+    import { userStore } from "$lib/stores";
+    import type { Result } from "$lib/result";
+    import { type LoginDto } from "$lib/dto";
+    import { goto } from "$app/navigation";
+    let openError = writable(false);
+    let userEmail = $state("");
+    let userPassword = $state("");
+    let errorMessage = $state("");
+
+    async function performLogIn(): Promise<void> {
+        let result: Result<LoginDto> = await logIn(userEmail, userPassword);
+
+        if (result.ok) {
+            userStore.setLoggedIn(
+                userEmail,
+                `Bearer ${result.data!.accessToken}`,
+            );
+            goto("/");
+        } else {
+            errorMessage = "Unable to log in";
+            openError.set(true);
+        }
+    }
+
+    function closeDialog() {
+        openError.set(false);
+        errorMessage = "";
+    }
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
@@ -13,67 +45,51 @@
             <div
                 class="w-full flex-1 flex flex-col m-4 text-right justify-center"
             >
+                <a href="/signup" class="underline">Sign Up</a>
+                <a href="/about" class="underline">About</a>
                 <a href="/" class="underline">Home</a>
             </div>
         </div>
 
         <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
-            About
+            Log In
         </h2>
 
-        <p class="m-4">
-            cinemadle is a guessing game. each day, a movie is randomly
-            selected. your task is to figure out the movie based on the clues
-            provided.
-        </p>
-
-        <div class="flex justify-center items-center">
-            <hr
-                class="my-12 h-0.5 w-1/2 border-t-0 bg-gray-300 dark:bg-white/10"
+        <div class="flex flex-col">
+            <Input
+                type="email"
+                placeholder="example@example.com"
+                bind:value={userEmail}
+                class="m-1"
             />
-        </div>
-
-        <p class="m-4">
-            each movie gussed provides you information. the tiles within each
-            guess are color-coded to indicate if the information is wrong
-            (gray), partially correct (yellow), or correct (green). each
-            category has different criteria to determine these colors.
-        </p>
-
-        <p class="m-4">
-            on the genre list and the cast list, a star will indicate
-            which item(s) from your guess are correct.
-        </p>
-
-        <div class="m-4">
-            <ul class="list-disc">
-                <li>
-                    rating: yellow if your guess is adjacent to the MPAA rating
-                    of the target
-                </li>
-                <li>
-                    year: yellow if your guess was released within ten years of
-                    the target
-                </li>
-                <li>
-                    cast: yellow if any of the actors in your guessed movie are
-                    in the target movie
-                </li>
-                <li>
-                    genre: yellow if any of the genres of your guessed movie
-                    match the target movie
-                </li>
-            </ul>
-        </div>
-
-        <div class="flex justify-center items-center">
-            <hr
-                class="my-12 h-0.5 w-1/2 border-t-0 bg-gray-300 dark:bg-white/10"
+            <Input
+                type="password"
+                placeholder="*****"
+                bind:value={userPassword}
+                class="m-1"
             />
+            <Button
+                type="submit"
+                size="icon"
+                onclick={performLogIn}
+                class="m-1 flex-grow w-full"
+            >
+                <p class="m-1">Log In</p>
+            </Button>
         </div>
 
-        <p class="m-4">code: will hodges</p>
-
-        <p class="m-4">design: will hodges and myke yunis</p>
+        <AlertDialog.Root bind:open={$openError}>
+            <AlertDialog.Content>
+                <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+                <AlertDialog.Description>
+                    {errorMessage}
+                </AlertDialog.Description>
+                <AlertDialog.Footer>
+                    <AlertDialog.Action on:click={closeDialog}>
+                        Ok
+                    </AlertDialog.Action>
+                </AlertDialog.Footer>
+            </AlertDialog.Content>
+        </AlertDialog.Root>
     </div>
 </div>

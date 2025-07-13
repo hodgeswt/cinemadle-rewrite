@@ -7,17 +7,23 @@ import type { Result } from "$lib/result";
 import { isLoginDto, isSignUpErrorDto, type LoginDto, type SignUpErrorDto } from "./dto";
 
 export async function logIn(email: string, password: string): Promise<Result<LoginDto>> {
-    const data = await post("login", true, {
-        "email": email,
-        "password": password
-    })
+    const data = await post(
+        "login", true,
+        JSON.stringify({
+            "email": email,
+            "password": password
+        }),
+        {
+            "Content-Type": "application/json"
+        }
+    )
 
     if (!data.ok) {
         return err(data.error!)
     }
 
     const raw = JSON.parse(data.data!)
-
+    console.log(raw);
     if (!isLoginDto(raw)) {
         return err("invalid data received")
     }

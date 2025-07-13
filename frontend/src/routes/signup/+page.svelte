@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { logIn, signUp } from "$lib/auth";
+    import { signUp } from "$lib/auth";
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { writable } from "svelte/store";
-    import { userStore } from "$lib/stores";
     import type { Result } from "$lib/result";
-    import { type LoginDto, type SignUpErrorDto } from "$lib/dto";
+    import { type SignUpErrorDto } from "$lib/dto";
     import { goto } from "$app/navigation";
     let openError = writable(false);
     let userEmail = $state("");
@@ -74,12 +73,6 @@
             databases. This will be supported for all accounts created before
             this feature is added.
         </p>
-
-        <div class="flex justify-center items-center">
-            <hr
-                class="my-12 h-0.5 w-1/2 border-t-0 bg-gray-300 dark:bg-white/10"
-            />
-        </div>
 
         <div class="flex flex-col">
             <Input

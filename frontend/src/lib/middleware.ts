@@ -102,10 +102,10 @@ export async function post(
         let responseData: string;
         let good = true;
         if (response.ok) {
-            let j = await response.text();
-            if (response.status != 204 && j !== "") {
-                responseData = JSON.stringify(await response.json());
-            } else {
+            let j = await response.json();
+            try {
+                responseData = JSON.stringify(j);
+            } catch {
                 responseData = "[]";
             }
         } else {
