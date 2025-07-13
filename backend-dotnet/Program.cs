@@ -95,7 +95,7 @@ public class Program
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
-
+        app.UseStaticFiles();
         app.MapControllers();
         app.UseCors("AllowAllOrigins"); ;
         app.Run();
