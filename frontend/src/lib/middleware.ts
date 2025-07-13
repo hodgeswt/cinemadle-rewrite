@@ -103,8 +103,8 @@ export async function post(
         let responseData: string;
         let good = true;
         if (response.ok) {
-            let j = await response.json();
             try {
+                let j = await response.json();
                 responseData = JSON.stringify(j);
             } catch {
                 responseData = "[]";
