@@ -8,7 +8,7 @@ public class IdentityContext : IdentityDbContext<IdentityUser>
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         string path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "cinemadle-identity.db");
+        DbPath = Path.Join(path, "AppData", "cinemadle-identity.db");
     }
 
     public string DbPath { get; set; }

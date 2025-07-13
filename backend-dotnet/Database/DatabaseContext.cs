@@ -12,7 +12,7 @@ public class DatabaseContext : DbContext
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         string path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "cinemadle.db");
+        DbPath = Path.Join(path, "AppData",  "cinemadle.db");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
