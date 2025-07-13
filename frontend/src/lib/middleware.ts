@@ -72,7 +72,7 @@ export async function post(
     headers?: { [key: string]: string } | null,
     queryParams?: { [key: string]: string } | null,
 ): Promise<Result<string>> {
-    let host = "http://192.168.0.23:5566"
+    let host = import.meta.env.VITE_API_ENDPOINT
 
     try {
         endpoint = endpoint.replace(/^\//, "");
@@ -131,7 +131,7 @@ export async function get(
     queryParams: { [key: string]: string } | null,
     headers?: { [key: string]: any } | null,
 ): Promise<Result<string>> {
-    let host = "http://192.168.0.23:5566";
+    let host = import.meta.env.VITE_API_ENDPOINT;
 
     try {
         endpoint = endpoint.replace(/^\//, "");
