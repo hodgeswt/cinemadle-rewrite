@@ -6,10 +6,7 @@ const config = {
     preprocess: vitePreprocess(),
 
     kit: {
-        adapter: adapter({
-            pages: '../backend-dotnet/wwwroot',
-            assets: '../backend-dotnet/wwwroot',
-        }),
+        adapter: adapter(),
     },
 };
 
