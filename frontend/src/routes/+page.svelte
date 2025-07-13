@@ -144,7 +144,7 @@
             navigator.share({
                 title: "cinemadle",
                 text: shareData.join("\n"),
-                url: "http://cinemadle2.hodgeswill.com",
+                url: "http://cinemadle.com",
             });
         } else {
             navigator.clipboard.writeText(shareData.join("\n"));
