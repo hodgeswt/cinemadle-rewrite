@@ -4,6 +4,7 @@ import type { GuessDomain, PossibleMediaDomain } from "./domain";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
+
 export async function ping(): Promise<boolean> {
     const data = await get("heartbeat", null, "")
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { isoDateNoTime } from "$lib/util";
+    import { Button } from "$lib/components/ui/button";
+    import { userStore } from "$lib/stores";
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
@@ -13,6 +14,12 @@
             <div
                 class="w-full flex-1 flex flex-col m-4 text-right justify-center"
             >
+                {#if !$userStore.loggedIn}
+                    <a href="/login" class="underline">Log In</a>
+                    <a href="/signup" class="underline">Sign Up</a>
+                {:else}
+                    <p>{$userStore.email}</p>
+                {/if}
                 <a href="/" class="underline">Home</a>
             </div>
         </div>
@@ -41,8 +48,8 @@
         </p>
 
         <p class="m-4">
-            on the genre list and the cast list, a star will indicate
-            which item(s) from your guess are correct.
+            on the genre list and the cast list, a star will indicate which
+            item(s) from your guess are correct.
         </p>
 
         <div class="m-4">
@@ -75,5 +82,17 @@
         <p class="m-4">code: will hodges</p>
 
         <p class="m-4">design: will hodges and myke yunis</p>
+
+        {#if $userStore.loggedIn}
+            <div class="flex justify-center items-center">
+                <Button
+                    onclick={() => {
+                        userStore.setLoggedOut();
+                    }}
+                >
+                    <p>Log out</p>
+                </Button>
+            </div>
+        {/if}
     </div>
 </div>

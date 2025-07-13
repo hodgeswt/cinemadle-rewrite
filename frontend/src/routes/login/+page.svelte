@@ -13,6 +13,10 @@
     let userPassword = $state("");
     let errorMessage = $state("");
 
+    if ($userStore.loggedIn) {
+        goto("/");
+    }
+
     async function performLogIn(): Promise<void> {
         let result: Result<LoginDto> = await logIn(userEmail, userPassword);
 

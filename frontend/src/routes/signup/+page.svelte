@@ -7,11 +7,17 @@
     import type { Result } from "$lib/result";
     import { type SignUpErrorDto } from "$lib/dto";
     import { goto } from "$app/navigation";
+    import { userStore } from "$lib/stores";
+
     let openError = writable(false);
     let userEmail = $state("");
     let userPassword = $state("");
     let userConfirmPassword = $state("");
     let errorMessage = $state("");
+
+    if ($userStore.loggedIn) {
+        goto("/");
+    }
 
     async function performSignUp(): Promise<void> {
         if (userPassword !== userConfirmPassword) {

@@ -23,7 +23,6 @@ export async function logIn(email: string, password: string): Promise<Result<Log
     }
 
     const raw = JSON.parse(data.data!)
-    console.log(raw);
     if (!isLoginDto(raw)) {
         return err("invalid data received")
     }
