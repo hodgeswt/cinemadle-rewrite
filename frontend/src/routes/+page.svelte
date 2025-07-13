@@ -245,7 +245,7 @@
                 cinemadle
             </h1>
             <div
-                class="w-full flex-1 flex flex-col m-4 text-right justify-center"
+                class="w-full flex-1 flex flex-col m-4 p-4 text-right justify-center"
             >
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>

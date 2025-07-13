@@ -61,7 +61,7 @@
                 cinemadle
             </h1>
             <div
-                class="w-full flex-1 flex flex-col m-4 text-right justify-center"
+                class="w-full flex-1 flex flex-col m-4 p-4 text-right justify-center"
             >
                 <a href="/login" class="underline">Login</a>
                 <a href="/about" class="underline">About</a>
