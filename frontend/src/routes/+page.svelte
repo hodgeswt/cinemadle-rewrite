@@ -98,15 +98,15 @@
                 throw new Error(result.error!);
             }
 
-            /*const prev = await loadPreviousGuesses($userStore.jwt);
+            const prev = await loadPreviousGuesses($userStore.jwt);
 
             if (prev.ok) {
                 for (const id of prev.data!) {
-                    await makeGuess(id, true);
+                    await makeGuess(id.toString(), true);
                 }
             } else {
                 throw new Error(prev.error!);
-            }*/
+            }
 
             loading = false;
         } catch (e) {
@@ -191,6 +191,7 @@
         let result = await get(
             `/guess/${id}`,
             { date: isoDateNoTime() },
+            { Authorization: $userStore.jwt },
         );
 
         match(

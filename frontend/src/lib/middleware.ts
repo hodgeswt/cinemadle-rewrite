@@ -54,7 +54,7 @@ export async function getPossibleMovies(): Promise<Result<PossibleMediaDomain>> 
     }
 }
 
-export async function loadPreviousGuesses(userToken: string): Promise<Result<string[]>> {
+export async function loadPreviousGuesses(userToken: string): Promise<Result<number[]>> {
     const data = await get("guesses", { date: isoDateNoTime() }, { "Authorization": userToken })
 
     if (!data.ok) {
@@ -129,7 +129,7 @@ export async function post(
 export async function get(
     endpoint: string,
     queryParams: { [key: string]: string } | null,
-    headers?: { [key: string]: string } | null,
+    headers?: { [key: string]: any } | null,
 ): Promise<Result<string>> {
     let host = "http://192.168.0.23:5566";
 
