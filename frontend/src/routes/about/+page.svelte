@@ -12,9 +12,7 @@
             >
                 cinemadle
             </h1>
-            <div
-                class="flex-1 flex flex-col text-right justify-center"
-            >
+            <div class="flex-1 flex flex-col text-right justify-center">
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>
                     <a href="/signup" class="underline">Sign Up</a>
@@ -49,8 +47,16 @@
         </p>
 
         <p class="mb-4">
-            on the genre list and the cast list, a star will indicate which
-            item(s) from your guess are correct.
+            on the genre list, the cast list, and the creatives list, a star
+            will indicate which item(s) from your guess are correct.
+        </p>
+
+        <p class="mb-4">
+            one or two arrows may appear on the box office and year boxes to
+            indicate how far off your guess was. two arrows means your guess was
+            further off, one means less. a threshold is provided in the box as
+            well. the arrows indicate which direction the number must go (i.e.
+            up arrows mean the number must be bigger).
         </p>
 
         <div class="mb-4">
@@ -70,6 +76,14 @@
                 <li>
                     genre: yellow if any of the genres of your guessed movie
                     match the target movie
+                </li>
+                <li>
+                    box office: yellow if your guess earned within $100M of the
+                    target movie's box office gross
+                </li>
+                <li>
+                    creatives: yellow if any of your guessed creatives are
+                    creatives on the target movie
                 </li>
             </ul>
         </div>
