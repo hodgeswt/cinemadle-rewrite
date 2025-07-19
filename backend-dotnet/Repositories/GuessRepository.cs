@@ -128,18 +128,18 @@ public class GuessRepository : IGuessRepository
         int yearDiffAbs = Math.Abs(yearDiff);
 
         string color = "grey";
-        if (yearDiffAbs < _config.YearYellowThreshold)
+        if (yearDiffAbs <= _config.YearYellowThreshold)
         {
             color = "yellow";
         }
 
         int yearDirection = 0;
 
-        if (yearDiffAbs < _config.YearSingleArrowThreshold)
+        if (yearDiffAbs <= _config.YearSingleArrowThreshold)
         {
             yearDirection = 1;
         }
-        else if (yearDiffAbs < _config.YearDoubleArrowThreshold)
+        else if (yearDiffAbs <= _config.YearDoubleArrowThreshold)
         {
             yearDirection = 2;
         }
