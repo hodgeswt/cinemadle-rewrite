@@ -68,21 +68,26 @@
     <div
         class={`p-4 flex flex-col h-full rounded-lg shadow-md bg-${props.color}-300`}
     >
-        <h2 class="text-lg font-bold mb-2 flex">
-            {mapTitle(props.title)}
-            {#if props.direction === 2}
-                <ArrowUp class="ml-4" /><ArrowUp />
-                &gt;{getNumber()}
-            {:else if props.direction === 1}
-                <ArrowUp class="ml-4" />
-                &le;{getNumber()}
-            {:else if props.direction === -1}
-                <ArrowDown class="ml-4" />
-                &le;{getNumber()}
-            {:else if props.direction === -2}
-                <ArrowDown class="ml-4" /><ArrowDown />
-                &gt;{getNumber()}
-            {/if}
+        <h2 class="text-lg font-bold mb-2 flex justify-between items-center">
+            <span class="flex items-center">
+                {mapTitle(props.title)}
+                {#if props.direction === 2}
+                    <ArrowUp class="ml-4" /><ArrowUp />
+                {:else if props.direction === 1}
+                    <ArrowUp class="ml-4" />
+                {:else if props.direction === -1}
+                    <ArrowDown class="ml-4" />
+                {:else if props.direction === -2}
+                    <ArrowDown class="ml-4" /><ArrowDown />
+                {/if}
+            </span>
+            <span class="text-sm font-light">
+                {#if props.direction === 2 || props.direction === -2}
+                    &gt;{getNumber()}
+                {:else if props.direction === 1 || props.direction === -1}
+                    &le;{getNumber()}
+                {/if}
+            </span>
         </h2>
         <ul class="list-none list-inside flex-grow">
             {#each props.data as datum}
