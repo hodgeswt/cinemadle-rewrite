@@ -40,44 +40,42 @@
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
-        <div class="w-full flex justify-between items-center">
+    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
+        <div class="w-full flex justify-between items-center mb-4">
             <h1
-                class="flex-1 m-4 text-4xl font-extrabold leading-none tracking-tight"
+                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
             >
                 cinemadle
             </h1>
-            <div
-                class="w-full flex-1 flex flex-col p-4 m-4 text-right justify-center"
-            >
+            <div class="flex-1 flex flex-col text-right justify-center">
                 <a href="/signup" class="underline">Sign Up</a>
                 <a href="/about" class="underline">About</a>
                 <a href="/" class="underline">Home</a>
             </div>
         </div>
 
-        <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
             Log In
         </h2>
 
-        <div class="flex flex-col">
+        <div class="flex flex-col space-y-2">
             <Input
                 type="email"
                 placeholder="example@example.com"
                 bind:value={userEmail}
-                class="m-1"
+                class="text-base"
             />
             <Input
                 type="password"
                 placeholder="*****"
+                class="text-base"
                 bind:value={userPassword}
-                class="m-1"
             />
             <Button
                 type="submit"
                 size="icon"
                 onclick={performLogIn}
-                class="m-1 flex-grow w-full"
+                class="w-full"
             >
                 <p class="m-1">Log In</p>
             </Button>
@@ -96,6 +94,5 @@
                 </AlertDialog.Footer>
             </AlertDialog.Content>
         </AlertDialog.Root>
-
     </div>
 </div>

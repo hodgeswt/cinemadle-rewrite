@@ -5,15 +5,15 @@
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
-        <div class="w-full flex justify-between items-center">
+    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
+        <div class="w-full flex justify-between items-center mb-4">
             <h1
-                class="flex-1 m-4 text-4xl font-extrabold leading-none tracking-tight"
+                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
             >
                 cinemadle
             </h1>
             <div
-                class="w-full flex-1 flex flex-col m-4 p-4 text-right justify-center"
+                class="flex-1 flex flex-col text-right justify-center"
             >
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>
@@ -25,11 +25,11 @@
             </div>
         </div>
 
-        <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
             About
         </h2>
 
-        <p class="m-4">
+        <p class="mb-4">
             cinemadle is a guessing game. each day, a movie is randomly
             selected. your task is to figure out the movie based on the clues
             provided.
@@ -41,20 +41,20 @@
             />
         </div>
 
-        <p class="m-4">
+        <p class="mb-4">
             each movie gussed provides you information. the tiles within each
             guess are color-coded to indicate if the information is wrong
             (gray), partially correct (yellow), or correct (green). each
             category has different criteria to determine these colors.
         </p>
 
-        <p class="m-4">
+        <p class="mb-4">
             on the genre list and the cast list, a star will indicate which
             item(s) from your guess are correct.
         </p>
 
-        <div class="m-4">
-            <ul class="list-disc">
+        <div class="mb-4">
+            <ul class="list-disc pl-5">
                 <li>
                     rating: yellow if your guess is adjacent to the MPAA rating
                     of the target
@@ -80,9 +80,9 @@
             />
         </div>
 
-        <p class="m-4">code: will hodges</p>
+        <p class="mb-4">code: will hodges</p>
 
-        <p class="m-4">design: will hodges and myke yunis</p>
+        <p class="mb-4">design: will hodges and myke yunis</p>
 
         {#if $userStore.loggedIn}
             <div class="flex justify-center items-center mb-4">

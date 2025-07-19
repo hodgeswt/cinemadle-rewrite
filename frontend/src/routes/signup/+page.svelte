@@ -53,15 +53,15 @@
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
-        <div class="w-full flex justify-between items-center">
+    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
+        <div class="w-full flex justify-between items-center mb-4">
             <h1
-                class="flex-1 m-4 text-4xl font-extrabold leading-none tracking-tight"
+                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
             >
                 cinemadle
             </h1>
             <div
-                class="w-full flex-1 flex flex-col m-4 p-4 text-right justify-center"
+                class="flex-1 flex flex-col text-right justify-center"
             >
                 <a href="/login" class="underline">Login</a>
                 <a href="/about" class="underline">About</a>
@@ -69,41 +69,41 @@
             </div>
         </div>
 
-        <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
             Sign Up
         </h2>
 
-        <p class="m-4">
+        <p class="mb-4">
             Email will be stored and may be provided to third parties. In the
             future, support will be added to remove your user account from our
             databases. This will be supported for all accounts created before
             this feature is added.
         </p>
 
-        <div class="flex flex-col">
+        <div class="flex flex-col space-y-2">
             <Input
                 type="email"
+                class="text-base"
                 placeholder="example@example.com"
                 bind:value={userEmail}
-                class="m-1"
             />
             <Input
                 type="password"
                 placeholder="*****"
+                class="text-base"
                 bind:value={userPassword}
-                class="m-1"
             />
             <Input
                 type="password"
                 placeholder="*****"
+                class="text-base"
                 bind:value={userConfirmPassword}
-                class="m-1"
             />
             <Button
                 type="submit"
                 size="icon"
                 onclick={performSignUp}
-                class="m-1 flex-grow w-full"
+                class="w-full"
             >
                 <p class="m-1">Sign Up</p>
             </Button>

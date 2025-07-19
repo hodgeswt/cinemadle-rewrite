@@ -263,15 +263,15 @@
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full p-4">
-        <div class="w-full flex justify-between items-center">
+    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
+        <div class="w-full flex justify-between items-center mb-4">
             <h1
-                class="flex-1 m-4 text-4xl font-extrabold leading-none tracking-tight"
+                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
             >
                 cinemadle
             </h1>
             <div
-                class="w-full flex-1 flex flex-col m-4 p-4 text-right justify-center"
+                class="flex-1 flex flex-col text-right justify-center"
             >
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>
@@ -283,13 +283,13 @@
             </div>
         </div>
         {#if $userStore.loggedIn}
-            <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+            <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
                 {isoDateNoTime()}
             </h2>
             {#if win}
-                <div class="flex items-center">
+                <div class="flex items-center mb-4">
                     <h2
-                        class="m-4 text-3xl font-semibold text-green-400 leading-non tracking-tight"
+                        class="flex-1 text-3xl font-semibold text-green-400 leading-none tracking-tight"
                     >
                         you win!
                     </h2>
@@ -299,16 +299,16 @@
                 </div>
             {/if}
             {#if lose}
-                <div class="flex items-center">
+                <div class="flex items-center mb-4">
                     <h2
-                        class="m-4 text-3xl font-semibold text-red-400 leading-non tracking-tight"
+                        class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
                     >
                         better luck next time!
                     </h2>
                     <Button class="bg-red-400" on:click={showShareSheet}>
                         share
                     </Button>
-                    <Button class="bg-red-400 ml-4" on:click={showAnswerButton}>
+                    <Button class="bg-red-400 ml-2" on:click={showAnswerButton}>
                         see answer
                     </Button>
                 </div>
@@ -316,13 +316,13 @@
 
             {#if !loading && !serverDown}
                 {#if remaining > 0 && !win}
-                    <div class="flex">
+                    <div class="flex space-x-2 mb-4">
                         <Input
                             type="text"
                             placeholder={`Guess... ${remaining} remaining`}
                             bind:value={guessValue}
                             onchange={guessChange}
-                            class="m-1"
+                            class="flex-1 text-base"
                             disabled={done}
                         />
 
@@ -330,7 +330,6 @@
                             type="submit"
                             size="icon"
                             onclick={handleGuess}
-                            class="m-1"
                             disabled={done || guessValue.trim() === ""}
                         >
                             <Search />
@@ -443,16 +442,16 @@
 
             {#if serverDown}
                 <h2
-                    class="m-4 text-2xl font-semibold leading-non tracking-tight"
+                    class="mb-4 text-2xl font-semibold leading-none tracking-tight"
                 >
                     Server down. Please try again later
                 </h2>
             {/if}
         {:else}
-            <h2 class="m-4 text-2xl font-semibold leading-non tracking-tight">
+            <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
                 cinemadle - the movie guessing game
             </h2>
-            <p class="m-4">
+            <p class="mb-4">
                 Please <a href="/login" class="underline">sign in</a> or
                 <a href="/signup" class="underline">create an account</a> to play
             </p>
