@@ -22,12 +22,12 @@
         <h2 class="text-lg font-bold mb-2 flex">
             {props.title}
             {#if props.direction === 2}
-                <ArrowUp class="ml-4" /><ArrowUp />15
+                <ArrowUp class="ml-4" /><ArrowUp />{">10"}
             {:else if props.direction === 1}
-                <ArrowUp class="ml-4" />10
+                <ArrowUp class="ml-4" />{"<=10"}
             {:else if props.direction === -1}10
-                <ArrowDown class="ml-4" />
-            {:else if props.direction === -2}15
+                <ArrowDown class="ml-4" />{"<=10"}
+            {:else if props.direction === -2}{">10"}
                 <ArrowDown class="ml-4" /><ArrowDown />
             {/if}
         </h2>
