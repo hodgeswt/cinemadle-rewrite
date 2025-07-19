@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY backend-dotnet/*.csproj ./
 RUN dotnet restore
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
 
 COPY backend-dotnet/. .
 
