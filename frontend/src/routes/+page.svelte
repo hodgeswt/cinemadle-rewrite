@@ -379,9 +379,8 @@
                             <p>cinemadle {isoDateNoTime()}</p>
                             <p>
                                 play at <a
-                                    href="cinemadle2.hodgeswill.com"
-                                    class="underline"
-                                    >cinemadle2.hodgeswill.com</a
+                                    href="cinemadle.com"
+                                    class="underline">cinemadle.com</a
                                 >
                             </p></AlertDialog.Description
                         >

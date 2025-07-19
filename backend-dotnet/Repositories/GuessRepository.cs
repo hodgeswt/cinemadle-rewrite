@@ -10,6 +10,8 @@ public class GuessRepository : IGuessRepository
     private readonly CinemadleConfig _config;
 
     private readonly string _ratingKey = "rating";
+    private readonly string _creativesKey = "creatives";
+    private readonly string _boxOfficeKey = "boxOffice";
     private readonly string _yearKey = "year";
     private readonly string _genreKey = "genre";
     private readonly string _castKey = "cast";
@@ -28,6 +30,11 @@ public class GuessRepository : IGuessRepository
         _logger.LogDebug("-ctor({type})", type);
     }
 
+    private string CreativeFromPerson(PersonDto person)
+    {
+        return $"{person.Role ?? "UNK"}: {person.Name ?? "UNK"}";
+    }
+
     public GuessDto Guess(MovieDto guess, MovieDto target)
     {
         string cacheKey = string.Format(_guessCacheKeyTemplate, guess.Id, target.Id);
@@ -38,6 +45,36 @@ public class GuessRepository : IGuessRepository
         }
 
         Dictionary<string, FieldDto> fields = new Dictionary<string, FieldDto>();
+
+        if (IsBoxOfficeMismatch(guess.BoxOffice, target.BoxOffice, out FieldDto? boxOfficeOut) && boxOfficeOut is not null)
+        {
+            fields.Add(_boxOfficeKey, boxOfficeOut);
+        }
+        else
+        {
+            fields.Add(_boxOfficeKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = new List<string> { target.BoxOffice.ToString() },
+            });
+        }
+
+        if (IsListMismatch(guess.Creatives.Select(x => CreativeFromPerson(x)), target.Creatives.Select(x => CreativeFromPerson(x)), out FieldDto? creativesOut) && creativesOut is not null)
+        {
+            fields.Add(_creativesKey, creativesOut);
+        }
+        else
+        {
+            fields.Add(_creativesKey, new FieldDto
+            {
+                Color = "green",
+                Direction = 0,
+                Modifiers = new(),
+                Values = target.Creatives.Select(x => CreativeFromPerson(x))
+            });
+        }
 
         if (IsRatingMismatch(guess.Rating, target.Rating, out FieldDto? ratingOut) && ratingOut is not null)
         {
@@ -50,7 +87,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = new(),
-                Values = new List<string> { guess.Rating.ToString() }
+                Values = new List<string> { target.Rating.ToString() }
             });
         }
 
@@ -65,7 +102,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = new(),
-                Values = guess.Genres
+                Values = target.Genres
             });
         }
 
@@ -80,7 +117,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = new(),
-                Values = guess.Cast.Select(x => x.Name)
+                Values = target.Cast.Select(x => x.Name)
             });
         }
 
@@ -95,7 +132,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = new(),
-                Values = new List<string> { guess.Year }
+                Values = new List<string> { target.Year }
             });
         }
 
@@ -103,6 +140,53 @@ public class GuessRepository : IGuessRepository
         {
             Fields = fields
         };
+    }
+
+    public bool IsBoxOfficeMismatch(long guessBoxOffice, long targetBoxOffice, out FieldDto? boxOfficeOut)
+    {
+        boxOfficeOut = null;
+
+        if (guessBoxOffice == targetBoxOffice)
+        {
+            return false;
+        }
+
+        long boxOfficeDiff = guessBoxOffice - targetBoxOffice;
+        long boxOfficeDiffAbs = Math.Abs(boxOfficeDiff);
+
+        string color = "grey";
+
+        if (boxOfficeDiffAbs <= _config.BoxOfficeYellowThreshold)
+        {
+            color = "yellow";
+        }
+
+        int yearDirection = 0;
+
+        if (boxOfficeDiffAbs <= _config.BoxOfficeSingleArrowThreshold)
+        {
+            yearDirection = 1;
+        }
+        else
+        {
+            yearDirection = 2;
+        }
+
+        if (boxOfficeDiffAbs > 0)
+        {
+            yearDirection *= -1;
+        }
+
+        boxOfficeOut = new FieldDto
+        {
+            Direction = yearDirection,
+            Color = color,
+            Modifiers = new(),
+            Values = new List<string> { guessBoxOffice.ToString() }
+        };
+
+        return true;
+
     }
 
     public bool IsYearMismatch(string guessYear, string targetYear, out FieldDto? yearOut)

@@ -167,6 +167,40 @@ public class TmdbRepository : ITmdbRepository
                 ?.ReleaseDates
                 ?.FirstOrDefault(x => x.Type == ReleaseDateType.Theatrical);
 
+        PersonDto? director = movie
+            .Credits
+            ?.Crew
+            ?.Where(x => string.Equals(x.Job, "director", StringComparison.OrdinalIgnoreCase))
+            ?.Select(x => new PersonDto
+            {
+                Name = x.Name,
+                Role = "Director"
+            })
+            ?.FirstOrDefault();
+
+        PersonDto? writer = movie
+            .Credits
+            ?.Crew
+            ?.Where(x => string.Equals(x.Job, "writer", StringComparison.OrdinalIgnoreCase))
+            ?.Select(x => new PersonDto
+            {
+                Name = x.Name,
+                Role = "Writer"
+            })
+            ?.FirstOrDefault();
+
+        List<PersonDto> creatives = new List<PersonDto>();
+
+        if (director is not null)
+        {
+            creatives.Add(director);
+        }
+
+        if (writer is not null)
+        {
+            creatives.Add(writer);
+        }
+
         movieDto = new MovieDto
         {
             Id = id,
@@ -179,6 +213,8 @@ public class TmdbRepository : ITmdbRepository
                 ?.Take(_config.GenresCount)
                 ?.Select(x => x.Name) ?? new List<string>(),
             Year = release?.ReleaseDate.Year.ToString() ?? "9999",
+            BoxOffice = movie.Revenue,
+            Creatives = creatives,
             Rating = MapCertificationToRating(release?.Certification)
         };
 
