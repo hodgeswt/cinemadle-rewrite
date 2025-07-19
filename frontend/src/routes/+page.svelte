@@ -169,7 +169,7 @@
             navigator.share({
                 title: "cinemadle",
                 text: shareData.join("\n"),
-                url: "http://cinemadle.com",
+                url: "https://cinemadle.com",
             });
         } else {
             navigator.clipboard.writeText(shareData.join("\n"));

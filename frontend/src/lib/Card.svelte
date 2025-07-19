@@ -25,7 +25,7 @@
                 <ArrowUp class="ml-4" /><ArrowUp />{">10"}
             {:else if props.direction === 1}
                 <ArrowUp class="ml-4" />{"<=10"}
-            {:else if props.direction === -1}10
+            {:else if props.direction === -1}
                 <ArrowDown class="ml-4" />{"<=10"}
             {:else if props.direction === -2}{">10"}
                 <ArrowDown class="ml-4" /><ArrowDown />
