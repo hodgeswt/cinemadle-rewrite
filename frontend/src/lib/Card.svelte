@@ -18,15 +18,16 @@
     <div
         class={`p-4 flex flex-col h-full rounded-lg shadow-md bg-${props.color}-300`}
     >
+        <!-- TODO: Fix hardcoded numbers -->
         <h2 class="text-lg font-bold mb-2 flex">
             {props.title}
             {#if props.direction === 2}
-                <ArrowUp class="ml-4" /><ArrowUp />
+                <ArrowUp class="ml-4" /><ArrowUp />15
             {:else if props.direction === 1}
-                <ArrowUp class="ml-4" />
-            {:else if props.direction === -1}
+                <ArrowUp class="ml-4" />10
+            {:else if props.direction === -1}10
                 <ArrowDown class="ml-4" />
-            {:else if props.direction === -2}
+            {:else if props.direction === -2}15
                 <ArrowDown class="ml-4" /><ArrowDown />
             {/if}
         </h2>

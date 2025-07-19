@@ -139,7 +139,7 @@ public class GuessRepository : IGuessRepository
         {
             yearDirection = 1;
         }
-        else if (yearDiffAbs <= _config.YearDoubleArrowThreshold)
+        else
         {
             yearDirection = 2;
         }
