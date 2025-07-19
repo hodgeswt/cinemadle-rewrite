@@ -66,7 +66,7 @@ public class Program
 
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
-        builder.Services.AddSingleton<ITmdbRepository, TmdbRepository>();
+        builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
         builder.Services.AddSingleton<IGuessRepository, GuessRepository>();
 
         builder.Services.AddAuthorization();
