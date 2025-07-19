@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - 'main'
-    paths:
-      - '!Dockerfile-Migrator'
+    paths-ignore:
+      - 'Dockerfile-Migrator'
   workflow_dispatch:
 jobs:
   Build:

@@ -5,6 +5,7 @@ on:
       - 'main'
     paths:
       - 'Dockerfile-Migrator'
+      - 'migrate-container.sh'
   workflow_dispatch:
 jobs:
   Build:
