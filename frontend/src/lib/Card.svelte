@@ -66,22 +66,36 @@
 
 <div class="p-2 h-full">
     <div
-        class={`p-4 flex flex-col h-full rounded-lg shadow-md bg-${props.color}-300`}
+        class={`p-4 flex flex-col h-full rounded-lg shadow-md bg-${props.color}-300 overflow-hidden`}
     >
-        <h2 class="text-lg font-bold mb-2 flex justify-between items-center">
-            <span class="flex items-center">
-                {mapTitle(props.title)}
+        <h2 class="text-lg font-bold mb-2 flex sm:flex-row sm:justify-between sm:items-center gap-1">
+            <span class="flex items-center flex-shrink min-w-0">
+                <span>{mapTitle(props.title)}</span>
                 {#if props.direction === 2}
-                    <ArrowUp class="ml-4" /><ArrowUp />
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowUp class="inline w-4 h-4" />
+                    </span>
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowUp class="inline w-4 h-4" />
+                    </span>
                 {:else if props.direction === 1}
-                    <ArrowUp class="ml-4" />
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowUp class="inline w-4 h-4" />
+                    </span>
                 {:else if props.direction === -1}
-                    <ArrowDown class="ml-4" />
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowDown class="inline w-4 h-4" />
+                    </span>
                 {:else if props.direction === -2}
-                    <ArrowDown class="ml-4" /><ArrowDown />
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowDown class="inline w-4 h-4" />
+                    </span>
+                    <span class="flex-shrink-0 ml-2">
+                        <ArrowDown class="inline w-4 h-4" />
+                    </span>
                 {/if}
             </span>
-            <span class="text-sm font-light">
+            <span class="text-sm font-light flex-shrink-0 ml-2">
                 {#if props.direction === 2 || props.direction === -2}
                     &gt;{getNumber()}
                 {:else if props.direction === 1 || props.direction === -1}
@@ -89,15 +103,15 @@
                 {/if}
             </span>
         </h2>
-        <ul class="list-none list-inside flex-grow">
+        <ul class="list-none list-inside flex-grow overflow-y-auto">
             {#each props.data as datum}
                 {#if props.modifiers[datum]?.includes("bold") === true}
-                    <li class="text-black flex items-center">
-                        {formatNumber(datum)}
-                        <Sparkles class="scale-75" />
+                    <li class="text-black flex items-center break-words">
+                        <span class="truncate flex-grow">{formatNumber(datum)}</span>
+                        <Sparkles class="scale-75 flex-shrink-0 ml-1" />
                     </li>
                 {:else}
-                    <li class="text-black">{formatNumber(datum)}</li>
+                    <li class="text-black break-words">{formatNumber(datum)}</li>
                 {/if}
             {/each}
         </ul>
