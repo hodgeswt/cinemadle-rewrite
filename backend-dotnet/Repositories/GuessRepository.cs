@@ -166,7 +166,7 @@ public class GuessRepository : IGuessRepository
 
         IEnumerable<string> shared = guessList.Intersect(targetList);
 
-        if (guessList.Count() == shared.Count())
+        if (targetList.Count() == shared.Count())
         {
             return false;
         }
