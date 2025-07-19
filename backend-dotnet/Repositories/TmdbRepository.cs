@@ -1,3 +1,4 @@
+using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
 using TMDbLib.Client;
@@ -18,6 +19,7 @@ public class TmdbRepository : ITmdbRepository
     private readonly CinemadleConfig _config;
     private TMDbClient _tmdbClient;
     private ICacheRepository _cache;
+    private DatabaseContext _db;
 
     private bool _initialized { get; set; }
 
@@ -27,7 +29,7 @@ public class TmdbRepository : ITmdbRepository
     private readonly string _getTargetMovieCacheKeyTemplate = "TmdbRepository.GetTargetMovie.{0}";
     private readonly string _getMovieListCacheKey = "TmdbRepository.GetMovieList";
 
-    public TmdbRepository(ILogger<TmdbRepository> logger, IConfigRepository config, ICacheRepository cache)
+    public TmdbRepository(ILogger<TmdbRepository> logger, IConfigRepository config, ICacheRepository cache, DatabaseContext dbContext)
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "TmdbRepository";
@@ -36,6 +38,7 @@ public class TmdbRepository : ITmdbRepository
         _config = config.GetConfig();
         _cache = cache;
         _tmdbClient = new TMDbClient(config.GetConfig().TmdbApiKey);
+        _db = dbContext;
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -102,6 +105,15 @@ public class TmdbRepository : ITmdbRepository
         {
             _logger.LogDebug("GetTargetMovie: Returning cached movie");
             return movieDto;
+        }
+
+        TargetMovie? dbTargetMovie = _db.TargetMovies
+            .Where(x => x.GameId == date)
+            .FirstOrDefault();
+
+        if (dbTargetMovie is not null)
+        {
+            return await GetMovieByIdInternal(dbTargetMovie.TargetMovieId);
         }
 
         int seed = int.Parse(date.Replace("-", string.Empty));

@@ -5,6 +5,7 @@ namespace Cinemadle.Database;
 public class DatabaseContext : DbContext
 {
     public DbSet<UserGuess> Guesses { get; set; }
+    public DbSet<TargetMovie> TargetMovies { get; set; }
 
     public string DbPath { get; set; }
 
@@ -12,7 +13,7 @@ public class DatabaseContext : DbContext
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         string path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "AppData",  "cinemadle.db");
+        DbPath = Path.Join(path, "AppData", "cinemadle.db");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
