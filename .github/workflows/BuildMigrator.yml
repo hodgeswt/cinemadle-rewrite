@@ -28,6 +28,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: Dockerfile-Migrator
+          context: .
+          file: Dockerfile-Migrator
           push: ${{ github.event_name != 'pull_request' }}
           tags: hodgeswt/cinemadle-migrator:latest
