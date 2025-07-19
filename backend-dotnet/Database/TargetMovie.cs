@@ -12,8 +12,6 @@ public class TargetMovie
 
     public required string GameId { get; set; }
 
-    public int SequenceId { get; set; }
-
     public required int TargetMovieId { get; set; }
 
     public DateTime Inserted { get; set; }

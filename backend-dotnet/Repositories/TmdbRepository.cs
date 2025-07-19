@@ -127,7 +127,16 @@ public class TmdbRepository : ITmdbRepository
             movieIndex = r.Next(0, movies.Count - 1);
         }
 
-        return await GetMovieByIdInternal(movies.Values.ElementAt(movieIndex));
+        int movieId = movies.Values.ElementAt(movieIndex);
+        _db.TargetMovies
+            .Add(new TargetMovie
+            {
+                GameId = date,
+                TargetMovieId = movieId,
+                Inserted = DateTime.Now,
+            });
+
+        return await GetMovieByIdInternal(movieId);
     }
 
     private async Task<MovieDto?> GetMovieByIdInternal(int id)
