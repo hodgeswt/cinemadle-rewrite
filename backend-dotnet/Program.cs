@@ -53,6 +53,14 @@ public class Program
                             .AllowAnyHeader();
                     });
         });
+
+        builder.Services.Configure<ForwardedHeadersOptions>(opts =>
+        {
+            opts.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+            opts.KnownNetworks.Clear();
+            opts.KnownProxies.Clear();
+        });
+
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
