@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BuyMeAPizza from "$lib/BuyMeAPizza.svelte";
     import { Button } from "$lib/components/ui/button";
     import { userStore } from "$lib/stores";
 </script>
@@ -84,7 +85,7 @@
         <p class="m-4">design: will hodges and myke yunis</p>
 
         {#if $userStore.loggedIn}
-            <div class="flex justify-center items-center">
+            <div class="flex justify-center items-center mb-4">
                 <Button
                     onclick={() => {
                         userStore.setLoggedOut();
@@ -94,5 +95,6 @@
                 </Button>
             </div>
         {/if}
+        <BuyMeAPizza />
     </div>
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import Guess from "$lib/Guess.svelte";
+    import BuyMeAPizza from "$lib/BuyMeAPizza.svelte";
     import { Input } from "$lib/components/ui/input";
     import { Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
@@ -455,6 +456,9 @@
                 Please <a href="/login" class="underline">sign in</a> or
                 <a href="/signup" class="underline">create an account</a> to play
             </p>
+        {/if}
+        {#if $userStore.loggedIn && guesses.length > 0}
+            <BuyMeAPizza />
         {/if}
     </div>
 </div>
