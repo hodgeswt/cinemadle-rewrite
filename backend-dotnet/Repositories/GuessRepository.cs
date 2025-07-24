@@ -30,7 +30,7 @@ public class GuessRepository : IGuessRepository
         _logger.LogDebug("-ctor({type})", type);
     }
 
-    private string CreativeFromPerson(PersonDto person)
+    public static string CreativeFromPerson(PersonDto person)
     {
         return $"{person.Role ?? "UNK"}: {person.Name ?? "UNK"}";
     }
