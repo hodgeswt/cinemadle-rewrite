@@ -1,5 +1,7 @@
+using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
+using System.Reflection;
 
 namespace Cinemadle.Repositories;
 
@@ -8,6 +10,7 @@ public class GuessRepository : IGuessRepository
     private ILogger<GuessRepository> _logger;
     private ICacheRepository _cache;
     private readonly CinemadleConfig _config;
+    private DatabaseContext _db;
 
     private readonly string _ratingKey = "rating";
     private readonly string _creativesKey = "creatives";
@@ -18,7 +21,7 @@ public class GuessRepository : IGuessRepository
 
     private readonly string _guessCacheKeyTemplate = "GuessRepository.Guess.{0}.{1}";
 
-    public GuessRepository(ILogger<GuessRepository> logger, ICacheRepository cacheRepository, IConfigRepository configRepository)
+    public GuessRepository(ILogger<GuessRepository> logger, ICacheRepository cacheRepository, IConfigRepository configRepository, DatabaseContext db)
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "GuessRepository";
@@ -26,6 +29,7 @@ public class GuessRepository : IGuessRepository
 
         _cache = cacheRepository;
         _config = configRepository.GetConfig();
+        _db = db;
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -33,6 +37,51 @@ public class GuessRepository : IGuessRepository
     public static string CreativeFromPerson(PersonDto person)
     {
         return $"{person.Role ?? "UNK"}: {person.Name ?? "UNK"}";
+    }
+
+    private void ApplyDataOverrides(ref MovieDto guess)
+    {
+        try
+        {
+            int id = guess.Id;
+            IEnumerable<DataOverride> overrides = _db.DataOverrides
+                .Where(x => x.MovieId == id);
+
+            if (!overrides.Any())
+            {
+                _logger.LogInformation("Did not override any fields for movie {id}", id);
+                return;
+            }
+
+            foreach (DataOverride o in overrides)
+            {
+                Type t = guess.GetType();
+                PropertyInfo? f = t.GetProperty(o.Category);
+
+                if (f is null)
+                {
+                    _logger.LogWarning("Unable to override field {fieldName}", o.Category);
+                    continue;
+                }
+
+                Type fieldType = f.PropertyType;
+
+                try
+                {
+                    object v = Convert.ChangeType(o.Data, fieldType);
+
+                    f.SetValue(guess, v);
+                }
+                catch
+                {
+                    _logger.LogWarning("Unable to override field {fieldName} of type {fieldType} with data {data}", o.Category, nameof(fieldType), o.Data);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Guess: failed to override data. Exception: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+        }
     }
 
     public GuessDto Guess(MovieDto guess, MovieDto target)
@@ -43,6 +92,8 @@ public class GuessRepository : IGuessRepository
             _logger.LogDebug("Guess: Returning cached guess data");
             return guessDto;
         }
+
+        ApplyDataOverrides(ref guess);
 
         Dictionary<string, FieldDto> fields = new Dictionary<string, FieldDto>();
 

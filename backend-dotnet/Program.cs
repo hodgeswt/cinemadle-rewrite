@@ -75,7 +75,7 @@ public class Program
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
         builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
-        builder.Services.AddSingleton<IGuessRepository, GuessRepository>();
+        builder.Services.AddScoped<IGuessRepository, GuessRepository>();
 
         builder.Services.AddAuthorization();
         builder.Services.AddIdentityApiEndpoints<IdentityUser>()

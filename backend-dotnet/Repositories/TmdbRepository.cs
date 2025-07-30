@@ -135,6 +135,7 @@ public class TmdbRepository : ITmdbRepository
                 TargetMovieId = movieId,
                 Inserted = DateTime.Now,
             });
+        _db.SaveChanges();
 
         return await GetMovieByIdInternal(movieId);
     }
