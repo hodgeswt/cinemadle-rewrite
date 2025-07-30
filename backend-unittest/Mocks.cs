@@ -1,8 +1,8 @@
+using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
-using Cinemadle.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Cinemadle.UnitTest;
@@ -29,6 +29,18 @@ public class Mocks
     public static IMemoryCache GetMemoryCache()
     {
         return new MemoryCache(new MemoryCacheOptions());
+    }
+
+    public static DatabaseContext GetDatabaseContext()
+    {
+        var opt = new DbContextOptionsBuilder<DatabaseContext>()
+            .UseInMemoryDatabase(databaseName: System.Guid.NewGuid().ToString())
+            .Options;
+
+        var ctx = new DatabaseContext(opt);
+
+        ctx.Database.EnsureCreated();
+        return ctx;
     }
 
     public static Mock<ICacheRepository> GetMockedCacheRepository()

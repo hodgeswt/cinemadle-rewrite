@@ -1,3 +1,4 @@
+using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
@@ -17,7 +18,9 @@ public class GuessRepositoryUnitTest
         Mock<ICacheRepository> cacheRepoMock = Mocks.GetMockedCacheRepository();
         ICacheRepository cacheRepo = cacheRepoMock.Object;
 
-        return new GuessRepository(logger, cacheRepo, configRepo);
+        DatabaseContext db = Mocks.GetDatabaseContext();
+
+        return new GuessRepository(logger, cacheRepo, configRepo, db);
     }
 
     private static MovieDto GetTargetMovie()

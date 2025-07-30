@@ -10,13 +10,22 @@ public class DatabaseContext : DbContext
 
     public string DbPath { get; set; }
 
-    public DatabaseContext()
+    public DatabaseContext(DbContextOptions<DatabaseContext> opts) : base(opts)
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         string path = Environment.GetFolderPath(folder);
         DbPath = Path.Join(path, "AppData", "cinemadle.db");
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseSqlite($"DataSource={DbPath}");
+    public DatabaseContext() : this(new DbContextOptions<DatabaseContext>())
+    {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlite($"DataSource={DbPath}");
+        }
+    }
 }
