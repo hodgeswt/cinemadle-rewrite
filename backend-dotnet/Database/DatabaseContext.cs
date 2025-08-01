@@ -7,6 +7,8 @@ public class DatabaseContext : DbContext
     public DbSet<UserGuess> Guesses { get; set; }
     public DbSet<TargetMovie> TargetMovies { get; set; }
     public DbSet<DataOverride> DataOverrides { get; set; }
+    public DbSet<AnonUser> AnonUsers { get; set; }
+    public DbSet<UserGuess> AnonUserGuesses { get; set; }
 
     public string DbPath { get; set; }
 

@@ -62,6 +62,42 @@ public class CinemadleController : ControllerBase
         return true;
     }
 
+    [HttpGet("anonUserId")]
+    public async Task<ActionResult> GetAnonUserId()
+    {
+        _logger.LogDebug("+GetAnonUserId");
+
+        IEnumerable<AnonUser>? users = null;
+        int count = 0;
+        string userId = string.Empty;
+
+        while ((users == null || users.Any()) && count < 5)
+        {
+            userId = System.Guid.NewGuid().ToString();
+
+            users = _db.AnonUsers
+                .Where(x => x.UserId == userId);
+
+            count++;
+        }
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetAnonUserId");
+            return new StatusCodeResult(500);
+        }
+
+        _db.AnonUsers.Add(new()
+        {
+            UserId = userId
+        });
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogDebug("-GetAnonUserId");
+        return new OkObjectResult(userId);
+    }
+
     [HttpGet("target")]
     public async Task<ActionResult> GetTargetMovie(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
