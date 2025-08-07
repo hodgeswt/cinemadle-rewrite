@@ -4,18 +4,9 @@
     import { Input } from "$lib/components/ui/input";
     import { Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
-    import { match } from "$lib/result";
     import { flip } from "svelte/animate";
-    import {
-        get,
-        getPossibleMovies,
-        loadPreviousGuesses,
-        ping,
-        getAnswer,
-        validateAndRefreshToken,
-    } from "$lib/middleware";
+    import { ping, getAnswer, validateAndRefreshToken } from "$lib/middleware";
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
-    import { GuessDtoToDomain } from "$lib/mappers";
     import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
     import { isoDateNoTime } from "$lib/util";
@@ -25,6 +16,8 @@
     import { userStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
     import type { LoginDto } from "$lib/dto";
+    import { Container, type IGuessService } from "$lib/services";
+    import Logger from "$lib/logger";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -37,9 +30,11 @@
 
     let searchOpen = $state(false);
 
-    let possibleGuesses = $state({} as PossibleMediaDomain);
-
     let titles = $derived(guesses.map((x) => x.title));
+
+    let guessService = (): IGuessService => Container.it().GuessService;
+
+    let possibleGuesses = $state({} as PossibleMediaDomain);
 
     let filteredGuesses = $derived(
         find(guessValue, Object.keys(possibleGuesses))
@@ -48,6 +43,7 @@
     );
 
     const LIMIT = 10;
+    const PING_LIMIT = 10;
 
     let remaining = $derived(LIMIT - guesses.length);
     let win = $derived(guesses.filter((x) => x.win).length > 0);
@@ -57,6 +53,7 @@
 
     let loading = $state(true);
     let healthPing = $state(0);
+    let guessServicePing = $state(0);
 
     let serverDown = $state(false);
 
@@ -84,7 +81,7 @@
             let alive = await ping();
 
             while (!alive) {
-                if (healthPing == 10) {
+                if (healthPing === PING_LIMIT) {
                     serverDown = true;
                     return;
                 }
@@ -114,24 +111,27 @@
                 }
             }
 
-            const result = await getPossibleMovies();
+            while (!guessService().isInitialized()) {
+                if (guessServicePing === PING_LIMIT) {
+                    serverDown = true;
+                    return;
+                }
 
-            if (result.ok) {
-                possibleGuesses = result.data!;
-            } else {
-                throw new Error(result.error!);
+                guessServicePing += 1;
+                await new Promise((x) => setTimeout(x, 1000));
             }
 
-            if ($userStore.loggedIn) {
-                const prev = await loadPreviousGuesses($userStore.jwt);
+            possibleGuesses = guessService().possibleGuesses();
+            Logger.log("+page.svelte.onMount: possibleGuesses: {0}", possibleGuesses);
 
-                if (prev.ok) {
-                    for (const id of prev.data!) {
-                        await makeGuess(id.toString(), true);
-                    }
-                } else {
-                    throw new Error(prev.error!);
-                }
+            const prev = await guessService().getPreviousGuesses();
+            if (!prev.ok) {
+                throw new Error(prev.error!);
+            }
+
+            for (const g of prev.data!) {
+                Logger.log("+page.svelte.onMount: Making previous guess {0}", g.title);
+                guesses.push(g);
             }
 
             loading = false;
@@ -179,6 +179,7 @@
     }
 
     function guessChange(_event: Event): void {
+        Logger.log("+page.svelte.guessChange(): Input changed: {0}", guessValue);
         if (guessValue !== "") {
             searchOpen = true;
         } else {
@@ -186,58 +187,15 @@
         }
     }
 
-    async function makeGuess(guess: string, skipMap?: boolean): Promise<void> {
-        if (done || guess.trim() === "") {
-            return;
-        }
+    async function makeGuess(guess: string): Promise<void> {
+        let result = await guessService().guess(guess);
 
-        const skip = skipMap === true;
-        const id = skip ? guess : possibleGuesses[guess];
-        const title = skip
-            ? (Object.keys(possibleGuesses).find(
-                  (x) => possibleGuesses[x].toString() === guess,
-              ) ?? "Unknown")
-            : guess;
-
-        if (guesses.filter((x) => x.title === title).length != 0) {
-            errorMessage = "Movie already guessed!";
+        if (result.ok) {
+            guesses.push(result.data!);
+        } else {
+            errorMessage = result.error!;
             openError.set(true);
-            return;
         }
-
-        if (id === undefined) {
-            errorMessage = "Unable to make that guess! Try another option";
-            openError.set(true);
-            return;
-        }
-
-        let result = await get(
-            `/guess/${id}`,
-            { date: isoDateNoTime() },
-            { Authorization: $userStore.jwt },
-        );
-
-        match(
-            result,
-            () => {
-                let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto, title);
-
-                if (domain.ok) {
-                    guesses.push(domain.data as GuessDomain);
-                    errorMessage = "";
-                    openError.set(false);
-                } else {
-                    console.log("error");
-                    errorMessage = "Invalid response from server";
-                    openError.set(true);
-                }
-            },
-            () => {
-                errorMessage = "Error making that guess! Try another option";
-                openError.set(true);
-            },
-        );
     }
 
     function closeDialog() {
@@ -270,9 +228,7 @@
             >
                 cinemadle
             </h1>
-            <div
-                class="flex-1 flex flex-col text-right justify-center"
-            >
+            <div class="flex-1 flex flex-col text-right justify-center">
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>
                     <a href="/signup" class="underline">Sign Up</a>
@@ -362,9 +318,9 @@
                             {errorMessage}
                         </AlertDialog.Description>
                         <AlertDialog.Footer>
-                            <AlertDialog.Action on:click={closeDialog}
-                                >Ok</AlertDialog.Action
-                            >
+                            <AlertDialog.Action on:click={closeDialog}>
+                                Ok
+                            </AlertDialog.Action>
                         </AlertDialog.Footer>
                     </AlertDialog.Content>
                 </AlertDialog.Root>

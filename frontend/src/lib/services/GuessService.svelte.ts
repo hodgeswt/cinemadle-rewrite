@@ -1,0 +1,57 @@
+import type { GuessDomain } from "$lib/domain";
+import { get } from "$lib/middleware";
+import { err, match, ok, type Result } from "$lib/result";
+import { isoDateNoTime } from "$lib/util";
+import type { IGuessService } from "./IGuessService";
+import { userStore } from "$lib/stores";
+import { get as sget } from 'svelte/store';
+import { GuessDtoToDomain } from "$lib/mappers";
+import { GuessServiceShared } from "./GuessServiceShared";
+import Logger from "$lib/logger";
+
+export class GuessService extends GuessServiceShared implements IGuessService {
+    constructor() {
+        super();
+    }
+
+    async guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
+        if (guess.trim() === "") {
+            return err("Invalid guess");
+        }
+
+        Logger.log("GuessService.svelte.ts: guess: {0}, skipTitleMap: {1}", guess, skipTitleMap);
+
+        const id = skipTitleMap !== true ? this._possibleGuesses[guess] : guess;
+
+        let result = await get(
+            `/guess/${id}`,
+            { date: isoDateNoTime() },
+            { Authorization: sget(userStore).jwt },
+        );
+
+        const title = skipTitleMap !== true ? guess : this.getTitle(guess);
+
+        if (this._guesses.includes(title)) {
+            return err(GuessService.duplicateGuessError);
+        }
+
+        if (result.ok) {
+            try {
+                let dto = JSON.parse(result.data as string);
+                let domain = GuessDtoToDomain(dto, title);
+
+                if (domain.ok) {
+                    this._guesses.push(title);
+                    return ok(domain.data as GuessDomain);
+                } else {
+                    return err(GuessService.guessError)
+                }
+            }
+            catch {
+                return err(GuessService.guessError)
+            }
+        }
+
+        return err(GuessService.guessError);
+    }
+}

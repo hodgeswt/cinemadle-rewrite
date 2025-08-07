@@ -1,5 +1,10 @@
-import type { GuessDomain } from "$lib/domain";
+import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
+import type { Result } from "$lib/result";
 
 export interface IGuessService {
-    guess(id: string): GuessDomain | null;
+    guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
+    isInitialized(): boolean;
+    initialize(): Promise<boolean>;
+    possibleGuesses(): PossibleMediaDomain;
+    getPreviousGuesses(): Promise<Result<GuessDomain[]>>;
 }
