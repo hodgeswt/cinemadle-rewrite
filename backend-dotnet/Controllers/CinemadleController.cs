@@ -145,6 +145,33 @@ public class CinemadleController : ControllerBase
         }
     }
 
+    [HttpGet("guesses/anon")]
+    public ActionResult GetPastGuessesAnon(
+        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+        [FromQuery, Required] Guid userId
+    )
+    {
+        _logger.LogDebug("+GetPastGuessesAnon({date}, {userId})", date, userId);
+
+        try
+        {
+            IEnumerable<UserGuess> guesses = _db.AnonUserGuesses.Where(
+                x => x.GameId == date && x.UserId == userId.ToString()
+            )
+            .OrderBy(x => x.SequenceId);
+
+            _logger.LogDebug("-GetPastGuessesAnon({date}, {userId})", date, userId);
+            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogDebug("-GetPastGuesses({date}, {userId})", date, userId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
     [Authorize]
     [HttpGet("guesses")]
     public ActionResult GetPastGuesses(

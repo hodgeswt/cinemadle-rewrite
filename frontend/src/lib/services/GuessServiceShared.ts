@@ -1,15 +1,13 @@
 import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
 import Logger from "$lib/logger";
 import { getPossibleMovies, loadPreviousGuesses } from "$lib/middleware";
-import { err, ok, type Result } from "$lib/result";
-import { userStore } from "$lib/stores";
+import { type Result } from "$lib/result";
 import type { IGuessService } from "./IGuessService";
-import { get as sget } from 'svelte/store';
 
 export abstract class GuessServiceShared implements IGuessService {
     static guessError = "Error making that guess! Try another option.";
     static duplicateGuessError = "Guess already made! Try another option.";
-
+    static unableToGetPreviousError = "Unable to get previous guesses. Try again later.";
 
     private _initialized;
     protected _possibleGuesses: PossibleMediaDomain;
@@ -56,27 +54,5 @@ export abstract class GuessServiceShared implements IGuessService {
         ) ?? "Unknown";
     }
 
-    public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
-        Logger.log("GuessServiceShared.getPreviousGuesses()");
-
-        const jwt = sget(userStore).jwt;
-
-        const prev = await loadPreviousGuesses(jwt);
-
-        let o: GuessDomain[] = [] as GuessDomain[];
-
-        if (prev.ok) {
-            for (const id of prev.data!) {
-                const g = await this.guess(`${id}`, true);
-
-                if (g.ok) {
-                    o.push(g.data!);
-                }
-            }
-
-            return ok(o);
-        }
-
-        return err("Unable to load previous guesses. Try again later.");
-    }
+    abstract getPreviousGuesses(): Promise<Result<GuessDomain[]>>;
 }

@@ -1,6 +1,6 @@
 import type { GuessDomain } from "$lib/domain";
-import { get } from "$lib/middleware";
-import { err, match, ok, type Result } from "$lib/result";
+import { get, loadPreviousGuesses } from "$lib/middleware";
+import { err, ok, type Result } from "$lib/result";
 import { isoDateNoTime } from "$lib/util";
 import type { IGuessService } from "./IGuessService";
 import { userStore } from "$lib/stores";
@@ -53,5 +53,29 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         }
 
         return err(GuessService.guessError);
+    }
+    
+    public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
+        Logger.log("GuessService.getPreviousGuesses()");
+
+        const jwt = sget(userStore).jwt;
+
+        const prev = await loadPreviousGuesses(jwt);
+
+        let o: GuessDomain[] = [] as GuessDomain[];
+
+        if (prev.ok) {
+            for (const id of prev.data!) {
+                const g = await this.guess(`${id}`, true);
+
+                if (g.ok) {
+                    o.push(g.data!);
+                }
+            }
+
+            return ok(o);
+        }
+
+        return err("Unable to load previous guesses. Try again later.");
     }
 }

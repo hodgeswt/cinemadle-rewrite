@@ -2,6 +2,7 @@ import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain } from "./domain";
 import { isLoginDto } from "./dto";
+import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
@@ -152,6 +153,7 @@ export async function get(
     endpoint: string,
     queryParams: { [key: string]: string } | null,
     headers?: { [key: string]: any } | null,
+    raw?: boolean,
 ): Promise<Result<string>> {
     let host = import.meta.env.VITE_API_ENDPOINT;
 
@@ -185,10 +187,16 @@ export async function get(
         let good = true;
         if (response.ok) {
             try {
-                if (response.status != 204) {
-                    responseData = JSON.stringify(await response.json());
+                if (raw !== true) {
+                    Logger.log("middleware.ts: get(): loading json")
+                    if (response.status != 204) {
+                        responseData = JSON.stringify(await response.json());
+                    } else {
+                        responseData = "true";
+                    }
                 } else {
-                    responseData = "true";
+                    Logger.log("middleware.ts: get(): loading raw")
+                    responseData = await response.text();
                 }
             }
             catch {

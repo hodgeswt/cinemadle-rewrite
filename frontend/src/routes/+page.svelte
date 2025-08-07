@@ -122,7 +122,10 @@
             }
 
             possibleGuesses = guessService().possibleGuesses();
-            Logger.log("+page.svelte.onMount: possibleGuesses: {0}", possibleGuesses);
+            Logger.log(
+                "+page.svelte.onMount: possibleGuesses: {0}",
+                possibleGuesses,
+            );
 
             const prev = await guessService().getPreviousGuesses();
             if (!prev.ok) {
@@ -130,7 +133,10 @@
             }
 
             for (const g of prev.data!) {
-                Logger.log("+page.svelte.onMount: Making previous guess {0}", g.title);
+                Logger.log(
+                    "+page.svelte.onMount: Making previous guess {0}",
+                    g.title,
+                );
                 guesses.push(g);
             }
 
@@ -179,7 +185,10 @@
     }
 
     function guessChange(_event: Event): void {
-        Logger.log("+page.svelte.guessChange(): Input changed: {0}", guessValue);
+        Logger.log(
+            "+page.svelte.guessChange(): Input changed: {0}",
+            guessValue,
+        );
         if (guessValue !== "") {
             searchOpen = true;
         } else {
@@ -232,187 +241,163 @@
                 {#if !$userStore.loggedIn}
                     <a href="/login" class="underline">Log In</a>
                     <a href="/signup" class="underline">Sign Up</a>
-                {:else}
-                    <p>{$userStore.email}</p>
                 {/if}
                 <a href="/about" class="underline">About</a>
             </div>
         </div>
-        {#if $userStore.loggedIn}
-            <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-                {isoDateNoTime()}
-            </h2>
-            {#if win}
-                <div class="flex items-center mb-4">
-                    <h2
-                        class="flex-1 text-3xl font-semibold text-green-400 leading-none tracking-tight"
-                    >
-                        you win!
-                    </h2>
-                    <Button class="bg-green-400" on:click={showShareSheet}>
-                        share
-                    </Button>
-                </div>
-            {/if}
-            {#if lose}
-                <div class="flex items-center mb-4">
-                    <h2
-                        class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
-                    >
-                        better luck next time!
-                    </h2>
-                    <Button class="bg-red-400" on:click={showShareSheet}>
-                        share
-                    </Button>
-                    <Button class="bg-red-400 ml-2" on:click={showAnswerButton}>
-                        see answer
-                    </Button>
-                </div>
-            {/if}
-
-            {#if !loading && !serverDown}
-                {#if remaining > 0 && !win}
-                    <div class="flex space-x-2 mb-4">
-                        <Input
-                            type="text"
-                            placeholder={`Guess... ${remaining} remaining`}
-                            bind:value={guessValue}
-                            onchange={guessChange}
-                            class="flex-1 text-base"
-                            disabled={done}
-                        />
-
-                        <Button
-                            type="submit"
-                            size="icon"
-                            onclick={handleGuess}
-                            disabled={done || guessValue.trim() === ""}
-                        >
-                            <Search />
-                        </Button>
-                    </div>
-                {/if}
-
-                {#if filteredGuesses.length > 0}
-                    <ul
-                        class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
-                    >
-                        {#each filteredGuesses as possibleGuess}
-                            <li class="p-2 text-lg">
-                                <button
-                                    onclick={() => {
-                                        handleSelect(possibleGuess);
-                                    }}
-                                >
-                                    {possibleGuess}
-                                </button>
-                            </li>
-                        {/each}
-                    </ul>
-                {/if}
-
-                <AlertDialog.Root bind:open={$openError}>
-                    <AlertDialog.Content>
-                        <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
-                        <AlertDialog.Description>
-                            {errorMessage}
-                        </AlertDialog.Description>
-                        <AlertDialog.Footer>
-                            <AlertDialog.Action on:click={closeDialog}>
-                                Ok
-                            </AlertDialog.Action>
-                        </AlertDialog.Footer>
-                    </AlertDialog.Content>
-                </AlertDialog.Root>
-
-                <AlertDialog.Root bind:open={$openShare}>
-                    <AlertDialog.Content>
-                        <AlertDialog.Title>your results</AlertDialog.Title>
-                        <AlertDialog.Description>
-                            {#each shareData as line}
-                                <p class="m-0 p-0">{line}</p>
-                            {/each}
-                            <p>cinemadle {isoDateNoTime()}</p>
-                            <p>
-                                play at <a
-                                    href="cinemadle.com"
-                                    class="underline">cinemadle.com</a
-                                >
-                            </p></AlertDialog.Description
-                        >
-                        <AlertDialog.Footer>
-                            <AlertDialog.Action
-                                on:click={closeShare}
-                                class="m-2"
-                            >
-                                Close
-                            </AlertDialog.Action>
-                            <AlertDialog.Action
-                                on:click={deviceShare}
-                                class="m-2"
-                            >
-                                Share
-                            </AlertDialog.Action>
-                        </AlertDialog.Footer>
-                    </AlertDialog.Content>
-                </AlertDialog.Root>
-
-                <AlertDialog.Root bind:open={$showAnswer}>
-                    <AlertDialog.Content>
-                        <AlertDialog.Title>The answer is...</AlertDialog.Title>
-                        <AlertDialog.Description>
-                            {#if answer !== null}
-                                <Guess props={answer} />
-                            {:else}
-                                Unable to pull answer from server
-                            {/if}
-                        </AlertDialog.Description>
-                        <AlertDialog.Footer>
-                            <AlertDialog.Action
-                                on:click={closeShare}
-                                class="m-2"
-                            >
-                                Close
-                            </AlertDialog.Action>
-                        </AlertDialog.Footer>
-                    </AlertDialog.Content>
-                </AlertDialog.Root>
-
-                <div class="guesses z-10">
-                    {#each [...guesses].reverse() as guess (guess)}
-                        <div animate:flip={{ duration: 1000 }}>
-                            <Guess props={guess} />
-                        </div>
-                    {/each}
-                </div>
-            {:else if loading && !serverDown}
-                <div class="min-w-3xl w-full">
-                    <Skeleton class="h-12 w-full mb-4" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    {#each [1, 2, 3, 4] as _}
-                        <Skeleton class="flex-grow h-24 w-full rounded-rect" />
-                    {/each}
-                </div>
-            {/if}
-
-            {#if serverDown}
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+            {isoDateNoTime()}
+        </h2>
+        {#if win}
+            <div class="flex items-center mb-4">
                 <h2
-                    class="mb-4 text-2xl font-semibold leading-none tracking-tight"
+                    class="flex-1 text-3xl font-semibold text-green-400 leading-none tracking-tight"
                 >
-                    Server down. Please try again later
+                    you win!
                 </h2>
-            {/if}
-        {:else}
-            <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-                cinemadle - the movie guessing game
-            </h2>
-            <p class="mb-4">
-                Please <a href="/login" class="underline">sign in</a> or
-                <a href="/signup" class="underline">create an account</a> to play
-            </p>
+                <Button class="bg-green-400" on:click={showShareSheet}>
+                    share
+                </Button>
+            </div>
         {/if}
-        {#if $userStore.loggedIn && guesses.length > 0}
+        {#if lose}
+            <div class="flex items-center mb-4">
+                <h2
+                    class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
+                >
+                    better luck next time!
+                </h2>
+                <Button class="bg-red-400" on:click={showShareSheet}>
+                    share
+                </Button>
+                <Button class="bg-red-400 ml-2" on:click={showAnswerButton}>
+                    see answer
+                </Button>
+            </div>
+        {/if}
+
+        {#if !loading && !serverDown}
+            {#if remaining > 0 && !win}
+                <div class="flex space-x-2 mb-4">
+                    <Input
+                        type="text"
+                        placeholder={`Guess... ${remaining} remaining`}
+                        bind:value={guessValue}
+                        onchange={guessChange}
+                        class="flex-1 text-base"
+                        disabled={done}
+                    />
+
+                    <Button
+                        type="submit"
+                        size="icon"
+                        onclick={handleGuess}
+                        disabled={done || guessValue.trim() === ""}
+                    >
+                        <Search />
+                    </Button>
+                </div>
+            {/if}
+
+            {#if filteredGuesses.length > 0}
+                <ul
+                    class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
+                >
+                    {#each filteredGuesses as possibleGuess}
+                        <li class="p-2 text-lg">
+                            <button
+                                onclick={() => {
+                                    handleSelect(possibleGuess);
+                                }}
+                            >
+                                {possibleGuess}
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+
+            <AlertDialog.Root bind:open={$openError}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {errorMessage}
+                    </AlertDialog.Description>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeDialog}>
+                            Ok
+                        </AlertDialog.Action>
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <AlertDialog.Root bind:open={$openShare}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>your results</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {#each shareData as line}
+                            <p class="m-0 p-0">{line}</p>
+                        {/each}
+                        <p>cinemadle {isoDateNoTime()}</p>
+                        <p>
+                            play at <a href="cinemadle.com" class="underline"
+                                >cinemadle.com</a
+                            >
+                        </p></AlertDialog.Description
+                    >
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeShare} class="m-2">
+                            Close
+                        </AlertDialog.Action>
+                        <AlertDialog.Action on:click={deviceShare} class="m-2">
+                            Share
+                        </AlertDialog.Action>
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <AlertDialog.Root bind:open={$showAnswer}>
+                <AlertDialog.Content>
+                    <AlertDialog.Title>The answer is...</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        {#if answer !== null}
+                            <Guess props={answer} />
+                        {:else}
+                            Unable to pull answer from server
+                        {/if}
+                    </AlertDialog.Description>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Action on:click={closeShare} class="m-2">
+                            Close
+                        </AlertDialog.Action>
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <div class="guesses z-10">
+                {#each [...guesses].reverse() as guess (guess)}
+                    <div animate:flip={{ duration: 1000 }}>
+                        <Guess props={guess} />
+                    </div>
+                {/each}
+            </div>
+        {:else if loading && !serverDown}
+            <div class="min-w-3xl w-full">
+                <Skeleton class="h-12 w-full mb-4" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                {#each [1, 2, 3, 4] as _}
+                    <Skeleton class="flex-grow h-24 w-full rounded-rect" />
+                {/each}
+            </div>
+        {/if}
+
+        {#if serverDown}
+            <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+                Server down. Please try again later
+            </h2>
+        {/if}
+        {#if guesses.length > 0}
             <BuyMeAPizza />
         {/if}
     </div>
