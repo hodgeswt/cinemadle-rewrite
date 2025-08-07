@@ -63,9 +63,10 @@
             <div
                 class="flex-1 flex flex-col text-right justify-center"
             >
-                <a href="/login" class="underline">Login</a>
-                <a href="/about" class="underline">About</a>
-                <a href="/" class="underline">Home</a>
+                <a href="/login" class="underline">login</a>
+                <a href="/about" class="underline">about</a>
+                <a href="/devinfo" class="underline">dev info</a>
+                <a href="/" class="underline">home</a>
             </div>
         </div>
 

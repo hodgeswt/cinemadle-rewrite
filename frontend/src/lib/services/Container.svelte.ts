@@ -1,0 +1,36 @@
+import { get } from 'svelte/store';
+import { userStore } from "$lib/stores";
+import { type IGuessService } from './IGuessService';
+import { GuessService } from './GuessService.svelte';
+import { AnonGuessService } from "./AnonGuessService";
+
+export class Container {
+    private static _it: Container | null;
+
+    private authGuessService: IGuessService;
+    private anonGuessService: IGuessService;
+
+    private constructor() {
+        this.authGuessService = new GuessService();
+        this.authGuessService.initialize();
+
+        this.anonGuessService = new AnonGuessService();
+        this.anonGuessService.initialize();
+    }
+
+    public get GuessService(): IGuessService {
+        if (get(userStore).loggedIn) {
+            return this.authGuessService;
+        }
+        
+        return this.anonGuessService;
+    }
+
+    public static it(): Container {
+        if (Container._it === undefined || Container._it === null) {
+            Container._it = new Container();
+        }
+
+        return Container._it;
+    }
+}

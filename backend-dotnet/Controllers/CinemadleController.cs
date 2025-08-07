@@ -145,6 +145,33 @@ public class CinemadleController : ControllerBase
         }
     }
 
+    [HttpGet("guesses/anon")]
+    public ActionResult GetPastGuessesAnon(
+        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+        [FromQuery, Required] Guid userId
+    )
+    {
+        _logger.LogDebug("+GetPastGuessesAnon({date}, {userId})", date, userId);
+
+        try
+        {
+            IEnumerable<UserGuess> guesses = _db.AnonUserGuesses.Where(
+                x => x.GameId == date && x.UserId == userId.ToString()
+            )
+            .OrderBy(x => x.SequenceId);
+
+            _logger.LogDebug("-GetPastGuessesAnon({date}, {userId})", date, userId);
+            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogDebug("-GetPastGuesses({date}, {userId})", date, userId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
     [Authorize]
     [HttpGet("guesses")]
     public ActionResult GetPastGuesses(
@@ -178,6 +205,90 @@ public class CinemadleController : ControllerBase
         }
     }
 
+    [HttpGet("guess/anon/{id}")]
+    public async Task<ActionResult> GuessMovieAnon(
+            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+            [FromQuery, Required] Guid userId,
+            int id
+    )
+    {
+        _logger.LogDebug("+GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+
+        string anonUserId = userId.ToString();
+        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+
+        if (user is null)
+        {
+            _logger.LogWarning("GuessMovieAnon: attempted access by invalid user: {userId}", anonUserId);
+            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            GuessDto? guessDto = await GuessMovieInternal(id, date);
+            UserGuess? x = _db.AnonUserGuesses.FirstOrDefault(
+                                           x => x.GuessMediaId == id && x.GameId == date && x.UserId == anonUserId
+                                      );
+
+            if (x is null)
+            {
+                int seqNo = (_db.AnonUserGuesses.FirstOrDefault(x => x.GameId == date)?.SequenceId ?? 0) + 1;
+                _db.AnonUserGuesses.Add(new UserGuess
+                {
+                    GameId = date,
+                    UserId = anonUserId,
+                    GuessMediaId = id,
+                    SequenceId = seqNo,
+                    Inserted = DateTime.Now,
+                });
+
+                await _db.SaveChangesAsync();
+            }
+
+            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
+            return new OkObjectResult(guessDto);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GuessMovieAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    private async Task<GuessDto?> GuessMovieInternal(int id, string date)
+    {
+        MovieDto? guessMovie = await _tmdbRepo.GetMovieById(id);
+
+        if (guessMovie is null)
+        {
+            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            return null;
+        }
+
+        MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+
+        if (targetMovie is null)
+        {
+            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            return null;
+        }
+
+        GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+
+        if (guessDto is null)
+        {
+            _logger.LogError("GuessMovieInternal: unable to create guess DTO");
+            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            return null;
+        }
+
+        return guessDto;
+    }
+
     [Authorize]
     [HttpGet("guess/{id}")]
     public async Task<ActionResult> GuessMovie(
@@ -195,30 +306,8 @@ public class CinemadleController : ControllerBase
 
         try
         {
-            MovieDto? guessMovie = await _tmdbRepo.GetMovieById(id);
 
-            if (guessMovie is null)
-            {
-                _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-                return new NotFoundResult();
-            }
-
-            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
-
-            if (targetMovie is null)
-            {
-                _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-                return new NotFoundResult();
-            }
-
-            GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
-
-            if (guessDto is null)
-            {
-                _logger.LogError("GuessMovie: unable to create guess DTO");
-                _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-                return new NotFoundResult();
-            }
+            GuessDto? guessDto = await GuessMovieInternal(id, date);
 
             UserGuess? x = _db.Guesses.FirstOrDefault(
                                 x => x.GuessMediaId == id && x.GameId == date
@@ -227,7 +316,7 @@ public class CinemadleController : ControllerBase
             if (x is null)
             {
                 int seqNo = (_db.Guesses.FirstOrDefault(x => x.GameId == date)?.SequenceId ?? 0) + 1;
-                _db.Add(new UserGuess
+                _db.Guesses.Add(new UserGuess
                 {
                     GameId = date,
                     UserId = userId,
