@@ -48,9 +48,10 @@
                 cinemadle
             </h1>
             <div class="flex-1 flex flex-col text-right justify-center">
-                <a href="/signup" class="underline">Sign Up</a>
-                <a href="/about" class="underline">About</a>
-                <a href="/" class="underline">Home</a>
+                <a href="/signup" class="underline">sign up</a>
+                <a href="/about" class="underline">about</a>
+                <a href="/devinfo" class="underline">dev info</a>
+                <a href="/" class="underline">home</a>
             </div>
         </div>
 

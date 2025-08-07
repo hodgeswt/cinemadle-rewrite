@@ -239,10 +239,11 @@
             </h1>
             <div class="flex-1 flex flex-col text-right justify-center">
                 {#if !$userStore.loggedIn}
-                    <a href="/login" class="underline">Log In</a>
-                    <a href="/signup" class="underline">Sign Up</a>
+                    <a href="/login" class="underline">log in</a>
+                    <a href="/signup" class="underline">sign up</a>
                 {/if}
-                <a href="/about" class="underline">About</a>
+                <a href="/about" class="underline">about</a>
+                <a href="/devinfo" class="underline">dev info</a>
             </div>
         </div>
         <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
@@ -373,6 +374,15 @@
                     </AlertDialog.Footer>
                 </AlertDialog.Content>
             </AlertDialog.Root>
+
+            {#if !$userStore.loggedIn}
+                <p>
+                    cinemadle is better when you <a
+                        href="/login"
+                        class="underline">log in</a
+                    >
+                </p>
+            {/if}
 
             <div class="guesses z-10">
                 {#each [...guesses].reverse() as guess (guess)}

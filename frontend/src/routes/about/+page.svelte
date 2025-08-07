@@ -14,11 +14,12 @@
             </h1>
             <div class="flex-1 flex flex-col text-right justify-center">
                 {#if !$userStore.loggedIn}
-                    <a href="/login" class="underline">Log In</a>
-                    <a href="/signup" class="underline">Sign Up</a>
+                    <a href="/login" class="underline">log in</a>
+                    <a href="/signup" class="underline">sign up</a>
                 {:else}
                     <p>{$userStore.email}</p>
                 {/if}
+                <a href="/devinfo" class="underline">dev info</a>
                 <a href="/" class="underline">Home</a>
             </div>
         </div>
