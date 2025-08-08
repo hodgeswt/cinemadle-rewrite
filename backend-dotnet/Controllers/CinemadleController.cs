@@ -159,7 +159,7 @@ public class CinemadleController : ControllerBase
         {
             int userGuesses = _db.AnonUserGuesses.Where(x => x.GameId == date && x.UserId == anonUserId).Count();
 
-            if (userGuesses < 10 && !_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
             {
                 _logger.LogDebug("GetMovieImageAnon({date}, {userId}): User attempted to access image on guess {number}", date, userId, userGuesses);
                 _logger.LogDebug("-GetMovieImageAnon({date})", date);
@@ -207,7 +207,7 @@ public class CinemadleController : ControllerBase
         {
             int userGuesses = _db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
 
-            if (userGuesses < 10 && !_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
             {
                 _logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
                 _logger.LogDebug("-GetMovieImage({date})", date);

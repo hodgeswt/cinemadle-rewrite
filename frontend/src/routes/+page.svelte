@@ -25,6 +25,7 @@
     import Logger from "$lib/logger";
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
+    import VisualClue from "$lib/ui/VisualClue.svelte";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -32,6 +33,7 @@
 
     let openError = writable(false);
     let openShare = writable(false);
+    let openVisualClue = writable(false);
     let showAnswer = writable(false);
     let guesses = $state([] as GuessDomain[]);
 
@@ -209,6 +211,14 @@
         }
     }
 
+    function showVisualClue(_event: Event): void {
+        openVisualClue.set(true);
+    }
+
+    function closeVisualClue(): void {
+        openVisualClue.set(false);
+    }
+
     function closeDialog() {
         openError.set(false);
         errorMessage = "";
@@ -287,6 +297,12 @@
             </div>
         {/if}
 
+        {#if guesses.length >= 6}
+            <Button class="ml-2" on:click={showVisualClue}>
+                see visual clue
+            </Button>
+        {/if}
+
         {#if filteredGuesses.length > 0}
             <ul
                 class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute z-[9999999]"
@@ -307,13 +323,13 @@
 
         <AlertDialog.Root bind:open={$openError}>
             <AlertDialog.Content>
-                <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+                <AlertDialog.Title>uh-oh!</AlertDialog.Title>
                 <AlertDialog.Description>
                     {errorMessage}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
                     <AlertDialog.Action on:click={closeDialog}>
-                        Ok
+                        ok
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
             </AlertDialog.Content>
@@ -329,10 +345,24 @@
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
                     <AlertDialog.Action on:click={closeShare} class="m-2">
-                        Close
+                        close
                     </AlertDialog.Action>
                     <AlertDialog.Action on:click={deviceShare} class="m-2">
-                        Share
+                        share
+                    </AlertDialog.Action>
+                </AlertDialog.Footer>
+            </AlertDialog.Content>
+        </AlertDialog.Root>
+
+        <AlertDialog.Root bind:open={$openVisualClue}>
+            <AlertDialog.Content>
+                <AlertDialog.Title>visual clue</AlertDialog.Title>
+                <AlertDialog.Description>
+                    <VisualClue />
+                </AlertDialog.Description>
+                <AlertDialog.Footer>
+                    <AlertDialog.Action on:click={closeVisualClue} class="m-2">
+                        close
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
             </AlertDialog.Content>
@@ -340,12 +370,12 @@
 
         <AlertDialog.Root bind:open={$showAnswer}>
             <AlertDialog.Content>
-                <AlertDialog.Title>The answer is...</AlertDialog.Title>
+                <AlertDialog.Title>the answer is...</AlertDialog.Title>
                 <AlertDialog.Description>
                     {#if answer !== null}
                         <Guess props={answer} />
                     {:else}
-                        Unable to pull answer from server
+                        unable to pull answer from server
                     {/if}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
@@ -384,7 +414,7 @@
 
     {#if serverDown}
         <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-            Server down. Please try again later
+            server down. please try again later
         </h2>
     {/if}
     {#if guesses.length > 0}
