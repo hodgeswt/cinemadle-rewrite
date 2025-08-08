@@ -6,11 +6,28 @@ import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
+export const PING_LIMIT = 10;
+
 
 export async function ping(): Promise<boolean> {
     const data = await get("heartbeat", null)
 
     return data.ok
+}
+
+export async function healthcheck(): Promise<boolean> {
+    let alive = await ping();
+    let healthPing = 0;
+    while (!alive) {
+        if (healthPing === PING_LIMIT) {
+            return false;
+        }
+        alive = await ping();
+        healthPing += 1;
+        await new Promise((x) => setTimeout(x, 1000));
+    }
+
+    return true;
 }
 
 export async function getAnswer(): Promise<Result<GuessDomain>> {

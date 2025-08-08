@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Guess from "$lib/Guess.svelte";
-    import BuyMeAPizza from "$lib/BuyMeAPizza.svelte";
+    import Guess from "$lib/ui/Guess.svelte";
+    import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
     import { Input } from "$lib/components/ui/input";
     import { Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
     import { flip } from "svelte/animate";
-    import { ping, getAnswer, validateAndRefreshToken } from "$lib/middleware";
+    import { PING_LIMIT, getAnswer, validateAndRefreshToken, healthcheck } from "$lib/middleware";
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
@@ -18,6 +18,7 @@
     import type { LoginDto } from "$lib/dto";
     import { Container, type IGuessService } from "$lib/services";
     import Logger from "$lib/logger";
+    import Header from "$lib/ui/Header.svelte";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -43,7 +44,6 @@
     );
 
     const LIMIT = 10;
-    const PING_LIMIT = 10;
 
     let remaining = $derived(LIMIT - guesses.length);
     let win = $derived(guesses.filter((x) => x.win).length > 0);
@@ -52,7 +52,6 @@
     let done = $derived(guesses.length >= LIMIT && win);
 
     let loading = $state(true);
-    let healthPing = $state(0);
     let guessServicePing = $state(0);
 
     let serverDown = $state(false);
@@ -78,16 +77,9 @@
 
     onMount(async () => {
         try {
-            let alive = await ping();
-
-            while (!alive) {
-                if (healthPing === PING_LIMIT) {
-                    serverDown = true;
-                    return;
-                }
-                alive = await ping();
-                healthPing += 1;
-                await new Promise((x) => setTimeout(x, 1000));
+            if (!(await healthcheck())) {
+                serverDown = true;
+                return;
             }
 
             if ($userStore.loggedIn) {
@@ -239,24 +231,7 @@
 
 <div class="p-4 flex justify-center min-h-screen">
     <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
-        <div class="w-full flex justify-between items-center mb-4">
-            <h1
-                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
-            >
-                cinemadle
-            </h1>
-            <div class="flex-1 flex flex-col text-right justify-center">
-                {#if !$userStore.loggedIn}
-                    <a href="/login" class="underline">log in</a>
-                    <a href="/signup" class="underline">sign up</a>
-                {/if}
-                <a href="/about" class="underline">about</a>
-                <a href="/devinfo" class="underline">dev info</a>
-            </div>
-        </div>
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-            {isoDateNoTime()}
-        </h2>
+        <Header showDate={true} />
         {#if win}
             <div class="flex items-center mb-4">
                 <h2
@@ -301,6 +276,7 @@
                         type="submit"
                         size="icon"
                         onclick={handleGuess}
+                        class="relative -z-1000"
                         disabled={done || guessValue.trim() === ""}
                     >
                         <Search />
@@ -310,7 +286,7 @@
 
             {#if filteredGuesses.length > 0}
                 <ul
-                    class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute"
+                    class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute z-[9999999]"
                 >
                     {#each filteredGuesses as possibleGuess}
                         <li class="p-2 text-lg">

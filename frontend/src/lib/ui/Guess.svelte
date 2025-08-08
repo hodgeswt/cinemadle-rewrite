@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import Card from "./Card.svelte";
-    import type { GuessDomain } from "./domain";
-    import Logger from "./logger";
+    import type { GuessDomain } from "../domain";
+    import Logger from "../logger";
 
     export let props: GuessDomain = {
          title: "Unknown Movie",

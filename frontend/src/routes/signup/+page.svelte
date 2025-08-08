@@ -8,6 +8,7 @@
     import { type SignUpErrorDto } from "$lib/dto";
     import { goto } from "$app/navigation";
     import { userStore } from "$lib/stores";
+    import Header from "$lib/ui/Header.svelte";
 
     let openError = writable(false);
     let userEmail = $state("");
@@ -54,21 +55,7 @@
 
 <div class="p-4 flex justify-center min-h-screen">
     <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
-        <div class="w-full flex justify-between items-center mb-4">
-            <h1
-                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
-            >
-                cinemadle
-            </h1>
-            <div
-                class="flex-1 flex flex-col text-right justify-center"
-            >
-                <a href="/login" class="underline">login</a>
-                <a href="/about" class="underline">about</a>
-                <a href="/devinfo" class="underline">dev info</a>
-                <a href="/" class="underline">home</a>
-            </div>
-        </div>
+        <Header />
 
         <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
             Sign Up
