@@ -17,6 +17,7 @@
     <h1 class="flex-1 text-4xl font-extrabold leading-none tracking-tight">
         cinemadle
     </h1>
+
     <div class="flex-1 flex flex-col text-right justify-center">
         <div class="flex-1 flex justify-end">
             <div class="relative">
@@ -41,11 +42,6 @@
                             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >sign up</a
                         >
-                    {/if}
-                    {#if $userStore.loggedIn && showEmail}
-                        <p class="block px-4 py-2 text-sm text-gray-700">
-                            {$userStore.email}
-                        </p>
                     {/if}
                     <a
                         href="/about"
@@ -72,3 +68,9 @@
         {isoDateNoTime()}
     </h2>
 {/if}
+{#if $userStore.loggedIn && showEmail}
+    <p class="block text-sm pb-4 text-gray-700">
+        User: {$userStore.email}
+    </p>
+{/if}
+
