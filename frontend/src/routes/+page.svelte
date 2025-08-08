@@ -163,6 +163,10 @@
                 })
                 .join(""),
         );
+
+        shareData.push(`cinemadle ${isoDateNoTime()}`);
+        shareData.push("play at cinemadle.com");
+
         openShare.set(true);
     }
 
@@ -343,13 +347,7 @@
                         {#each shareData as line}
                             <p class="m-0 p-0">{line}</p>
                         {/each}
-                        <p>cinemadle {isoDateNoTime()}</p>
-                        <p>
-                            play at <a href="cinemadle.com" class="underline"
-                                >cinemadle.com</a
-                            >
-                        </p></AlertDialog.Description
-                    >
+                    </AlertDialog.Description>
                     <AlertDialog.Footer>
                         <AlertDialog.Action on:click={closeShare} class="m-2">
                             Close
