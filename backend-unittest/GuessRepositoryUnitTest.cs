@@ -29,20 +29,20 @@ public class GuessRepositoryUnitTest
         {
             Id = 2,
             Title = "Shrek 2",
-            Genres = new List<string>() {
+            Genres = [
                 "Animation",
                 "Family",
                 "Comedy"
-            },
-            Cast = new List<PersonDto>() {
-                new PersonDto { Name = "Mike Myers", Role = "Cast" },
-                new PersonDto { Name = "Eddie Murphy", Role = "Cast" },
-                new PersonDto { Name = "Cameron Diaz", Role = "Cast" }
-            },
-            Creatives = new List<PersonDto>() {
-                new PersonDto { Name = "Andrew Adamson", Role = "Director" },
-                new PersonDto { Name = "Andrew Adamson", Role = "Writer" },
-            },
+            ],
+            Cast = [
+                new() { Name = "Mike Myers", Role = "Cast" },
+                new() { Name = "Eddie Murphy", Role = "Cast" },
+                new() { Name = "Cameron Diaz", Role = "Cast" }
+            ],
+            Creatives = [
+                new() { Name = "Andrew Adamson", Role = "Director" },
+                new() { Name = "Andrew Adamson", Role = "Writer" },
+            ],
             BoxOffice = 935000000,
             Year = "2004",
             Rating = Rating.PG,
@@ -56,7 +56,7 @@ public class GuessRepositoryUnitTest
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
 
-        GuessDto expected = new GuessDto
+        GuessDto expected = new()
         {
             Fields = new Dictionary<string, FieldDto>()
             {
@@ -65,7 +65,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.BoxOffice.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "creatives", new FieldDto
@@ -73,7 +73,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Creatives.Select(x => GuessRepository.CreativeFromPerson(x)),
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "cast", new FieldDto
@@ -81,7 +81,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Cast.Select(x => x.Name),
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "rating", new FieldDto
@@ -89,7 +89,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Rating.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "genre", new FieldDto
@@ -97,7 +97,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Genres,
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "year", new FieldDto
@@ -105,7 +105,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Year ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 }
 
@@ -129,7 +129,7 @@ public class GuessRepositoryUnitTest
         ];
         MovieDto target = GetTargetMovie();
 
-        GuessDto expected = new GuessDto
+        GuessDto expected = new()
         {
             Fields = new Dictionary<string, FieldDto>()
             {
@@ -138,7 +138,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.BoxOffice.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "creatives", new FieldDto
@@ -146,7 +146,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Creatives.Select(x => GuessRepository.CreativeFromPerson(x)),
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "cast", new FieldDto
@@ -154,7 +154,7 @@ public class GuessRepositoryUnitTest
                         Color = "grey",
                         Direction = 0,
                         Values = guess.Cast.Select(x => x.Name),
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "rating", new FieldDto
@@ -162,7 +162,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Rating.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "genre", new FieldDto
@@ -170,7 +170,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Genres,
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "year", new FieldDto
@@ -178,7 +178,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Year ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 }
 
@@ -202,7 +202,7 @@ public class GuessRepositoryUnitTest
         ];
         MovieDto target = GetTargetMovie();
 
-        GuessDto expected = new GuessDto
+        GuessDto expected = new()
         {
             Fields = new Dictionary<string, FieldDto>()
             {
@@ -211,7 +211,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.BoxOffice.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "creatives", new FieldDto
@@ -219,7 +219,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Creatives.Select(x => GuessRepository.CreativeFromPerson(x)),
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "cast", new FieldDto
@@ -238,7 +238,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Rating.ToString() ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "genre", new FieldDto
@@ -246,7 +246,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = target.Genres,
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 },
                 { "year", new FieldDto
@@ -254,7 +254,7 @@ public class GuessRepositoryUnitTest
                         Color = "green",
                         Direction = 0,
                         Values = [ target.Year ],
-                        Modifiers = new(),
+                        Modifiers = [],
                     }
                 }
 

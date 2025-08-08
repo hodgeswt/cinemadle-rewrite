@@ -9,7 +9,7 @@ namespace Cinemadle.UnitTest;
 
 public class Mocks
 {
-    private static readonly CinemadleConfig _defaultConfig = new CinemadleConfig
+    private static readonly CinemadleConfig _defaultConfig = new()
     {
         TmdbApiKey = string.Empty,
         CastCount = 3,
@@ -58,7 +58,7 @@ public class Mocks
     public static Mock<IConfigRepository> GetMockedConfigRepository(CinemadleConfig? config = null)
     {
         CinemadleConfig usableConfig = config ?? _defaultConfig;
-        Mock<IConfigRepository> configRepo = new Mock<IConfigRepository>();
+        Mock<IConfigRepository> configRepo = new();
 
         configRepo.Setup(x => x.GetConfig())
             .Returns(usableConfig);
