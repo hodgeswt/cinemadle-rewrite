@@ -49,6 +49,11 @@ public class GuessRepositoryUnitTest
         };
     }
 
+    private static CinemadleConfig GetConfig()
+    {
+        return Mocks.GetMockedConfigRepository().Object.GetConfig();
+    }
+
     [Fact]
     public void AllCategoriesGreenTest()
     {
@@ -266,4 +271,122 @@ public class GuessRepositoryUnitTest
         Assert.Equivalent(expected, o);
     }
 
+    [Fact]
+    public void BoxOfficeGreenWhenExactMatch()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("green", result.Fields["boxOffice"].Color);
+        Assert.Equal(0, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeYellowWhenWithinThreshold()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+
+        guess.BoxOffice = target.BoxOffice - GetConfig().BoxOfficeYellowThreshold;
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("yellow", result.Fields["boxOffice"].Color);
+        Assert.Equal(1, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeGreyWithSingleUpArrowWhenBelowTarget()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        guess.BoxOffice = target.BoxOffice - (GetConfig().BoxOfficeSingleArrowThreshold / 2);
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(1, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeGreyWithDoubleUpArrowWhenFarBelowTarget()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        guess.BoxOffice = target.BoxOffice - (GetConfig().BoxOfficeSingleArrowThreshold * 2);
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(2, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeGreyWithSingleDownArrowWhenAboveTarget()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        guess.BoxOffice = target.BoxOffice + (GetConfig().BoxOfficeSingleArrowThreshold / 2);
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(-1, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeGreyWithDoubleDownArrowWhenFarAboveTarget()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        guess.BoxOffice = target.BoxOffice + (GetConfig().BoxOfficeSingleArrowThreshold * 2);
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(-2, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeHandlesZeroBoxOfficeGuess()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        guess.BoxOffice = 0;
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(2, result.Fields["boxOffice"].Direction);
+    }
+
+    [Fact]
+    public void BoxOfficeHandlesZeroBoxOfficeTarget()
+    {
+        GuessRepository guessRepo = GetGuessRepository();
+        MovieDto guess = GetTargetMovie();
+        MovieDto target = GetTargetMovie();
+        
+        target.BoxOffice = 0;
+        guess.BoxOffice = GetConfig().BoxOfficeSingleArrowThreshold * 2;
+
+        GuessDto result = guessRepo.Guess(guess, target);
+
+        Assert.Equal("grey", result.Fields["boxOffice"].Color);
+        Assert.Equal(-2, result.Fields["boxOffice"].Direction);
+    }
 }

@@ -223,7 +223,7 @@ public class GuessRepository : IGuessRepository
             yearDirection = 2;
         }
 
-        if (boxOfficeDiffAbs > 0)
+        if (boxOfficeDiff > 0)
         {
             yearDirection *= -1;
         }
