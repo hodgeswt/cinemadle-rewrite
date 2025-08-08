@@ -27,7 +27,6 @@
         </h2>
         <ul class="list-disc">
             <li>if you log in, then log out, you must refresh to see your previous guesses</li>
-            <li>the box office box is busted</li>
         </ul>
 
         <BuyMeAPizza />
