@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Png;
 
 namespace Cinemadle.Controllers;
 
@@ -19,7 +23,7 @@ public class CinemadleController : ControllerBase
     private ILogger<CinemadleController> _logger;
     private DatabaseContext _db;
 
-    private bool _isDevelopment;
+    private readonly bool _isDevelopment;
 
     public CinemadleController(
             ILogger<CinemadleController> logger,
@@ -96,6 +100,141 @@ public class CinemadleController : ControllerBase
 
         _logger.LogDebug("-GetAnonUserId");
         return new OkObjectResult(userId);
+    }
+
+
+    private async Task<ImageDto?> GetBlurredImage(string date, float blurFactor)
+    {
+        _logger.LogDebug("+GetBlurredImage({date}, {blurFactor})", date, blurFactor);
+        MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+        if (targetMovie is null)
+        {
+            _logger.LogDebug("GetBlurredImage({date}, {blurFactor}): Unable to find target movie", date, blurFactor);
+            _logger.LogDebug("-GetBlurredImage({date}, {blurFactor})", date, blurFactor);
+            return null;
+        }
+
+        byte[]? imageBytes = await _tmdbRepo.GetMovieImageById(targetMovie.Id);
+
+        if (imageBytes is null)
+        {
+            _logger.LogDebug("GetBlurredImage({date}, {blurFactor}): Unable to find target movie image", date, blurFactor);
+            _logger.LogDebug("-GetBlurredImage({date}, {blurFactor})", date, blurFactor);
+            return null;
+        }
+
+        using Image image = Image.Load(imageBytes);
+
+        if (blurFactor > 0)
+        {
+            image.Mutate(x => x.GaussianBlur(blurFactor));
+        }
+        
+        string base64 = image.ToBase64String(PngFormat.Instance);
+
+        return new ImageDto
+        {
+            ImageData = base64
+        };
+    }
+
+    [HttpGet("target/image/anon")]
+    public async Task<ActionResult> GetMovieImageAnon(
+        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+        [FromQuery, Required] Guid userId
+    )
+    {
+        _logger.LogDebug("+GetMovieImageAnon({date}, {userId})", date, userId);
+        string anonUserId = userId.ToString();
+        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+
+        if (user is null)
+        {
+            _logger.LogWarning("GetMovieImageAnon: attempted access by invalid user: {userId}", anonUserId);
+            _logger.LogDebug("-GetMovieImageAnon({date}, {userId})", date, userId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            int userGuesses = _db.AnonUserGuesses.Where(x => x.GameId == date && x.UserId == anonUserId).Count();
+
+            if (userGuesses < 10 && !_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            {
+                _logger.LogDebug("GetMovieImageAnon({date}, {userId}): User attempted to access image on guess {number}", date, userId, userGuesses);
+                _logger.LogDebug("-GetMovieImageAnon({date})", date);
+                return new UnauthorizedResult();
+            }
+
+            float blurFactor = userGuesses >= 10 ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
+
+            ImageDto? image = await GetBlurredImage(date, blurFactor);
+
+            if (image is null)
+            {
+                _logger.LogDebug("GetMovieImageAnon({date}, {userId}): No image found", date, userId);
+                _logger.LogDebug("-GetMovieImageAnon({date}, {userId})", date, userId);
+                return new NotFoundResult();
+            }
+
+            _logger.LogDebug("-GetMovieImageAnon({date}, {userId})", date, userId);
+            return new OkObjectResult(image);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetMovieImage({date}, {userId})", date, userId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("target/image")]
+    public async Task<ActionResult> GetMovieImage(
+        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+    )
+    {
+        _logger.LogDebug("+GetMovieImage({date})", date);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetMovieImage({date})", date);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            int userGuesses = _db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
+
+            if (userGuesses < 10 && !_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            {
+                _logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new UnauthorizedResult();
+            }
+
+            float blurFactor = userGuesses >= 10 ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
+
+            ImageDto? image = await GetBlurredImage(date, blurFactor);
+
+            if (image is null)
+            {
+                _logger.LogDebug("GetMovieImage({date}): No image found", date);
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new NotFoundResult();
+            }
+
+            _logger.LogDebug("-GetMovieImage({date})", date);
+            return new OkObjectResult(image);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetMovieImage({date})", date);
+
+            return new StatusCodeResult(500);
+        }
     }
 
     [HttpGet("target")]
