@@ -71,7 +71,22 @@ export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDom
         modifiers: {},
     } as CardDomain;
 
-    o.cards = [cast, genre, year, rating] as CardDomain[];
+    const creatives = {
+        title: "creatives",
+        data: media.creatives.map((x) => `${x.role}: ${x.name}`),
+        color: color,
+        modifiers: {},
+    } as CardDomain;
+
+    const boxOffice = {
+        title: "box office",
+        data: [`${media.boxOffice}`] as string[],
+        color: color,
+        modifiers: {},
+    } as CardDomain;
+
+
+    o.cards = [boxOffice, creatives, cast, genre, year, rating] as CardDomain[];
 
     return ok(o);
 }

@@ -33,6 +33,8 @@ export type MediaDto = {
     genres: string[];
     year: number;
     rating: string;
+    creatives: PersonDto[];
+    boxOffice: number;
 };
 
 export type PersonDto = {

@@ -1,11 +1,18 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import Card from "./Card.svelte";
     import type { GuessDomain } from "./domain";
+    import Logger from "./logger";
 
     export let props: GuessDomain = {
-        title: "Unknown Movie",
-        cards: [],
-    };
+         title: "Unknown Movie",
+         cards: [],
+         win: false
+     };
+
+     onMount(() => {
+        Logger.log("Guess.svelte.onMount(): Mounting with {0}", props);
+     })
 </script>
 
 <div class="min-w-3xl w-full">

@@ -227,6 +227,10 @@
         makeGuess(guessValue);
         guessValue = "";
     }
+
+    function closeAnswer(_event: Event): void {
+        showAnswer.set(false);
+    }
 </script>
 
 <div class="p-4 flex justify-center min-h-screen">
@@ -368,7 +372,7 @@
                         {/if}
                     </AlertDialog.Description>
                     <AlertDialog.Footer>
-                        <AlertDialog.Action on:click={closeShare} class="m-2">
+                        <AlertDialog.Action on:click={closeAnswer} class="m-2">
                             Close
                         </AlertDialog.Action>
                     </AlertDialog.Footer>
