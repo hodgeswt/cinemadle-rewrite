@@ -6,6 +6,10 @@ on:
     paths-ignore:
       - 'Dockerfile-Migrator'
   workflow_dispatch:
+
+concurrency:
+  group: BuildContainer
+  cancel-in-progress: true
 jobs:
   Build:
     runs-on: ubuntu-latest
