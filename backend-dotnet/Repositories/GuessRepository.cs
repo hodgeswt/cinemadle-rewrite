@@ -95,7 +95,7 @@ public class GuessRepository : IGuessRepository
 
         ApplyDataOverrides(ref guess);
 
-        Dictionary<string, FieldDto> fields = new Dictionary<string, FieldDto>();
+        Dictionary<string, FieldDto> fields = [];
 
         if (IsBoxOfficeMismatch(guess.BoxOffice, target.BoxOffice, out FieldDto? boxOfficeOut) && boxOfficeOut is not null)
         {
@@ -107,7 +107,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = new List<string> { target.BoxOffice.ToString() },
             });
         }
@@ -122,7 +122,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = target.Creatives.Select(x => CreativeFromPerson(x))
             });
         }
@@ -137,7 +137,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = new List<string> { target.Rating.ToString() }
             });
         }
@@ -152,7 +152,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = target.Genres
             });
         }
@@ -167,7 +167,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = target.Cast.Select(x => x.Name)
             });
         }
@@ -182,7 +182,7 @@ public class GuessRepository : IGuessRepository
             {
                 Color = "green",
                 Direction = 0,
-                Modifiers = new(),
+                Modifiers = [],
                 Values = new List<string> { target.Year }
             });
         }
@@ -232,7 +232,7 @@ public class GuessRepository : IGuessRepository
         {
             Direction = yearDirection,
             Color = color,
-            Modifiers = new(),
+            Modifiers = [],
             Values = new List<string> { guessBoxOffice.ToString() }
         };
 
@@ -288,7 +288,7 @@ public class GuessRepository : IGuessRepository
         {
             Direction = yearDirection,
             Color = color,
-            Modifiers = new(),
+            Modifiers = [],
             Values = new List<string> { guessYear }
         };
 
@@ -347,7 +347,7 @@ public class GuessRepository : IGuessRepository
             Color = color,
             Direction = 0,
             Values = new List<string>() { guessRating.ToString() },
-            Modifiers = new()
+            Modifiers = []
         };
 
         return true;

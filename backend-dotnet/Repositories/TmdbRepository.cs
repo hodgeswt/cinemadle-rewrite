@@ -29,7 +29,15 @@ public class TmdbRepository : ITmdbRepository
     private readonly string _getTargetMovieCacheKeyTemplate = "TmdbRepository.GetTargetMovie.{0}";
     private readonly string _getMovieListCacheKey = "TmdbRepository.GetMovieList";
 
-    public TmdbRepository(ILogger<TmdbRepository> logger, IConfigRepository config, ICacheRepository cache, DatabaseContext dbContext)
+    private readonly bool _isDevelopment;
+
+    public TmdbRepository(
+        ILogger<TmdbRepository> logger,
+        IConfigRepository config,
+        ICacheRepository cache,
+        DatabaseContext dbContext,
+        IWebHostEnvironment env
+    )
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "TmdbRepository";
@@ -39,6 +47,7 @@ public class TmdbRepository : ITmdbRepository
         _cache = cache;
         _tmdbClient = new TMDbClient(config.GetConfig().TmdbApiKey);
         _db = dbContext;
+        _isDevelopment = env.IsDevelopment();
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -72,10 +81,10 @@ public class TmdbRepository : ITmdbRepository
                 .IncludeAdultMovies(false)
                 .WhereReleaseDateIsAfter(DateTime.ParseExact(_config.OldestMoviePossible, "yyyy-MM-dd", CultureInfo.InvariantCulture));
 
-        Dictionary<string, int> movies = new Dictionary<string, int>();
+        Dictionary<string, int> movies = [];
 
         int page = 0;
-        CancellationTokenSource c = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        CancellationTokenSource c = new(TimeSpan.FromSeconds(90));
         while (movies.Count < 2000 && !c.Token.IsCancellationRequested)
         {
             SearchContainer<SearchMovie> results = await discover.Query(page, c.Token);
@@ -116,8 +125,12 @@ public class TmdbRepository : ITmdbRepository
             return await GetMovieByIdInternal(dbTargetMovie.TargetMovieId);
         }
 
-        int seed = int.Parse(date.Replace("-", string.Empty));
-        Random r = new Random(seed);
+        int seed = _isDevelopment ? 1 : 0;
+
+        string dateStripped = date.Replace("-", string.Empty);
+        seed += int.Parse(dateStripped);
+
+        Random r = new(seed);
         int movieIndex = r.Next(0, 1999);
 
         Dictionary<string, int> movies = await GetMovieList();
@@ -190,7 +203,7 @@ public class TmdbRepository : ITmdbRepository
             })
             ?.FirstOrDefault();
 
-        List<PersonDto> creatives = new List<PersonDto>();
+        List<PersonDto> creatives = [];
 
         if (director is not null)
         {
