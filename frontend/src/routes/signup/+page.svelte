@@ -8,6 +8,8 @@
     import { type SignUpErrorDto } from "$lib/dto";
     import { goto } from "$app/navigation";
     import { userStore } from "$lib/stores";
+    import Header from "$lib/ui/Header.svelte";
+    import PageWrapper from "$lib/ui/PageWrapper.svelte";
 
     let openError = writable(false);
     let userEmail = $state("");
@@ -52,76 +54,60 @@
     }
 </script>
 
-<div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
-        <div class="w-full flex justify-between items-center mb-4">
-            <h1
-                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
-            >
-                cinemadle
-            </h1>
-            <div
-                class="flex-1 flex flex-col text-right justify-center"
-            >
-                <a href="/login" class="underline">login</a>
-                <a href="/about" class="underline">about</a>
-                <a href="/devinfo" class="underline">dev info</a>
-                <a href="/" class="underline">home</a>
-            </div>
-        </div>
+<PageWrapper>
+    <Header />
 
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-            Sign Up
-        </h2>
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+        sign up
+    </h2>
 
-        <p class="mb-4">
-            Email will be stored and may be provided to third parties. In the
-            future, support will be added to remove your user account from our
-            databases. This will be supported for all accounts created before
-            this feature is added.
-        </p>
+    <p class="mb-4">
+        email will be stored and may be provided to third parties. in the
+        future, support will be added to remove your user account from our
+        databases. this will be supported for all accounts created before this
+        feature is added.
+    </p>
 
-        <div class="flex flex-col space-y-2">
-            <Input
-                type="email"
-                class="text-base"
-                placeholder="example@example.com"
-                bind:value={userEmail}
-            />
-            <Input
-                type="password"
-                placeholder="*****"
-                class="text-base"
-                bind:value={userPassword}
-            />
-            <Input
-                type="password"
-                placeholder="*****"
-                class="text-base"
-                bind:value={userConfirmPassword}
-            />
-            <Button
-                type="submit"
-                size="icon"
-                onclick={performSignUp}
-                class="w-full"
-            >
-                <p class="m-1">Sign Up</p>
-            </Button>
-        </div>
-
-        <AlertDialog.Root bind:open={$openError}>
-            <AlertDialog.Content>
-                <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
-                <AlertDialog.Description>
-                    {errorMessage}
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeDialog}>
-                        Ok
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+    <div class="flex flex-col space-y-2">
+        <Input
+            type="email"
+            class="text-base"
+            placeholder="example@example.com"
+            bind:value={userEmail}
+        />
+        <Input
+            type="password"
+            placeholder="*****"
+            class="text-base"
+            bind:value={userPassword}
+        />
+        <Input
+            type="password"
+            placeholder="*****"
+            class="text-base"
+            bind:value={userConfirmPassword}
+        />
+        <Button
+            type="submit"
+            size="icon"
+            onclick={performSignUp}
+            class="w-full"
+        >
+            <p class="m-1">Sign Up</p>
+        </Button>
     </div>
-</div>
+
+    <AlertDialog.Root bind:open={$openError}>
+        <AlertDialog.Content>
+            <AlertDialog.Title>uh-oh!</AlertDialog.Title>
+            <AlertDialog.Description>
+                {errorMessage}
+            </AlertDialog.Description>
+            <AlertDialog.Footer>
+                <AlertDialog.Action on:click={closeDialog}>
+                    ok
+                </AlertDialog.Action>
+            </AlertDialog.Footer>
+        </AlertDialog.Content>
+    </AlertDialog.Root>
+</PageWrapper>

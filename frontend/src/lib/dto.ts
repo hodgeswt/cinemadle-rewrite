@@ -4,6 +4,10 @@ export type SignUpErrorDto = {
     errors: { [key: string]: string[] }
 }
 
+export type ImageDto = {
+    imageData: string,
+}
+
 export type LoginDto = {
     tokenType: string,
     accessToken: string,
@@ -40,6 +44,26 @@ export type MediaDto = {
 export type PersonDto = {
     name: string;
     role: string;
+}
+
+export type GameSummaryDto = {
+    summary: string[];
+}
+
+export function isGameSummaryDto(obj: any): obj is GameSummaryDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return isArray(obj.summary, 'string');
+}
+
+export function isImageDto(obj: any): obj is ImageDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return typeof obj.imageData === 'string';
 }
 
 export function isSignUpErrorDto(obj: any): obj is SignUpErrorDto {

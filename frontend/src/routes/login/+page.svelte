@@ -8,6 +8,8 @@
     import type { Result } from "$lib/result";
     import { type LoginDto } from "$lib/dto";
     import { goto } from "$app/navigation";
+    import Header from "$lib/ui/Header.svelte";
+    import PageWrapper from "$lib/ui/PageWrapper.svelte";
     let openError = writable(false);
     let userEmail = $state("");
     let userPassword = $state("");
@@ -39,61 +41,42 @@
     }
 </script>
 
-<div class="p-4 flex justify-center min-h-screen">
-    <div class="w-full lg:w-1/2 md:w-1/2 sm:w-full">
-        <div class="w-full flex justify-between items-center mb-4">
-            <h1
-                class="flex-1 text-4xl font-extrabold leading-none tracking-tight"
-            >
-                cinemadle
-            </h1>
-            <div class="flex-1 flex flex-col text-right justify-center">
-                <a href="/signup" class="underline">sign up</a>
-                <a href="/about" class="underline">about</a>
-                <a href="/devinfo" class="underline">dev info</a>
-                <a href="/" class="underline">home</a>
-            </div>
-        </div>
+<PageWrapper>
+    <Header />
 
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-            Log In
-        </h2>
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+        log in
+    </h2>
 
-        <div class="flex flex-col space-y-2">
-            <Input
-                type="email"
-                placeholder="example@example.com"
-                bind:value={userEmail}
-                class="text-base"
-            />
-            <Input
-                type="password"
-                placeholder="*****"
-                class="text-base"
-                bind:value={userPassword}
-            />
-            <Button
-                type="submit"
-                size="icon"
-                onclick={performLogIn}
-                class="w-full"
-            >
-                <p class="m-1">Log In</p>
-            </Button>
-        </div>
-
-        <AlertDialog.Root bind:open={$openError}>
-            <AlertDialog.Content>
-                <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
-                <AlertDialog.Description>
-                    {errorMessage}
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeDialog}>
-                        Ok
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+    <div class="flex flex-col space-y-2">
+        <Input
+            type="email"
+            placeholder="example@example.com"
+            bind:value={userEmail}
+            class="text-base"
+        />
+        <Input
+            type="password"
+            placeholder="*****"
+            class="text-base"
+            bind:value={userPassword}
+        />
+        <Button type="submit" size="icon" onclick={performLogIn} class="w-full">
+            <p class="m-1">log in</p>
+        </Button>
     </div>
-</div>
+
+    <AlertDialog.Root bind:open={$openError}>
+        <AlertDialog.Content>
+            <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+            <AlertDialog.Description>
+                {errorMessage}
+            </AlertDialog.Description>
+            <AlertDialog.Footer>
+                <AlertDialog.Action on:click={closeDialog}>
+                    ok
+                </AlertDialog.Action>
+            </AlertDialog.Footer>
+        </AlertDialog.Content>
+    </AlertDialog.Root>
+</PageWrapper>

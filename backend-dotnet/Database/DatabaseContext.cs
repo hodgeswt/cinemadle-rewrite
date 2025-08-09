@@ -9,6 +9,7 @@ public class DatabaseContext : DbContext
     public DbSet<DataOverride> DataOverrides { get; set; }
     public DbSet<AnonUser> AnonUsers { get; set; }
     public DbSet<UserGuess> AnonUserGuesses { get; set; }
+    public DbSet<Clue> UserClues { get; set; }
 
     public string DbPath { get; set; }
 

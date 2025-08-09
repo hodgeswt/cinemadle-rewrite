@@ -6,12 +6,68 @@ import type { IGuessService } from "./IGuessService";
 import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
+import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
 
 export class AnonGuessService extends GuessServiceShared implements IGuessService {
     private readonly anonUserIdKey = 'anonUserId';
 
     constructor() {
         super();
+    }
+
+    public async getGameSummary(): Promise<Result<GameSummaryDto>> {
+        const anonUserId = await this.getAnonUserId();
+
+        if (anonUserId === undefined) {
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        let result = await get(
+            '/gameSummary/anon',
+            { date: isoDateNoTime(), userId: anonUserId },
+            null
+        );
+
+        if (!result.ok) {
+            Logger.log("AnonGuessService.getGameSummary(): got bad response from server")
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        const data = JSON.parse(result.data!);
+        if (!isGameSummaryDto(data)) {
+            Logger.log("AnonGuessService.getGameSummary(): got invalid object {0}", data)
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        return ok(data);
+    }
+
+    public async getVisualClue(): Promise<Result<ImageDto>> {
+        const anonUserId = await this.getAnonUserId();
+
+        if (anonUserId === undefined) {
+            return err(GuessServiceShared.guessError);
+        }
+
+        let result = await get(
+            '/target/image/anon',
+            { date: isoDateNoTime(), userId: anonUserId },
+            null,
+            true
+        )
+
+        if (!result.ok) {
+            Logger.log("AnonGuessService.getVisualClue(): got bad response from server")
+            return err(AnonGuessService.unableToLoadImageError);
+        }
+
+        const data = JSON.parse(result.data!);
+
+        if (!isImageDto(data)) {
+            Logger.log("AnonGuessService.getVisualClue(): got invalid object {0}", data);
+            return err(AnonGuessService.unableToLoadImageError);
+        }
+        return ok(data as ImageDto);
     }
 
     private async getAnonUserId(): Promise<string | undefined> {
@@ -40,7 +96,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         return storedAnonUserId;
     }
 
-    async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
+    public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
         Logger.log("GuessService.getPreviousGuesses()");
 
         const anonUserId = await this.getAnonUserId();
@@ -69,7 +125,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         return err("Unable to load previous guesses. Try again later.");
     }
 
-    async guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
+    public async guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
         if (guess.trim() === "") {
             return err("Invalid guess");
         }

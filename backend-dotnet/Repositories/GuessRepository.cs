@@ -7,17 +7,10 @@ namespace Cinemadle.Repositories;
 
 public class GuessRepository : IGuessRepository
 {
-    private ILogger<GuessRepository> _logger;
-    private ICacheRepository _cache;
+    private readonly ILogger<GuessRepository> _logger;
+    private readonly ICacheRepository _cache;
     private readonly CinemadleConfig _config;
-    private DatabaseContext _db;
-
-    private readonly string _ratingKey = "rating";
-    private readonly string _creativesKey = "creatives";
-    private readonly string _boxOfficeKey = "boxOffice";
-    private readonly string _yearKey = "year";
-    private readonly string _genreKey = "genre";
-    private readonly string _castKey = "cast";
+    private readonly DatabaseContext _db;
 
     private readonly string _guessCacheKeyTemplate = "GuessRepository.Guess.{0}.{1}";
 
@@ -99,11 +92,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsBoxOfficeMismatch(guess.BoxOffice, target.BoxOffice, out FieldDto? boxOfficeOut) && boxOfficeOut is not null)
         {
-            fields.Add(_boxOfficeKey, boxOfficeOut);
+            fields.Add(IGuessRepository.BoxOfficeKey, boxOfficeOut);
         }
         else
         {
-            fields.Add(_boxOfficeKey, new FieldDto
+            fields.Add(IGuessRepository.BoxOfficeKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,
@@ -114,11 +107,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsListMismatch(guess.Creatives.Select(x => CreativeFromPerson(x)), target.Creatives.Select(x => CreativeFromPerson(x)), out FieldDto? creativesOut) && creativesOut is not null)
         {
-            fields.Add(_creativesKey, creativesOut);
+            fields.Add(IGuessRepository.CreativesKey, creativesOut);
         }
         else
         {
-            fields.Add(_creativesKey, new FieldDto
+            fields.Add(IGuessRepository.CreativesKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,
@@ -129,11 +122,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsRatingMismatch(guess.Rating, target.Rating, out FieldDto? ratingOut) && ratingOut is not null)
         {
-            fields.Add(_ratingKey, ratingOut);
+            fields.Add(IGuessRepository.RatingKey, ratingOut);
         }
         else
         {
-            fields.Add(_ratingKey, new FieldDto
+            fields.Add(IGuessRepository.RatingKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,
@@ -144,11 +137,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsListMismatch(guess.Genres, target.Genres, out FieldDto? genreOut) && genreOut is not null)
         {
-            fields.Add(_genreKey, genreOut);
+            fields.Add(IGuessRepository.GenreKey, genreOut);
         }
         else
         {
-            fields.Add(_genreKey, new FieldDto
+            fields.Add(IGuessRepository.GenreKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,
@@ -159,11 +152,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsListMismatch(guess.Cast.Select(x => x.Name), target.Cast.Select(x => x.Name), out FieldDto? castOut) && castOut is not null)
         {
-            fields.Add(_castKey, castOut);
+            fields.Add(IGuessRepository.CastKey, castOut);
         }
         else
         {
-            fields.Add(_castKey, new FieldDto
+            fields.Add(IGuessRepository.CastKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,
@@ -174,11 +167,11 @@ public class GuessRepository : IGuessRepository
 
         if (IsYearMismatch(guess.Year, target.Year, out FieldDto? yearOut) && yearOut is not null)
         {
-            fields.Add(_yearKey, yearOut);
+            fields.Add(IGuessRepository.YearKey, yearOut);
         }
         else
         {
-            fields.Add(_yearKey, new FieldDto
+            fields.Add(IGuessRepository.YearKey, new FieldDto
             {
                 Color = "green",
                 Direction = 0,

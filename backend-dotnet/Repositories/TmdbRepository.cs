@@ -9,7 +9,6 @@ using TMDbLib.Objects.General;
 
 using System.Globalization;
 using System.Text.Json;
-
 namespace Cinemadle.Repositories;
 
 public class TmdbRepository : ITmdbRepository
@@ -28,6 +27,9 @@ public class TmdbRepository : ITmdbRepository
     private readonly string _getMovieByIdCacheKeyTemplate = "TmdbRepository.GetMovieById.{0}";
     private readonly string _getTargetMovieCacheKeyTemplate = "TmdbRepository.GetTargetMovie.{0}";
     private readonly string _getMovieListCacheKey = "TmdbRepository.GetMovieList";
+    private readonly string _getMovieImageByIdCacheKeyTemplate = "TmdbRepository.GetMovieImageById.{0}";
+
+    private static readonly HttpClient _httpClient = new();
 
     private readonly bool _isDevelopment;
 
@@ -284,4 +286,51 @@ public class TmdbRepository : ITmdbRepository
 
         return Rating.UNKNOWN;
     }
+
+    public async Task<byte[]?> GetMovieImageById(int id)
+    {
+        _logger.LogDebug("+GetMovieImageById({id})", id);
+
+        string cacheKey = string.Format(_getMovieImageByIdCacheKeyTemplate, id);
+
+        if (_cache.TryGet(cacheKey, out byte[]? cachedImage) && cachedImage is not null)
+        {
+            _logger.LogDebug("GetMovieImageById({id}): returning cached image", id);
+            _logger.LogDebug("-GetMovieImageById({id})", id);
+            return cachedImage;
+        }
+
+        ImagesWithId? imagesWithId = await _tmdbClient.GetMovieImagesAsync(id);
+
+        if (imagesWithId is null)
+        {
+            return null;
+        }
+
+        ImageData? imageData = imagesWithId.Backdrops.FirstOrDefault();
+
+        if (imageData is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            _logger.LogDebug("GetMovieImageById({id}: path {path}", id, imageData.FilePath);
+            string fullUri = $"https://image.tmdb.org/t/p/w500/{imageData.FilePath}";
+            byte[] bytes = await _httpClient.GetByteArrayAsync(fullUri);
+
+            _cache.Set(cacheKey, bytes);
+
+            _logger.LogDebug("-GetMovieImageById({id})", id);
+            return bytes;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error getting image: {message}, {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogDebug("-GetMovieImageById({id})", id);
+            return null;
+        }
+    }
+
 }

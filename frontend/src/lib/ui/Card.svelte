@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CardDomain } from "./domain";
+    import type { CardDomain } from "../domain";
 
     import { ArrowUp } from "@lucide/svelte";
     import { ArrowDown } from "@lucide/svelte";
