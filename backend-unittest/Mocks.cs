@@ -4,6 +4,9 @@ using Cinemadle.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
+using Cinemadle.Repositories;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Cinemadle.UnitTest;
 
@@ -23,7 +26,14 @@ public class Mocks
         OldestMoviePossible = "1960-01-01",
         MinimumVotesPossible = 2000,
         MinimumScorePossible = 5,
-        MinimumRuntimePossible = 70
+        MinimumRuntimePossible = 70,
+        MovieImageBlurFactors = new()
+        {
+            { "6", 14.0F },
+            { "7", 12.0F },
+            { "8", 9.0F },
+            { "9", 6.0F }
+        }
     };
 
     public static IMemoryCache GetMemoryCache()
@@ -66,5 +76,40 @@ public class Mocks
             .Returns(true);
 
         return configRepo;
+    }
+
+    public static IGuessRepository GetGuessRepository(CinemadleConfig? config = null)
+    {
+        ILogger<GuessRepository> logger = UnitTestAssist.GetLogger<GuessRepository>();
+        Mock<IConfigRepository> configRepoMock = GetMockedConfigRepository();
+        IConfigRepository configRepo = configRepoMock.Object;
+
+        Mock<ICacheRepository> cacheRepoMock = GetMockedCacheRepository();
+        ICacheRepository cacheRepo = cacheRepoMock.Object;
+
+        DatabaseContext db = GetDatabaseContext();
+
+        return new GuessRepository(logger, cacheRepo, configRepo, db);
+    }
+
+    public static Mock<IGuessRepository> GetMockedGuessRepository()
+    {
+        Mock<IGuessRepository> guessRepoMock = new();
+
+        return guessRepoMock;
+    }
+
+    public static Mock<ITmdbRepository> GetMockedTmdbRepository()
+    {
+        Mock<ITmdbRepository> tmdbRepoMock = new();
+
+        return tmdbRepoMock;
+    }
+
+    public static Mock<IWebHostEnvironment> GetMockedWebHostEnvironment() {
+        Mock<IWebHostEnvironment> webHostEnvMock = new();
+        webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
+
+        return webHostEnvMock;
     }
 }

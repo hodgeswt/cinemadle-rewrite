@@ -77,7 +77,7 @@ public class CinemadleController : ControllerBase
 
         while ((users == null || users.Any()) && count < 5)
         {
-            userId = System.Guid.NewGuid().ToString();
+            userId = Guid.NewGuid().ToString();
 
             users = _db.AnonUsers
                 .Where(x => x.UserId == userId);
@@ -372,7 +372,7 @@ public class CinemadleController : ControllerBase
 
             if (x is null)
             {
-                int seqNo = (_db.AnonUserGuesses.FirstOrDefault(x => x.GameId == date)?.SequenceId ?? 0) + 1;
+                int seqNo = (_db.AnonUserGuesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
                 _db.AnonUserGuesses.Add(new UserGuess
                 {
                     GameId = date,
@@ -454,7 +454,7 @@ public class CinemadleController : ControllerBase
 
             if (x is null)
             {
-                int seqNo = (_db.Guesses.FirstOrDefault(x => x.GameId == date)?.SequenceId ?? 0) + 1;
+                int seqNo = (_db.Guesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
                 _db.Guesses.Add(new UserGuess
                 {
                     GameId = date,
