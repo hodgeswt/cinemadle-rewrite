@@ -58,13 +58,13 @@
     <Header />
 
     <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-        Sign Up
+        sign up
     </h2>
 
     <p class="mb-4">
-        Email will be stored and may be provided to third parties. In the
+        email will be stored and may be provided to third parties. in the
         future, support will be added to remove your user account from our
-        databases. This will be supported for all accounts created before this
+        databases. this will be supported for all accounts created before this
         feature is added.
     </p>
 
@@ -99,13 +99,13 @@
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
-            <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+            <AlertDialog.Title>uh-oh!</AlertDialog.Title>
             <AlertDialog.Description>
                 {errorMessage}
             </AlertDialog.Description>
             <AlertDialog.Footer>
                 <AlertDialog.Action on:click={closeDialog}>
-                    Ok
+                    ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>
         </AlertDialog.Content>

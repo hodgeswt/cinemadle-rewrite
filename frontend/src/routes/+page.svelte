@@ -2,7 +2,7 @@
     import Guess from "$lib/ui/Guess.svelte";
     import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
     import { Input } from "$lib/components/ui/input";
-    import { Search } from "@lucide/svelte";
+    import { Info, Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
     import { flip } from "svelte/animate";
     import {
@@ -297,10 +297,35 @@
             </div>
         {/if}
 
-        {#if guesses.length >= 6}
-            <Button class="ml-2" on:click={showVisualClue}>
-                see visual clue
-            </Button>
+        {#if !$userStore.loggedIn}
+            <p class="mb-4">
+                cinemadle is better when you <a href="/login" class="underline"
+                    >log in</a
+                >
+            </p>
+        {/if}
+
+        {#if guesses.length >= 6 && !win && !lose}
+            <div
+                class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+            >
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <Info class="text-indigo-600"/>
+                        <span class="text-sm text-gray-700"
+                            >Need a hint?</span
+                        >
+                    </div>
+                    <Button
+                        on:click={showVisualClue}
+                        variant="secondary"
+                        size="sm"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                        View Visual Clue
+                    </Button>
+                </div>
+            </div>
         {/if}
 
         {#if filteredGuesses.length > 0}
@@ -385,14 +410,6 @@
                 </AlertDialog.Footer>
             </AlertDialog.Content>
         </AlertDialog.Root>
-
-        {#if !$userStore.loggedIn}
-            <p>
-                cinemadle is better when you <a href="/login" class="underline"
-                    >log in</a
-                >
-            </p>
-        {/if}
 
         <div class="guesses z-10">
             {#each [...guesses].reverse() as guess (guess)}

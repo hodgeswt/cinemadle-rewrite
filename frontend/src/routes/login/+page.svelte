@@ -45,7 +45,7 @@
     <Header />
 
     <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-        Log In
+        log in
     </h2>
 
     <div class="flex flex-col space-y-2">
@@ -62,7 +62,7 @@
             bind:value={userPassword}
         />
         <Button type="submit" size="icon" onclick={performLogIn} class="w-full">
-            <p class="m-1">Log In</p>
+            <p class="m-1">log in</p>
         </Button>
     </div>
 
@@ -74,7 +74,7 @@
             </AlertDialog.Description>
             <AlertDialog.Footer>
                 <AlertDialog.Action on:click={closeDialog}>
-                    Ok
+                    ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>
         </AlertDialog.Content>

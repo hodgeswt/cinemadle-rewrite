@@ -27,7 +27,7 @@ public class CinemadleControllerUnitTest
         Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
         ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
 
-        Mock<IWebHostEnvironment> webHostEnvMock = new Mock<IWebHostEnvironment>();
+        Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
         IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
 
@@ -54,7 +54,7 @@ public class CinemadleControllerUnitTest
         Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
         ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
 
-        Mock<IWebHostEnvironment> webHostEnvMock = new Mock<IWebHostEnvironment>();
+        Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
         IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
 
@@ -81,7 +81,7 @@ public class CinemadleControllerUnitTest
         Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
         ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
 
-        Mock<IWebHostEnvironment> webHostEnvMock = new Mock<IWebHostEnvironment>();
+        Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
         IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
 
@@ -295,7 +295,7 @@ public class CinemadleControllerUnitTest
             db
         );
 
-        var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
         var identity = new ClaimsIdentity(claims);
         var claimsPrincipal = new ClaimsPrincipal(identity);
         controller.ControllerContext = new ControllerContext

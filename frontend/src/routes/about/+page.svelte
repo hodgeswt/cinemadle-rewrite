@@ -11,7 +11,7 @@
     <Header showEmail={true} />
 
     <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
-        About
+        about
     </h2>
 
     <p class="mb-4">
