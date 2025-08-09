@@ -6,13 +6,40 @@ import type { IGuessService } from "./IGuessService";
 import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
-import { isImageDto, type ImageDto } from "$lib/dto";
+import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
 
 export class AnonGuessService extends GuessServiceShared implements IGuessService {
     private readonly anonUserIdKey = 'anonUserId';
 
     constructor() {
         super();
+    }
+
+    public async getGameSummary(): Promise<Result<GameSummaryDto>> {
+        const anonUserId = await this.getAnonUserId();
+
+        if (anonUserId === undefined) {
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        let result = await get(
+            '/gameSummary/anon',
+            { date: isoDateNoTime(), userId: anonUserId },
+            null
+        );
+
+        if (!result.ok) {
+            Logger.log("AnonGuessService.getGameSummary(): got bad response from server")
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        const data = JSON.parse(result.data!);
+        if (!isGameSummaryDto(data)) {
+            Logger.log("AnonGuessService.getGameSummary(): got invalid object {0}", data)
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
+        return ok(data);
     }
 
     public async getVisualClue(): Promise<Result<ImageDto>> {
@@ -24,7 +51,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
 
         let result = await get(
             '/target/image/anon',
-            { date: isoDateNoTime(), userId: anonUserId},
+            { date: isoDateNoTime(), userId: anonUserId },
             null,
             true
         )

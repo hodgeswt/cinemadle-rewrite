@@ -16,4 +16,5 @@ public class CinemadleConfig
     public required int MinimumScorePossible { get; set; }
     public required int MinimumRuntimePossible { get; set; }
     public required Dictionary<string, float> MovieImageBlurFactors { get; set; }
+    public required int GameLength { get; set; }
 }

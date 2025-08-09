@@ -1,5 +1,5 @@
 import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
-import type { ImageDto } from "$lib/dto";
+import type { GameSummaryDto, ImageDto } from "$lib/dto";
 import type { Result } from "$lib/result";
 
 export interface IGuessService {
@@ -9,4 +9,5 @@ export interface IGuessService {
     possibleGuesses(): PossibleMediaDomain;
     getPreviousGuesses(): Promise<Result<GuessDomain[]>>;
     getVisualClue(): Promise<Result<ImageDto>>;
+    getGameSummary(): Promise<Result<GameSummaryDto>>;
 }

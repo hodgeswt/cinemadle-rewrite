@@ -46,6 +46,18 @@ export type PersonDto = {
     role: string;
 }
 
+export type GameSummaryDto = {
+    summary: string[];
+}
+
+export function isGameSummaryDto(obj: any): obj is GameSummaryDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return isArray(obj.summary, 'string');
+}
+
 export function isImageDto(obj: any): obj is ImageDto {
     if (!hasValue(obj)) {
         return false;

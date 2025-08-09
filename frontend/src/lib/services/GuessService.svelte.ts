@@ -8,11 +8,32 @@ import { get as sget } from 'svelte/store';
 import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
-import { isImageDto, type ImageDto } from "$lib/dto";
+import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
 
 export class GuessService extends GuessServiceShared implements IGuessService {
     constructor() {
         super();
+    }
+
+    public async getGameSummary(): Promise<Result<GameSummaryDto>> {
+        let result = await get(
+            '/gameSummary',
+            { date: isoDateNoTime() },
+            { Authorization: sget(userStore).jwt }
+        );
+
+        if (!result.ok) {
+            Logger.log("GuessService.getGameSummary(): got bad response from server")
+            return err(GuessService.unableToLoadGameSummaryError);
+        }
+
+        const data = JSON.parse(result.data!);
+        if (!isGameSummaryDto(data)) {
+            Logger.log("GuessService.getGameSummary(): got invalid object {0}", data)
+            return err(GuessService.unableToLoadGameSummaryError);
+        }
+
+        return ok(data);
     }
 
     public async getVisualClue(): Promise<Result<ImageDto>> {
@@ -23,13 +44,13 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         )
 
         if (!result.ok) {
-            Logger.log("AnonGuessService.getVisualClue(): got bad response from server")
+            Logger.log("GuessService.getVisualClue(): got bad response from server")
             return err(GuessService.unableToLoadImageError);
         }
 
         const data = JSON.parse(result.data!);
         if (!isImageDto(data)) {
-            Logger.log("AnonGuessService.getVisualClue(): got invalid object {0}", data);
+            Logger.log("GuessService.getVisualClue(): got invalid object {0}", data);
             return err(GuessService.unableToLoadImageError);
         }
 

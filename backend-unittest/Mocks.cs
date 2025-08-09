@@ -33,7 +33,8 @@ public class Mocks
             { "7", 12.0F },
             { "8", 9.0F },
             { "9", 6.0F }
-        }
+        },
+        GameLength = 10,
     };
 
     public static IMemoryCache GetMemoryCache()

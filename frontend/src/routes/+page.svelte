@@ -148,24 +148,14 @@
         }
     });
 
-    function showShareSheet(_event: Event): void {
-        shareData = guesses.map((x) =>
-            x.cards
-                .map((y) => {
-                    switch (y.color) {
-                        case "green":
-                            return "🟩";
-                        case "yellow":
-                            return "🟨";
-                        default:
-                            return "⬛";
-                    }
-                })
-                .join(""),
-        );
+    async function showShareSheet(_event: Event): Promise<void> {
+        const result = await guessService().getGameSummary();
 
-        shareData.push(`cinemadle ${isoDateNoTime()}`);
-        shareData.push("play at cinemadle.com");
+        if (!result.ok) {
+            shareData = [result.error!];
+        } else {
+            shareData = result.data!.summary;
+        }
 
         openShare.set(true);
     }
@@ -305,16 +295,14 @@
             </p>
         {/if}
 
-        {#if guesses.length >= 6 && !win && !lose}
+        {#if $userStore.loggedIn && guesses.length >= 6}
             <div
                 class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
             >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
-                        <Info class="text-indigo-600"/>
-                        <span class="text-sm text-gray-700"
-                            >Need a hint?</span
-                        >
+                        <Info class="text-indigo-600" />
+                        <span class="text-sm text-gray-700">need a hint?</span>
                     </div>
                     <Button
                         on:click={showVisualClue}
@@ -322,7 +310,7 @@
                         size="sm"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
-                        View Visual Clue
+                        view visual clue
                     </Button>
                 </div>
             </div>
@@ -365,7 +353,7 @@
                 <AlertDialog.Title>your results</AlertDialog.Title>
                 <AlertDialog.Description>
                     {#each shareData as line}
-                        <p class="m-0 p-0">{line}</p>
+                        <div class="leading-none">{line}</div>
                     {/each}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
