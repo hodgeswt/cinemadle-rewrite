@@ -16,17 +16,19 @@ on:
 
 jobs:
   test:
-    - name: Checkout repository
-      if: ${{ inputs.checkout-repo }}
-      uses: actions/checkout@v4
-
-    - name: Set Up Dotnet
-      if: ${{ inputs.setup-dotnet }}
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.117
-
-    - name: Run Unit Tests
-      working-directory: backend-unittest
-      run: |
-        dotnet test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        if: ${{ inputs.checkout-repo }}
+        uses: actions/checkout@v4
+  
+      - name: Set Up Dotnet
+        if: ${{ inputs.setup-dotnet }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.117
+  
+      - name: Run Unit Tests
+        working-directory: backend-unittest
+        run: |
+          dotnet test
