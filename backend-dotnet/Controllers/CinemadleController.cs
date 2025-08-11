@@ -8,10 +8,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Png;
+using Cinemadle.Metrics;
 using System.Threading.Tasks;
-using System.Text;
 
 namespace Cinemadle.Controllers;
 
@@ -24,7 +23,7 @@ public class CinemadleController : ControllerBase
     private IGuessRepository _guessRepo;
     private ILogger<CinemadleController> _logger;
     private DatabaseContext _db;
-
+    private readonly CinemadleMetrics _metrics;
     private readonly bool _isDevelopment;
 
     public CinemadleController(
@@ -33,7 +32,8 @@ public class CinemadleController : ControllerBase
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
             IGuessRepository guessRepository,
-            DatabaseContext db
+            DatabaseContext db,
+            CinemadleMetrics metrics
     )
     {
         _logger = logger;
@@ -45,6 +45,7 @@ public class CinemadleController : ControllerBase
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _isDevelopment = env.IsDevelopment();
+        _metrics = metrics;
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -56,19 +57,24 @@ public class CinemadleController : ControllerBase
 
     [Authorize]
     [HttpGet("validate")]
+    [Metrics]
     public ActionResult<bool> Validate()
     {
+        _logger.LogDebug("Validate");
         return true;
     }
 
     [HttpGet("heartbeat")]
-    public ActionResult<bool> Heartbeat()
+    [Metrics]
+    public async Task<ActionResult<bool>> Heartbeat()
     {
         _logger.LogDebug("Heartbeat");
+        await Task.Delay(Random.Shared.Next(0, 10000));
         return true;
     }
 
     [HttpGet("anonUserId")]
+    [Metrics]
     public async Task<ActionResult> GetAnonUserId()
     {
         _logger.LogDebug("+GetAnonUserId");
@@ -176,6 +182,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("gameSummary/anon")]
+    [Metrics]
     public async Task<ActionResult> GetGameSummaryAnon(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
         [FromQuery, Required] Guid userId
@@ -230,6 +237,7 @@ public class CinemadleController : ControllerBase
 
     [Authorize]
     [HttpGet("gameSummary")]
+    [Metrics]
     public async Task<ActionResult> GetGameSummary(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
@@ -278,6 +286,7 @@ public class CinemadleController : ControllerBase
 
     [Authorize]
     [HttpGet("target/image")]
+    [Metrics]
     public async Task<ActionResult> GetMovieImage(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
@@ -350,6 +359,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("target")]
+    [Metrics]
     public async Task<ActionResult> GetTargetMovie(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
@@ -378,6 +388,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("movielist")]
+    [Metrics]
     public async Task<ActionResult> GetMovieList()
     {
         _logger.LogDebug("+GetMovieList");
@@ -397,6 +408,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("guesses/anon")]
+    [Metrics]
     public ActionResult GetPastGuessesAnon(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
         [FromQuery, Required] Guid userId
@@ -435,6 +447,7 @@ public class CinemadleController : ControllerBase
 
     [Authorize]
     [HttpGet("guesses")]
+    [Metrics]
     public ActionResult GetPastGuesses(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
@@ -469,6 +482,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("guess/anon/{id}")]
+    [Metrics]
     public async Task<ActionResult> GuessMovieAnon(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
             [FromQuery, Required] Guid userId,
@@ -554,6 +568,7 @@ public class CinemadleController : ControllerBase
 
     [Authorize]
     [HttpGet("guess/{id}")]
+    [Metrics]
     public async Task<ActionResult> GuessMovie(
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
             int id
@@ -610,6 +625,7 @@ public class CinemadleController : ControllerBase
     }
 
     [HttpGet("movie/{movieName}")]
+    [Metrics]
     public async Task<ActionResult> GetMovie(string movieName)
     {
         if (!_isDevelopment)

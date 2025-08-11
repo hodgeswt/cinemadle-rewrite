@@ -27,6 +27,9 @@ RUN dotnet publish --configuration Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
 
+ARG METRICS_ENABLED="false"
+ENV CINEMADLE_METRICS_ENABLED=${METRICS_ENABLED}
+
 WORKDIR /app
 
 RUN mkdir -p /app/AppData

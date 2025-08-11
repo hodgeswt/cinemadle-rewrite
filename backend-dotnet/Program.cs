@@ -1,18 +1,33 @@
 using Cinemadle.Database;
 using Cinemadle.Interfaces;
+using Cinemadle.Metrics;
 using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
-
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using System.Text.Json.Serialization;
 
 namespace Cinemadle;
 
 public class Program
 {
+    private static readonly string ENV_METRICS_ENABLED = "CINEMADLE_METRICS_ENABLED";
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        if (bool.TryParse(Environment.GetEnvironmentVariable(ENV_METRICS_ENABLED), out bool metricsEnabled) && metricsEnabled)
+        {
+            var telemetry = builder.Services.AddOpenTelemetry();
+                telemetry.ConfigureResource(r => r.AddService(builder.Environment.ApplicationName));
+                telemetry.WithMetrics(m => m
+                .AddAspNetCoreInstrumentation()
+                .AddConsoleExporter()
+                .AddPrometheusExporter()
+                .AddMeter(CinemadleMetrics.METER_NAME)
+            );
+        }
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(opts =>
@@ -72,6 +87,8 @@ public class Program
         builder.Services.AddDbContext<DatabaseContext>();
         builder.Services.AddDbContext<IdentityContext>();
 
+        builder.Services.AddSingleton<CinemadleMetrics>();
+
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
         builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
@@ -85,6 +102,11 @@ public class Program
         builder.Logging.AddConsole();
 
         var app = builder.Build();
+
+        if (metricsEnabled)
+        {
+            app.MapPrometheusScrapingEndpoint();
+        }
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
