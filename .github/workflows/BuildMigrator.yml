@@ -21,9 +21,7 @@ jobs:
           dotnet-version: 8.0.117
 
       - name: Run Unit Tests
-        working-directory: backend-unittest
-        run: |
-          dotnet test
+        uses: ./.github/workflows/UnitTest.yml
 
       - name: Login to Docker
         uses: docker/login-action@v3

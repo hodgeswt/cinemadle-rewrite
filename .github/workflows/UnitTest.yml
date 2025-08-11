@@ -1,0 +1,32 @@
+name: Run Unit Tests
+
+on:
+  workflow_call:
+    inputs:
+      checkout-repo:
+        description: 'perform checkout of repository'
+        required: false
+        type: boolean
+        default: false
+      setup-dotnet:
+        description: 'perform dotnet setup'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    - name: Checkout repository
+      if: ${{ inputs.checkout-repo }}
+      uses: actions/checkout@v4
+
+    - name: Set Up Dotnet
+      if: ${{ inputs.setup-dotnet }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.117
+
+    - name: Run Unit Tests
+      working-directory: backend-unittest
+      run: |
+        dotnet test
