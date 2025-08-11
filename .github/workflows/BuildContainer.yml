@@ -11,6 +11,9 @@ concurrency:
   group: BuildContainer
   cancel-in-progress: true
 jobs:
+  UnitTest:
+    uses: ./.github/workflows/UnitTest.yml
+
   Build:
     runs-on: ubuntu-latest
     steps:
@@ -21,9 +24,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.117
-
-      - name: Run Unit Tests
-        uses: ./.github/workflows/UnitTest.yml
 
       - name: Setup Config
         working-directory: backend-dotnet
