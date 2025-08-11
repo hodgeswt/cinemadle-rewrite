@@ -87,7 +87,7 @@ public class Program
         builder.Services.AddDbContext<DatabaseContext>();
         builder.Services.AddDbContext<IdentityContext>();
 
-        builder.Services.AddSingleton<CinemadleMetrics>();
+        builder.Services.AddSingleton<ICinemadleMetrics>();
 
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();

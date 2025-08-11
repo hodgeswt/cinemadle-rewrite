@@ -42,7 +42,7 @@ public class CinemadleControllerUnitTest
     }
 
     [Fact]
-    public void CinemadleControllerHeartbeatEndpointTest()
+    public async Task CinemadleControllerHeartbeatEndpointTest()
     {
         ILogger<CinemadleController> logger = UnitTestAssist.GetLogger<CinemadleController>();
         Mock<IConfigRepository> configRepoMock = Mocks.GetMockedConfigRepository();
@@ -65,7 +65,7 @@ public class CinemadleControllerUnitTest
 
         CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db);
 
-        Assert.True(controller.Heartbeat().Value);
+        Assert.True((await controller.Heartbeat()).Value);
     }
 
     [Fact]
@@ -451,11 +451,12 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetDatabaseContext()
-        );
-
-        controller.ControllerContext = new ControllerContext
+        )
         {
-            HttpContext = new DefaultHttpContext()
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
         };
 
         var result = await controller.GuessMovie(date, movieId);

@@ -1,3 +1,4 @@
+using Cinemadle.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -29,7 +30,7 @@ public class MetricsAttribute : ActionFilterAttribute
             return;
         }
 
-        CinemadleMetrics? metrics = context.HttpContext.RequestServices.GetService<CinemadleMetrics>();
+        ICinemadleMetrics? metrics = context.HttpContext.RequestServices.GetService<ICinemadleMetrics>();
         metrics?.EndpointMetrics[counterName]?.Add(1);
 
         base.OnActionExecuting(context);

@@ -7,6 +7,7 @@ using Moq;
 using Cinemadle.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
+using System.Diagnostics.Metrics;
 
 namespace Cinemadle.UnitTest;
 
@@ -107,7 +108,8 @@ public class Mocks
         return tmdbRepoMock;
     }
 
-    public static Mock<IWebHostEnvironment> GetMockedWebHostEnvironment() {
+    public static Mock<IWebHostEnvironment> GetMockedWebHostEnvironment()
+    {
         Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
 

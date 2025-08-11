@@ -1,12 +1,12 @@
 using System.Diagnostics.Metrics;
 using System.Reflection;
-using Cinemadle.Controllers;
+using Cinemadle.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace Cinemadle.Metrics;
 
-public class CinemadleMetrics
+public class CinemadleMetrics : ICinemadleMetrics
 {
 
     public static readonly string METER_NAME = "Cinemadle.Metrics";
@@ -14,9 +14,7 @@ public class CinemadleMetrics
     private readonly Meter _meter;
     private readonly ILogger<CinemadleMetrics> _logger;
     public Counter<long> RequestsProcessedCounter { get; }
-
     public Dictionary<string, Counter<long>> EndpointMetrics { get; } = [];
-
     public static string? GetCounterName(string baseRoute, MethodBase? method)
     {
         if (method is null)

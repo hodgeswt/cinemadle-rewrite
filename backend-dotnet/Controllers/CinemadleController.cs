@@ -10,7 +10,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Cinemadle.Metrics;
-using System.Threading.Tasks;
 
 namespace Cinemadle.Controllers;
 
@@ -23,7 +22,6 @@ public class CinemadleController : ControllerBase
     private IGuessRepository _guessRepo;
     private ILogger<CinemadleController> _logger;
     private DatabaseContext _db;
-    private readonly CinemadleMetrics _metrics;
     private readonly bool _isDevelopment;
 
     public CinemadleController(
@@ -32,8 +30,7 @@ public class CinemadleController : ControllerBase
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
             IGuessRepository guessRepository,
-            DatabaseContext db,
-            CinemadleMetrics metrics
+            DatabaseContext db
     )
     {
         _logger = logger;
@@ -45,7 +42,6 @@ public class CinemadleController : ControllerBase
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _isDevelopment = env.IsDevelopment();
-        _metrics = metrics;
 
         _logger.LogDebug("-ctor({type})", type);
     }
