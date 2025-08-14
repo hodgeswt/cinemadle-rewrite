@@ -8,10 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Png;
-using System.Threading.Tasks;
-using System.Text;
 
 namespace Cinemadle.Controllers;
 
