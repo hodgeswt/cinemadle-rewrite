@@ -1,20 +1,30 @@
+using System.ComponentModel.DataAnnotations;
 using Cinemadle.Database;
 using Cinemadle.Datamodel;
 using Cinemadle.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cinemadle.Controllers;
 
 [Route("api/insights")]
 [ApiController]
-public class InsightsController : ControllerBase
+public class InsightsController : CinemadleControllerBase
 {
     private readonly ILogger<InsightsController> _logger;
     private readonly DatabaseContext _db;
     private readonly IdentityContext _identity;
     private readonly ITmdbRepository _tmdbRepo;
+    private readonly UserManager<IdentityUser> _userManager;
 
-    public InsightsController(ILogger<InsightsController> logger, DatabaseContext db, IdentityContext identity, ITmdbRepository tmdbRepo)
+    public InsightsController(
+        ILogger<InsightsController> logger,
+        DatabaseContext db,
+        IdentityContext identity,
+        ITmdbRepository tmdbRepo,
+        UserManager<IdentityUser> userManager
+    )
     {
         _logger = logger;
 
@@ -23,6 +33,7 @@ public class InsightsController : ControllerBase
         _db = db;
         _identity = identity;
         _tmdbRepo = tmdbRepo;
+        _userManager = userManager;
 
         _logger.LogDebug("-InsightsController.ctor");
     }
@@ -72,7 +83,7 @@ public class InsightsController : ControllerBase
 
 
     [HttpGet("times")]
-    public async Task<ActionResult> GetGuessTimes()
+    public ActionResult GetGuessTimes()
     {
         _logger.LogDebug("+GetGuessTimes()");
         try
@@ -146,5 +157,61 @@ public class InsightsController : ControllerBase
 
             return new StatusCodeResult(500);
         }
+    }
+
+    [HttpGet("user/{email}")]
+    [Authorize]
+    public async Task<ActionResult> GetUserData(string email)
+    {
+        _logger.LogDebug("+GetUserData({email})", email);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetUserData({email})", email);
+            return new UnauthorizedResult();
+        }
+
+        IdentityUser? requestingUser = _identity.Users.Where(x => x.Id == userId).FirstOrDefault();
+
+        if (requestingUser is null)
+        {
+            _logger.LogDebug("-GetUserData({email})", email);
+            return new NotFoundResult();
+        }
+
+        if (requestingUser.Email != email && !UserHasRole(nameof(CustomRoles.Admin)))
+        {
+            _logger.LogDebug("-GetUserData({email})", email);
+            return new UnauthorizedResult();
+        }
+
+        IdentityUser? targetUser;
+
+        if (requestingUser.Email == email)
+        {
+            targetUser = requestingUser;
+        }
+        else
+        {
+            targetUser = await _userManager.FindByEmailAsync(email);
+        }
+
+        if (targetUser is null)
+        {
+            _logger.LogDebug("-GetUserData({email})", email);
+            return new NotFoundResult();
+        }
+
+        IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(x => x.UserId == targetUser.Id);
+
+        _logger.LogDebug("GetUserData({email}): User has {count} guesses", email, userGuesses.Count());
+
+        long gamesPlayed = userGuesses.GroupBy(x => x.GameId).Count();
+
+        return new OkObjectResult(new UserDataDto
+        {
+            Email = email,
+            GamesPlayed = gamesPlayed,
+        });
     }
 }

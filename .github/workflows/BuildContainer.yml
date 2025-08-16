@@ -48,6 +48,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+          build-args: |
+            VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+            CINEMADLE_ADMIN_EMAIL=${{ secrets.CINEMADLE_ADMIN_EMAIL }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: hodgeswt/cinemadle:latest

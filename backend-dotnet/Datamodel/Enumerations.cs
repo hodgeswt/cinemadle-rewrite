@@ -9,3 +9,8 @@ public enum Rating
     R,
     NC17
 }
+
+public enum CustomRoles
+{
+    Admin,
+}

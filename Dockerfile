@@ -1,4 +1,4 @@
-FROM node:18-alpine AS frontend-builder
+FROM denoland/deno:latest AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -12,7 +12,7 @@ ENV VITE_API_ENDPOINT=${VITE_API_ENDPOINT}
 RUN echo "API ENDPOINT IS: $VITE_API_ENDPOINT"
 RUN echo "VITE_API_ENDPOINT=$VITE_API_ENDPOINT" > .env
 
-RUN npm run build
+RUN deno task build
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
 
@@ -32,6 +32,9 @@ WORKDIR /app
 RUN mkdir -p /app/AppData
 COPY --from=builder /app/backend/out ./
 COPY --from=frontend-builder /app/frontend/build ./wwwroot
+
+ARG CINEMADLE_ADMIN_EMAIL=""
+ENV CINEMADLE_ADMIN_EMAIL=${CINEMADLE_ADMIN_EMAIL}
 
 EXPOSE 5000
 

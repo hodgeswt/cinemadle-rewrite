@@ -14,7 +14,7 @@ namespace Cinemadle.Controllers;
 
 [Route("api/cinemadle")]
 [ApiController]
-public class CinemadleController : ControllerBase
+public class CinemadleController : CinemadleControllerBase
 {
     private readonly CinemadleConfig _config;
     private ITmdbRepository _tmdbRepo;
@@ -44,11 +44,6 @@ public class CinemadleController : ControllerBase
         _isDevelopment = env.IsDevelopment();
 
         _logger.LogDebug("-ctor({type})", type);
-    }
-
-    protected string? GetUserId()
-    {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     [Authorize]
