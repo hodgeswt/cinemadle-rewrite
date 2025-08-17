@@ -1,4 +1,6 @@
-namespace Cinemadle.Datamodel;
+using Cinemadle.Datamodel.Domain;
+
+namespace Cinemadle.Datamodel.DTO;
 
 public class MovieDto
 {

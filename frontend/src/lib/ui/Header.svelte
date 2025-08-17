@@ -42,6 +42,12 @@
                             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >sign up</a
                         >
+                    {:else}
+                        <a
+                            href="/purchase"
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >purchase</a
+                        >
                     {/if}
                     <a
                         href="/about"

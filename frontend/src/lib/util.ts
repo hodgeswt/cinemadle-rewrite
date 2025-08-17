@@ -12,7 +12,7 @@ export function isDictionary(obj: any, keyType: string, valueType: string, value
     }
 
     for (const key in obj) {
-        if (!valueIsArray && typeof obj[key] !== 'string') {
+        if (!valueIsArray && typeof obj[key] !== valueType) {
             return false;
         } else if (valueIsArray && !isArray(obj[key], valueType)) {
             return false;

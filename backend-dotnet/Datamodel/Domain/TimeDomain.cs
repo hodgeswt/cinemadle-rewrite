@@ -1,6 +1,6 @@
-namespace Cinemadle.Datamodel;
+namespace Cinemadle.Datamodel.Domain;
 
-public class TimeDomain
+public class Time
 {
     public required DateTime DateTime { get; set; }
     public required DayOfWeek DayOfWeek { get; set; }

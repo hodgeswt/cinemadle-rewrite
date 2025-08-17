@@ -1,5 +1,6 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -46,14 +47,23 @@ public class Program
 
         builder.Services.AddCors(opts =>
         {
-            opts.AddPolicy("AllowAllOrigins",
-                    builder =>
+            opts.AddPolicy("AllowFrontend",
+                p =>
+                {
+                    if (builder.Environment.IsDevelopment())
                     {
-                        builder
-                            .AllowAnyOrigin()
+                        p.AllowAnyOrigin()
                             .AllowAnyMethod()
                             .AllowAnyHeader();
-                    });
+                    }
+                    else
+                    {
+                        p.WithOrigins("https://cinemadle.com")
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    }
+                    
+                });
         });
 
         builder.Services.Configure<ForwardedHeadersOptions>(opts =>
@@ -78,6 +88,7 @@ public class Program
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
         builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
+        builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
 
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("Admin", policy =>
@@ -141,14 +152,14 @@ public class Program
                 response.Redirect("/index.html");
             }
 
-            await System.Threading.Tasks.Task.CompletedTask;
+            await Task.CompletedTask;
         });
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
         app.UseStaticFiles();
         app.MapControllers();
-        app.UseCors("AllowAllOrigins"); ;
+        app.UseCors("AllowFrontend"); ;
         app.Run();
     }
 }

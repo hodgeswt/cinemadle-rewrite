@@ -3,6 +3,7 @@ using System;
 using Cinemadle.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cinemadle.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250817183342_UserAddOns")]
+    partial class UserAddOns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.17");
@@ -132,9 +135,6 @@ namespace Cinemadle.Migrations
                     b.Property<string>("ProductId")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<long>("Quantity")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

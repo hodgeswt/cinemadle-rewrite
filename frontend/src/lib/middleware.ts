@@ -135,11 +135,15 @@ export async function post(
                 uri += `${queryKey}=${queryParams[queryKey]}`;
             }
         }
+
+        Logger.log("post: making post request to {0}", uri);
+
         const response = await fetch(uri, {
             method: 'POST',
             headers: { ...headers },
             body: body,
         });
+
         let responseData: string;
         let good = true;
         if (response.ok) {
@@ -151,6 +155,7 @@ export async function post(
             }
         } else {
             responseData = JSON.stringify(await response.json());
+            Logger.log("post: error response {0}", responseData);
             good = false;
         }
 
@@ -160,7 +165,7 @@ export async function post(
 
         return ok(responseData);
     } catch (e) {
-        console.error(e);
+        Logger.log("Caught error: {0}", JSON.stringify(e));
         return err("unknown error");
     }
 
@@ -171,12 +176,14 @@ export async function get(
     queryParams: { [key: string]: string } | null,
     headers?: { [key: string]: any } | null,
     raw?: boolean,
+    useNoBase?: boolean,
 ): Promise<Result<string>> {
     let host = import.meta.env.VITE_API_ENDPOINT;
 
     try {
         endpoint = endpoint.replace(/^\//, "");
-        let uri = `${host}/api/cinemadle/${endpoint}`;
+        let uri = useNoBase ? `${host}/${endpoint}` : `${host}/api/cinemadle/${endpoint}`;
+
 
         if (queryParams !== null) {
             let first = true;

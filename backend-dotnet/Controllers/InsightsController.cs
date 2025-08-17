@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Cinemadle.Database;
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -88,10 +88,10 @@ public class InsightsController : CinemadleControllerBase
         _logger.LogDebug("+GetGuessTimes()");
         try
         {
-            IEnumerable<TimeDomain> guesses = [.. _db.Guesses
+            IEnumerable<Time> guesses = [.. _db.Guesses
                 .Concat(_db.AnonUserGuesses)
                 .GroupBy(x => x.Inserted)
-                .Select(x => new TimeDomain {
+                .Select(x => new Time {
                     DateTime = x.Key,
                     DayOfWeek = x.Key.DayOfWeek,
                     TimeOnly = TimeOnly.FromDateTime(x.Key),
@@ -204,14 +204,15 @@ public class InsightsController : CinemadleControllerBase
 
         IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(x => x.UserId == targetUser.Id);
 
-        _logger.LogDebug("GetUserData({email}): User has {count} guesses", email, userGuesses.Count());
-
         long gamesPlayed = userGuesses.GroupBy(x => x.GameId).Count();
+        var distinctGuesses = userGuesses.GroupBy(x => x.GuessMediaId);
 
         return new OkObjectResult(new UserDataDto
         {
             Email = email,
             GamesPlayed = gamesPlayed,
+            DistinctGuesses = distinctGuesses.Select(x => x.Key),
+            TotalGuesses = userGuesses.Count()
         });
     }
 }
