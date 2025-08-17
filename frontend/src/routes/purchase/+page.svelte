@@ -6,13 +6,11 @@
     import { goto } from "$app/navigation";
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
-    import { get, post } from "$lib/middleware";
-    import { isPurchaseResponseDto, isQuantitiesDto, type PurchaseDetailsDto, type PurchaseResponseDto } from "$lib/dto";
-    import { err, ok, type Result } from "$lib/result";
     import { loadStripe } from '@stripe/stripe-js';
     import Logger from "$lib/logger";
     import { onMount } from "svelte";
-    import { isoDateNoTime } from "$lib/util";
+    import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
+    import { Container } from "$lib/services";
 
     let openError = writable(false);
     let errorMessage = $state("");
@@ -20,6 +18,8 @@
     let purchaseCategoryRevealDisabled = $state(false);
 
     let quantities = $state({} as { [key: string]: number });
+
+    let purchasesService = (): PurchasesService => Container.it().PurchasesService;
 
     if (!$userStore.loggedIn) {
         goto("/");
@@ -36,47 +36,11 @@
     } as { [key: string]: string }
 
     onMount(async () => {
-        let result = await get(
-            '/api/payments/quantities',
-            { },
-            { Authorization: $userStore.jwt },
-            false,
-            true,
-        )
-
+        let result = await purchasesService().getQuantities();
         if (result.ok) {
-            let data = JSON.parse(result.data!);
-            if (isQuantitiesDto(data)) {
-                Logger.log("Got quantities: {0}", data.quantities)
-                quantities = data.quantities;
-            } else {
-                Logger.log("got bad data")
-            }
-        } else {
-            Logger.log("unable to load quantities")
+            quantities = result.data!.quantities;
         }
     });
-
-    async function purchase(productId: string): Promise<Result<PurchaseResponseDto>> {
-        Logger.log("Making purchase request to server");
-        let result = await post(
-            '/api/payments/purchase',
-            true,
-            JSON.stringify({ productId: productId, quantity: 1 } as PurchaseDetailsDto),
-            { Authorization: $userStore.jwt, "Content-Type": "application/json"}
-        );
-
-        if (!result.ok) {
-            return err("unable to make purchase request");
-        }
-
-        const data = JSON.parse(result.data!);
-        if (!isPurchaseResponseDto(data)) {
-            return err("unable to make purchase request");
-        }
-
-        return ok(data);
-    }
 
     async function stripeRedirect(sessionId: string) {
         Logger.log("Stripe frontend key: {0}", stripeFrontendKey);
@@ -93,7 +57,7 @@
     async function purchaseVisualClue() {
         purchaseVisualClueDisabled = true;
         Logger.log("Making purchase request for visual clue");
-        let result = await purchase(visualClueProductId);
+        let result = await purchasesService().purchase(visualClueProductId);
 
         if (!result.ok) {
             errorMessage = result.error!;
@@ -106,7 +70,7 @@
 
     async function purchaseCategoryReveal() {
         purchaseCategoryRevealDisabled = true;
-        let result = await purchase(categoryRevealProductId);
+        let result = await purchasesService().purchase(categoryRevealProductId);
 
         if (!result.ok) {
             errorMessage = result.error!;
@@ -156,13 +120,14 @@
 
     <p class="mb-4">Stripe payments will indicate recipient Will Hodges</p>
 
+    <p class="mb-4">Visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
     <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled}>
         <p class="m-1">Buy 10 Visual Clues</p>
     </Button>
 
-    <Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled}>
+    <!--<Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled}>
         <p class="m-1">Buy 10 Category Reveals</p>
-    </Button>
+    </Button>-->
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
