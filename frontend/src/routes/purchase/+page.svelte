@@ -16,6 +16,8 @@
 
     let openError = writable(false);
     let errorMessage = $state("");
+    let purchaseVisualClueDisabled = $state(false);
+    let purchaseCategoryRevealDisabled = $state(false);
 
     let quantities = $state({} as { [key: string]: number });
 
@@ -89,6 +91,7 @@
     }
 
     async function purchaseVisualClue() {
+        purchaseVisualClueDisabled = true;
         Logger.log("Making purchase request for visual clue");
         let result = await purchase(visualClueProductId);
 
@@ -102,6 +105,7 @@
     }
 
     async function purchaseCategoryReveal() {
+        purchaseCategoryRevealDisabled = true;
         let result = await purchase(categoryRevealProductId);
 
         if (!result.ok) {
@@ -115,6 +119,8 @@
 
     function closeDialog() {
         openError.set(false);
+        purchaseVisualClueDisabled = false;
+        purchaseCategoryRevealDisabled = false;
         errorMessage = "";
     }
 </script>
@@ -148,15 +154,15 @@
         </div>
     {/if}
 
-    <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4">
+    <p class="mb-4">Stripe payments will indicate recipient Will Hodges</p>
+
+    <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled}>
         <p class="m-1">Buy 10 Visual Clues</p>
     </Button>
 
-    <Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4">
+    <Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled}>
         <p class="m-1">Buy 10 Category Reveals</p>
     </Button>
-
-    
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
