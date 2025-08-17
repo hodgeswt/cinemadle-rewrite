@@ -27,7 +27,11 @@ public class ConfigRepository : IConfigRepository
         _jsonOptions = new();
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
 
-        if (!TryLoadConfig(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _configFileName)))
+        var folder = Environment.SpecialFolder.LocalApplicationData;
+        string path = Environment.GetFolderPath(folder);
+        string configPath = Path.Join(path, "AppData", "CinemadleConfig.json");
+
+        if (!TryLoadConfig(configPath) && !TryLoadConfig(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _configFileName)))
         {
             throw new ObjectInstantationException(typeName);
         }

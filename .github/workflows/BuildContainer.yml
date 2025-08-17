@@ -27,11 +27,6 @@ jobs:
         run: |
           dotnet test
 
-      - name: Setup Config
-        working-directory: backend-dotnet
-        run: |
-          echo "${{ secrets.CINEMADLE_CONFIG }}" | base64 -d > CinemadleConfig.json
-
       - name: Login to Docker
         uses: docker/login-action@v3
         with:
@@ -50,6 +45,8 @@ jobs:
           context: .
           build-args: |
             VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+            VITE_STRIPE_FRONTEND_KEY=${{ secrets.VITE_STRIPE_FRONTEND_KEY }}
+            VITE_PRODUCT_IDS=${{ secrets.VITE_PRODUCT_IDS }}
             CINEMADLE_ADMIN_EMAIL=${{ secrets.CINEMADLE_ADMIN_EMAIL }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: hodgeswt/cinemadle:latest
