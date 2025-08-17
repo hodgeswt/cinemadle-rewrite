@@ -25,8 +25,8 @@
         goto("/");
     }
 
-    const visualClueProductId = "price_1Rwv2IBpMK1eGQsnnKpUaxCb";
-    const categoryRevealProductId = "price_1Rww6UBpMK1eGQsngue55u43";
+    let visualClueProductId = $state("");
+    const categoryRevealProductId = "";
 
     const stripeFrontendKey = import.meta.env.VITE_STRIPE_FRONTEND_KEY;
 
@@ -39,6 +39,12 @@
         let result = await purchasesService().getQuantities();
         if (result.ok) {
             quantities = result.data!.quantities;
+        }
+
+        const mapped = (import.meta.env.VITE_PRODUCT_IDS as string).split(';').map(y => y.split(':'));
+        const temp = mapped.find(x => x[0] == "VisualClue");
+        if (temp !== undefined && temp !== null && temp.length === 2) {
+            visualClueProductId = temp[1] as string;
         }
     });
 
@@ -114,24 +120,24 @@
         </div>
     {:else}
         <div class="mt-6 p-4 mb-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center text-gray-500 dark:text-gray-400">
-            <p>No items yet. Purchase some to get started!</p>
+            <p>no items yet. purchase some to get started!</p>
         </div>
     {/if}
 
     <p class="mb-4">Stripe payments will indicate recipient Will Hodges</p>
 
-    <p class="mb-4">Visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
+    <p class="mb-4">visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
     <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled}>
-        <p class="m-1">Buy 10 Visual Clues</p>
+        <p class="m-1">buy 10 visual clues</p>
     </Button>
 
     <!--<Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled}>
-        <p class="m-1">Buy 10 Category Reveals</p>
+        <p class="m-1">buy 10 category reveals</p>
     </Button>-->
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
-            <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
+            <AlertDialog.Title>uh-oh!</AlertDialog.Title>
             <AlertDialog.Description>
                 {errorMessage}
             </AlertDialog.Description>
