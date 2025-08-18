@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: BuildContainer
+  group: BuildTestContainer
   cancel-in-progress: true
 jobs:
   Build:
