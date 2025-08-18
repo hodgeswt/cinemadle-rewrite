@@ -44,9 +44,9 @@ jobs:
         with:
           context: .
           build-args: |
-            VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+            VITE_API_ENDPOINT=${{ secrets.VITE_TEST_API_ENDPOINT }}
             VITE_STRIPE_FRONTEND_KEY=${{ secrets.VITE_TEST_STRIPE_FRONTEND_KEY }}
-            VITE_PRODUCT_IDS=${{ secrets.VITE_PRODUCT_IDS }}
+            VITE_PRODUCT_IDS=${{ secrets.VITE_TEST_PRODUCT_IDS }}
             CINEMADLE_ADMIN_EMAIL=${{ secrets.CINEMADLE_ADMIN_EMAIL }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: hodgeswt/cinemadle-test:latest
