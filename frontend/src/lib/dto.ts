@@ -50,6 +50,35 @@ export type GameSummaryDto = {
     summary: string[];
 }
 
+export type PurchaseResponseDto = {
+    sessionId: string;
+}
+
+export type PurchaseDetailsDto = {
+    productId: string;
+    quantity: number;
+}
+
+export type QuantitiesDto = {
+    quantities: { [key: string]: number }
+}
+
+export function isQuantitiesDto(obj: any): obj is QuantitiesDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return isDictionary(obj.quantities, 'string', 'number', false);
+}
+
+export function isPurchaseResponseDto(obj: any): obj is PurchaseResponseDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return typeof(obj.sessionId) === 'string';
+}
+
 export function isGameSummaryDto(obj: any): obj is GameSummaryDto {
     if (!hasValue(obj)) {
         return false;

@@ -1,16 +1,19 @@
 using Cinemadle.Database;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
-
+using System.Security.Claims;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace Cinemadle;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -44,14 +47,23 @@ public class Program
 
         builder.Services.AddCors(opts =>
         {
-            opts.AddPolicy("AllowAllOrigins",
-                    builder =>
+            opts.AddPolicy("AllowFrontend",
+                p =>
+                {
+                    if (builder.Environment.IsDevelopment())
                     {
-                        builder
-                            .AllowAnyOrigin()
+                        p.AllowAnyOrigin()
                             .AllowAnyMethod()
                             .AllowAnyHeader();
-                    });
+                    }
+                    else
+                    {
+                        p.WithOrigins("https://cinemadle.com")
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    }
+                    
+                });
         });
 
         builder.Services.Configure<ForwardedHeadersOptions>(opts =>
@@ -76,9 +88,14 @@ public class Program
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
         builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
+        builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("Admin", policy =>
+                policy.RequireClaim(ClaimTypes.Role, nameof(CustomRoles.Admin)));
+
         builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<IdentityContext>();
 
         builder.Logging.ClearProviders();
@@ -99,6 +116,31 @@ public class Program
         db.Database.EnsureCreated();
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
         identityDb.Database.EnsureCreated();
+
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        foreach (CustomRoles customRole in Enum.GetValues(typeof(CustomRoles)))
+        {
+            string roleName = customRole.ToString();
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+        }
+        
+        string? adminEmail = Environment.GetEnvironmentVariable("CINEMADLE_ADMIN_EMAIL");
+
+        if (!string.IsNullOrWhiteSpace(adminEmail))
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+            IdentityUser? admin = await userManager.FindByEmailAsync(adminEmail);
+            if (admin is not null && !await userManager.IsInRoleAsync(admin, nameof(CustomRoles.Admin)))
+            {
+                await userManager.AddToRoleAsync(admin, nameof(CustomRoles.Admin));
+            }
+        }
+
         app.UseStatusCodePages(async context =>
         {
             var response = context.HttpContext.Response;
@@ -110,14 +152,14 @@ public class Program
                 response.Redirect("/index.html");
             }
 
-            await System.Threading.Tasks.Task.CompletedTask;
+            await Task.CompletedTask;
         });
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
         app.UseStaticFiles();
         app.MapControllers();
-        app.UseCors("AllowAllOrigins"); ;
+        app.UseCors("AllowFrontend"); ;
         app.Run();
     }
 }

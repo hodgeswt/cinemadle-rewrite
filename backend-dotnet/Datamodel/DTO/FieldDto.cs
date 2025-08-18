@@ -1,4 +1,4 @@
-namespace Cinemadle.Datamodel;
+namespace Cinemadle.Datamodel.DTO;
 
 public class FieldDto
 {

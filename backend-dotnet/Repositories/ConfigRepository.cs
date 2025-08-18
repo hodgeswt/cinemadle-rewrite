@@ -1,17 +1,21 @@
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Exceptions;
 using Cinemadle.Interfaces;
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Cinemadle.Repositories;
 
 public class ConfigRepository : IConfigRepository
 {
-    private ILogger<ConfigRepository> _logger;
+    private readonly ILogger<ConfigRepository> _logger;
     private bool _configLoaded;
     private CinemadleConfig? _config;
     private readonly string _configFileName = "CinemadleConfig.json";
+
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public ConfigRepository(ILogger<ConfigRepository> logger)
     {
@@ -20,7 +24,14 @@ public class ConfigRepository : IConfigRepository
         logger.LogDebug("+ctor({type})", typeName);
         _config = null;
 
-        if (!TryLoadConfig(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _configFileName)))
+        _jsonOptions = new();
+        _jsonOptions.Converters.Add(new JsonStringEnumConverter());
+
+        var folder = Environment.SpecialFolder.LocalApplicationData;
+        string path = Environment.GetFolderPath(folder);
+        string configPath = Path.Join(path, "AppData", "CinemadleConfig.json");
+
+        if (!TryLoadConfig(configPath) && !TryLoadConfig(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _configFileName)))
         {
             throw new ObjectInstantationException(typeName);
         }
@@ -47,6 +58,10 @@ public class ConfigRepository : IConfigRepository
     public bool TryLoadConfig(string path)
     {
         _logger.LogDebug("+TryLoadConfig");
+        if (_configLoaded)
+        {
+            return true;
+        }
 
         try
         {
@@ -57,7 +72,8 @@ public class ConfigRepository : IConfigRepository
             }
 
             string configJson = File.ReadAllText(path);
-            _config = JsonSerializer.Deserialize<CinemadleConfig>(configJson);
+            _config = JsonSerializer.Deserialize<CinemadleConfig>(configJson, _jsonOptions);
+            _configLoaded = true;
 
             return true;
         }

@@ -10,6 +10,8 @@ public class DatabaseContext : DbContext
     public DbSet<AnonUser> AnonUsers { get; set; }
     public DbSet<UserGuess> AnonUserGuesses { get; set; }
     public DbSet<Clue> UserClues { get; set; }
+    public DbSet<PurchaseDetails> Purchases { get; set; }
+    public DbSet<UserAccount> UserAccounts { get; set; }
 
     public string DbPath { get; set; }
 

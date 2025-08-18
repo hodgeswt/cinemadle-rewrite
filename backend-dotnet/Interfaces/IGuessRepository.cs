@@ -1,4 +1,5 @@
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 
 namespace Cinemadle.Interfaces;
 

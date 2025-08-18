@@ -14,7 +14,6 @@
     import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
-    import { isoDateNoTime } from "$lib/util";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { writable } from "svelte/store";
@@ -26,6 +25,8 @@
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
     import VisualClue from "$lib/ui/VisualClue.svelte";
+    import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
+    import { goto } from "$app/navigation";
 
     let guessValue = $state("");
     let errorMessage = $state("");
@@ -34,6 +35,7 @@
     let openError = writable(false);
     let openShare = writable(false);
     let openVisualClue = writable(false);
+    let visualClueCountDecremented = $state(false);
     let showAnswer = writable(false);
     let guesses = $state([] as GuessDomain[]);
 
@@ -42,8 +44,12 @@
     let titles = $derived(guesses.map((x) => x.title));
 
     let guessService = (): IGuessService => Container.it().GuessService;
+    let purchasesService = (): PurchasesService =>
+        Container.it().PurchasesService;
 
     let possibleGuesses = $state({} as PossibleMediaDomain);
+
+    let visualClueCount = $state(0);
 
     let filteredGuesses = $derived(
         find(guessValue, Object.keys(possibleGuesses))
@@ -107,6 +113,14 @@
                             loginDto.accessToken,
                             loginDto.refreshToken,
                         );
+                    }
+                }
+
+                let quantitiesResult = await purchasesService().getQuantities();
+                if (quantitiesResult.ok) {
+                    const q = quantitiesResult.data!.quantities;
+                    if ("VisualClue" in q) {
+                        visualClueCount = q["VisualClue"];
                     }
                 }
             }
@@ -202,6 +216,10 @@
     }
 
     function showVisualClue(_event: Event): void {
+        if (!visualClueCountDecremented) {
+            visualClueCount -= 1;
+        }
+
         openVisualClue.set(true);
     }
 
@@ -287,35 +305,6 @@
             </div>
         {/if}
 
-        {#if !$userStore.loggedIn}
-            <p class="mb-4">
-                cinemadle is better when you <a href="/login" class="underline"
-                    >log in</a
-                >
-            </p>
-        {/if}
-
-        {#if $userStore.loggedIn && guesses.length >= 6}
-            <div
-                class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
-            >
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <Info class="text-indigo-600" />
-                        <span class="text-sm text-gray-700">need a hint?</span>
-                    </div>
-                    <Button
-                        on:click={showVisualClue}
-                        variant="secondary"
-                        size="sm"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                        view visual clue
-                    </Button>
-                </div>
-            </div>
-        {/if}
-
         {#if filteredGuesses.length > 0}
             <ul
                 class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute z-[9999999]"
@@ -332,6 +321,76 @@
                     </li>
                 {/each}
             </ul>
+        {/if}
+
+        {#if !$userStore.loggedIn}
+            <p class="mb-4">
+                cinemadle is better when you <a href="/login" class="underline"
+                    >log in</a
+                >
+            </p>
+        {/if}
+
+        {#if $userStore.loggedIn}
+            {#if guesses.length >= 6}
+                {#if visualClueCount > 0}
+                    <div
+                        class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <Info class="text-indigo-600" />
+                                <span class="text-sm text-gray-700"
+                                    >need a hint? (remaining: {visualClueCount})</span
+                                >
+                            </div>
+                            <Button
+                                on:click={showVisualClue}
+                                variant="secondary"
+                                size="sm"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                view visual clue
+                            </Button>
+                        </div>
+                    </div>
+                {:else}
+                    <div
+                        class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <Info class="text-indigo-600" />
+                                <span class="text-sm text-gray-700"
+                                    >need a hint?</span
+                                >
+                            </div>
+                            <Button
+                                on:click={() => goto("/purchase")}
+                                variant="secondary"
+                                size="sm"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                purchase visual clues
+                            </Button>
+                        </div>
+                    </div>
+                {/if}
+            {:else}
+                <div
+                    class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                >
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <Info class="text-indigo-600" />
+                            <span class="text-sm text-gray-700">
+                                visual clues remaining: {visualClueCount}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+            
         {/if}
 
         <AlertDialog.Root bind:open={$openError}>

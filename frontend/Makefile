@@ -1,3 +1,3 @@
 .PHONY: run
 run:
-	npm run dev -- --open --host
+	deno task dev --open --host

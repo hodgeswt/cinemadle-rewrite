@@ -1,5 +1,6 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using TMDbLib.Client;
 using TMDbLib.Objects.Movies;

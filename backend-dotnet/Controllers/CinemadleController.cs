@@ -1,5 +1,6 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -9,12 +10,14 @@ using System.Security.Claims;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers;
 
 [Route("api/cinemadle")]
 [ApiController]
-public class CinemadleController : ControllerBase
+public class CinemadleController : CinemadleControllerBase
 {
     private readonly CinemadleConfig _config;
     private ITmdbRepository _tmdbRepo;
@@ -44,11 +47,6 @@ public class CinemadleController : ControllerBase
         _isDevelopment = env.IsDevelopment();
 
         _logger.LogDebug("-ctor({type})", type);
-    }
-
-    protected string? GetUserId()
-    {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     [Authorize]
@@ -287,6 +285,22 @@ public class CinemadleController : ControllerBase
             return new UnauthorizedResult();
         }
 
+        UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
+        if (userAccount is null)
+        {
+            _logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
+            _logger.LogDebug("-GetMovieImage({date})", date);
+            return new NotFoundResult();
+        }
+
+        AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+        if ((addOn?.Count ?? 0) <= 0)
+        {
+            _logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
+            _logger.LogDebug("-GetMovieImage({date})", date);
+            return new UnauthorizedResult();
+        }
+
         try
         {
             int userGuesses = _db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
@@ -298,7 +312,17 @@ public class CinemadleController : ControllerBase
                 return new UnauthorizedResult();
             }
 
-            float blurFactor = userGuesses >= _config.GameLength ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
+            MovieDto? target = await _tmdbRepo.GetTargetMovie(date);
+
+            if (target is null)
+            {
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new StatusCodeResult(500);
+            }
+
+            bool win = _db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
+
+            float blurFactor = (userGuesses >= _config.GameLength || win) ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
 
             ImageDto? image = await GetBlurredImage(date, blurFactor);
 
@@ -321,18 +345,30 @@ public class CinemadleController : ControllerBase
                         ClueType = ClueType.Visual,
                         Inserted = DateTime.Now
                     });
-
-                    await _db.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {
-                     _logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+                    _logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
                     _logger.LogDebug("-GetMovieImage({date})", date);
 
                     return new StatusCodeResult(500);
                 }
-                
+
             }
+
+            AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+
+            if (record is null)
+            {
+                return new StatusCodeResult(500);
+            }
+
+            if (clue is null)
+            {
+                record.Count -= 1;
+            }
+            
+            await _db.SaveChangesAsync();
 
             _logger.LogDebug("-GetMovieImage({date})", date);
             return new OkObjectResult(image);

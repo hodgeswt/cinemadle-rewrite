@@ -1,8 +1,10 @@
-namespace Cinemadle.Datamodel;
+namespace Cinemadle.Datamodel.Domain;
 
 public class CinemadleConfig
 {
     public required string TmdbApiKey { get; set; }
+    public required string PaymentsApiKey { get; set; }
+    public required string WebhookSecret { get; set; }
     public required int CastCount { get; set; }
     public required int GenresCount { get; set; }
     public required int CacheTTL { get; set; }
@@ -17,4 +19,7 @@ public class CinemadleConfig
     public required int MinimumRuntimePossible { get; set; }
     public required Dictionary<string, float> MovieImageBlurFactors { get; set; }
     public required int GameLength { get; set; }
+    public required string PaymentSuccessUrl { get; set; }
+    public required string PaymentFailureUrl { get; set; }
+    public required Dictionary<string, AddOnDetails> AddOnMapping { get; set; }
 }

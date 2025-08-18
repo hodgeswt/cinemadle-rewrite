@@ -1,5 +1,6 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,6 +16,8 @@ public class Mocks
     private static readonly CinemadleConfig _defaultConfig = new()
     {
         TmdbApiKey = string.Empty,
+        PaymentsApiKey = "asdf",
+        WebhookSecret = "asdf",
         CastCount = 3,
         GenresCount = 3,
         CacheTTL = 10,
@@ -35,6 +38,9 @@ public class Mocks
             { "9", 6.0F }
         },
         GameLength = 10,
+        PaymentSuccessUrl = "http://localhost:5173/paymentSuccess",
+        PaymentFailureUrl = "http://localhost:5173/paymentFailure",
+        AddOnMapping = []
     };
 
     public static IMemoryCache GetMemoryCache()

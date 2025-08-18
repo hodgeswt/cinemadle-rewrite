@@ -3,12 +3,14 @@ import { userStore } from "$lib/stores";
 import { type IGuessService } from './IGuessService';
 import { GuessService } from './GuessService.svelte';
 import { AnonGuessService } from "./AnonGuessService";
+import { PurchasesService } from './PurchasesService.svelte';
 
 export class Container {
     private static _it: Container | null;
 
     private authGuessService: IGuessService;
     private anonGuessService: IGuessService;
+    private purchasesService: PurchasesService;
 
     private constructor() {
         this.authGuessService = new GuessService();
@@ -16,6 +18,12 @@ export class Container {
 
         this.anonGuessService = new AnonGuessService();
         this.anonGuessService.initialize();
+
+        this.purchasesService = new PurchasesService();
+    }
+
+    public get PurchasesService(): PurchasesService {
+        return this.purchasesService;
     }
 
     public get GuessService(): IGuessService {
