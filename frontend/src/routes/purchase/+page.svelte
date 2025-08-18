@@ -11,6 +11,7 @@
     import { onMount } from "svelte";
     import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
     import { Container } from "$lib/services";
+    import { browser } from "$app/environment";
 
     let openError = writable(false);
     let errorMessage = $state("");
@@ -22,7 +23,9 @@
     let purchasesService = (): PurchasesService => Container.it().PurchasesService;
 
     if (!$userStore.loggedIn) {
-        goto("/");
+        if (browser) {
+            goto("/");
+        }
     }
 
     let visualClueProductId = $state("");
