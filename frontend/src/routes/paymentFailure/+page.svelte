@@ -6,9 +6,9 @@
 <PageWrapper>
     <Header />
 
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="page-title">
         purchase failed
     </h2>
 
-    <p>please try again later</p>
+    <p data-testid="page-body">please try again later</p>
 </PageWrapper>

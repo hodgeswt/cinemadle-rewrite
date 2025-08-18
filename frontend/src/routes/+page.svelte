@@ -259,10 +259,15 @@
         <div class="flex items-center mb-4">
             <h2
                 class="flex-1 text-3xl font-semibold text-green-400 leading-none tracking-tight"
+                data-testid="youwin"
             >
                 you win!
             </h2>
-            <Button class="bg-green-400" on:click={showShareSheet}>
+            <Button
+                class="bg-green-400"
+                on:click={showShareSheet}
+                data-testid="share-button"
+            >
                 share
             </Button>
         </div>
@@ -271,11 +276,20 @@
         <div class="flex items-center mb-4">
             <h2
                 class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
+                data-testid="youlose"
             >
                 better luck next time!
             </h2>
-            <Button class="bg-red-400" on:click={showShareSheet}>share</Button>
-            <Button class="bg-red-400 ml-2" on:click={showAnswerButton}>
+            <Button
+                class="bg-red-400"
+                on:click={showShareSheet}
+                data-testid="share-button">share</Button
+            >
+            <Button
+                class="bg-red-400 ml-2"
+                on:click={showAnswerButton}
+                data-testid="seeanswer-button"
+            >
                 see answer
             </Button>
         </div>
@@ -291,6 +305,7 @@
                     onchange={guessChange}
                     class="flex-1 text-base"
                     disabled={done}
+                    data-testid="guess-input"
                 />
 
                 <Button
@@ -299,6 +314,7 @@
                     onclick={handleGuess}
                     class="relative -z-1000"
                     disabled={done || guessValue.trim() === ""}
+                    data-testid="submit-button"
                 >
                     <Search />
                 </Button>
@@ -315,6 +331,7 @@
                             onclick={() => {
                                 handleSelect(possibleGuess);
                             }}
+                            data-testid={`guess-${possibleGuess.replaceAll(" ", "-")}-button`}
                         >
                             {possibleGuess}
                         </button>
@@ -325,8 +342,10 @@
 
         {#if !$userStore.loggedIn}
             <p class="mb-4">
-                cinemadle is better when you <a href="/login" class="underline"
-                    >log in</a
+                cinemadle is better when you <a
+                    href="/login"
+                    class="underline"
+                    data-testid="login-page-link">log in</a
                 >
             </p>
         {/if}
@@ -340,7 +359,9 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <Info class="text-indigo-600" />
-                                <span class="text-sm text-gray-700"
+                                <span
+                                    class="text-sm text-gray-700"
+                                    data-testid="hint-text"
                                     >need a hint? (remaining: {visualClueCount})</span
                                 >
                             </div>
@@ -349,6 +370,7 @@
                                 variant="secondary"
                                 size="sm"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                data-testid="visualclue-button"
                             >
                                 view visual clue
                             </Button>
@@ -362,6 +384,7 @@
                             <div class="flex items-center space-x-2">
                                 <Info class="text-indigo-600" />
                                 <span class="text-sm text-gray-700"
+                                    data-testid="hint-text"
                                     >need a hint?</span
                                 >
                             </div>
@@ -370,6 +393,7 @@
                                 variant="secondary"
                                 size="sm"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                data-testid="purchase-button"
                             >
                                 purchase visual clues
                             </Button>
@@ -383,24 +407,23 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
                             <Info class="text-indigo-600" />
-                            <span class="text-sm text-gray-700">
+                            <span class="text-sm text-gray-700" data-testid="visualcluesremaining-text">
                                 visual clues remaining: {visualClueCount}
                             </span>
                         </div>
                     </div>
                 </div>
             {/if}
-            
         {/if}
 
         <AlertDialog.Root bind:open={$openError}>
             <AlertDialog.Content>
-                <AlertDialog.Title>uh-oh!</AlertDialog.Title>
-                <AlertDialog.Description>
+                <AlertDialog.Title data-testid="error-title-text">uh-oh!</AlertDialog.Title>
+                <AlertDialog.Description data-testid="error-body-text">
                     {errorMessage}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeDialog}>
+                    <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
                         ok
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
@@ -409,17 +432,17 @@
 
         <AlertDialog.Root bind:open={$openShare}>
             <AlertDialog.Content>
-                <AlertDialog.Title>your results</AlertDialog.Title>
-                <AlertDialog.Description>
+                <AlertDialog.Title data-testid="results-title-text">your results</AlertDialog.Title>
+                <AlertDialog.Description data-testid="results-body-text">
                     {#each shareData as line}
                         <div class="leading-none">{line}</div>
                     {/each}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeShare} class="m-2">
+                    <AlertDialog.Action on:click={closeShare} class="m-2" data-testid="share-close-button">
                         close
                     </AlertDialog.Action>
-                    <AlertDialog.Action on:click={deviceShare} class="m-2">
+                    <AlertDialog.Action on:click={deviceShare} class="m-2" data-testid="share-share-button">
                         share
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
@@ -428,12 +451,12 @@
 
         <AlertDialog.Root bind:open={$openVisualClue}>
             <AlertDialog.Content>
-                <AlertDialog.Title>visual clue</AlertDialog.Title>
+                <AlertDialog.Title data-testid="visualclue-title-text">visual clue</AlertDialog.Title>
                 <AlertDialog.Description>
                     <VisualClue />
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeVisualClue} class="m-2">
+                    <AlertDialog.Action on:click={closeVisualClue} class="m-2" data-testid="visualclue-close-button">
                         close
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
@@ -442,8 +465,8 @@
 
         <AlertDialog.Root bind:open={$showAnswer}>
             <AlertDialog.Content>
-                <AlertDialog.Title>the answer is...</AlertDialog.Title>
-                <AlertDialog.Description>
+                <AlertDialog.Title data-testid="answer-title-text">the answer is...</AlertDialog.Title>
+                <AlertDialog.Description data-testid="answer-body">
                     {#if answer !== null}
                         <Guess props={answer} />
                     {:else}
@@ -451,8 +474,8 @@
                     {/if}
                 </AlertDialog.Description>
                 <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeAnswer} class="m-2">
-                        Close
+                    <AlertDialog.Action on:click={closeAnswer} class="m-2" data-testid="answer-close-button">
+                        close
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
             </AlertDialog.Content>
@@ -477,7 +500,7 @@
     {/if}
 
     {#if serverDown}
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="serverdown-text">
             server down. please try again later
         </h2>
     {/if}

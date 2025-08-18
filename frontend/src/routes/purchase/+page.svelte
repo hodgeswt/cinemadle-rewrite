@@ -101,20 +101,20 @@
 <PageWrapper>
     <Header />
 
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="page-title">
         purchase
     </h2>
 
     {#if Object.keys(quantities).length > 0}
         <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
-            <h3 class="text-lg font-semibold mb-3">your current items</h3>
+            <h3 class="text-lg font-semibold mb-3" data-testid="currentitems-header-text">your current items</h3>
             <ul class="space-y-2">
                 {#each Object.entries(quantities) as [productId, quantity]}
                     <li class="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-md shadow-sm">
-                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                        <span class="font-medium text-gray-700 dark:text-gray-200" data-testid="product-name-text">
                             {nameMap[productId]}
                         </span>
-                        <span class="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                        <span class="text-lg font-semibold text-blue-600 dark:text-blue-400" data-testid="product-quantity-text">
                             {quantity}
                         </span>
                     </li>
@@ -123,29 +123,29 @@
         </div>
     {:else}
         <div class="mt-6 p-4 mb-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center text-gray-500 dark:text-gray-400">
-            <p>no items yet. purchase some to get started!</p>
+            <p data-testid="noitems-text">no items yet. purchase some to get started!</p>
         </div>
     {/if}
 
-    <p class="mb-4">Stripe payments will indicate recipient Will Hodges</p>
+    <p class="mb-4" data-testid="body1-text">Stripe payments will indicate recipient Will Hodges</p>
 
-    <p class="mb-4">visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
-    <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled}>
+    <p class="mb-4" data-testid="body2-text">visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
+    <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled} data-testid="visualcluepurchase-button">
         <p class="m-1">buy 10 visual clues</p>
     </Button>
 
-    <!--<Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled}>
+    <!--<Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled} data-testid="categoryrevealpurchase-button">
         <p class="m-1">buy 10 category reveals</p>
     </Button>-->
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
-            <AlertDialog.Title>uh-oh!</AlertDialog.Title>
-            <AlertDialog.Description>
+            <AlertDialog.Title data-testid="error-title-text">uh-oh!</AlertDialog.Title>
+            <AlertDialog.Description data-testid="error-body-text">
                 {errorMessage}
             </AlertDialog.Description>
             <AlertDialog.Footer>
-                <AlertDialog.Action on:click={closeDialog}>
+                <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
                     ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>

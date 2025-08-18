@@ -44,7 +44,7 @@
 <PageWrapper>
     <Header />
 
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="page-title">
         log in
     </h2>
 
@@ -54,26 +54,28 @@
             placeholder="example@example.com"
             bind:value={userEmail}
             class="text-base"
+            data-testid="email-input"
         />
         <Input
             type="password"
             placeholder="*****"
             class="text-base"
             bind:value={userPassword}
+            data-testid="password-input"
         />
-        <Button type="submit" size="icon" onclick={performLogIn} class="w-full">
+        <Button type="submit" size="icon" onclick={performLogIn} class="w-full" data-testid="login-button">
             <p class="m-1">log in</p>
         </Button>
     </div>
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
-            <AlertDialog.Title>Uh-oh!</AlertDialog.Title>
-            <AlertDialog.Description>
+            <AlertDialog.Title data-testid="error-title-text">uh-oh!</AlertDialog.Title>
+            <AlertDialog.Description data-testid="error-body-text">
                 {errorMessage}
             </AlertDialog.Description>
             <AlertDialog.Footer>
-                <AlertDialog.Action on:click={closeDialog}>
+                <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
                     ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>

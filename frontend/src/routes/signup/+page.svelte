@@ -57,11 +57,11 @@
 <PageWrapper>
     <Header />
 
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="page-title">
         sign up
     </h2>
 
-    <p class="mb-4">
+    <p class="mb-4" data-testid="body1-text">
         email will be stored and may be provided to third parties. in the
         future, support will be added to remove your user account from our
         databases. this will be supported for all accounts created before this
@@ -74,37 +74,41 @@
             class="text-base"
             placeholder="example@example.com"
             bind:value={userEmail}
+            data-testid="email-input"
         />
         <Input
             type="password"
             placeholder="*****"
             class="text-base"
             bind:value={userPassword}
+            data-testid="password-input"
         />
         <Input
             type="password"
             placeholder="*****"
             class="text-base"
             bind:value={userConfirmPassword}
+            data-testid="passwordconfirm-input"
         />
         <Button
             type="submit"
             size="icon"
             onclick={performSignUp}
             class="w-full"
+            data-testid="signup-button"
         >
-            <p class="m-1">Sign Up</p>
+            <p class="m-1">sign up</p>
         </Button>
     </div>
 
     <AlertDialog.Root bind:open={$openError}>
         <AlertDialog.Content>
-            <AlertDialog.Title>uh-oh!</AlertDialog.Title>
-            <AlertDialog.Description>
+            <AlertDialog.Title data-testid="error-title-text">uh-oh!</AlertDialog.Title>
+            <AlertDialog.Description data-testid="error-body-text">
                 {errorMessage}
             </AlertDialog.Description>
             <AlertDialog.Footer>
-                <AlertDialog.Action on:click={closeDialog}>
+                <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
                     ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>

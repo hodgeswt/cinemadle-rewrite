@@ -10,7 +10,7 @@
 <PageWrapper>
     <Header showEmail={true} />
 
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight">
+    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="page-title">
         about
     </h2>
 
@@ -82,8 +82,9 @@
                 onclick={() => {
                     userStore.setLoggedOut();
                 }}
+                data-testid="logout-button"
             >
-                <p>Log out</p>
+                <p>log out</p>
             </Button>
         </div>
     {/if}

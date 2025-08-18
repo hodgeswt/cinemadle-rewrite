@@ -17,7 +17,7 @@
 </script>
 
 <div class="min-w-3xl w-full">
-    <h1 class="m-4 text-3xl font-extrabold leading-none tracking-tight">
+    <h1 class="m-4 text-3xl font-extrabold leading-none tracking-tight" data-testid="guess-title">
         {props.title}
     </h1>
     <div class="grid grid-cols-2">

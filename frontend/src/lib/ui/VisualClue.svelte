@@ -42,10 +42,10 @@
 </script>
 
 {#if loading}
-    <Skeleton class="h-[200px] w-full mb-4" />
+    <Skeleton class="h-[200px] w-full mb-4" data-testid="visualclue-skeleton" />
 {:else if serverDown}
-    <p>unable to load image</p>
+    <p data-testid="visualclue-loaderror-text">unable to load image</p>
 {:else}
-    <img src={imageData} alt="blurred movie banner" style='w-500'/>
+    <img src={imageData} alt="blurred movie banner" style='w-500' data-testid="visualclue-image"/>
 {/if}
 
