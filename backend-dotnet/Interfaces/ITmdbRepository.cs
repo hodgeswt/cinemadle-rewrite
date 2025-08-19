@@ -10,4 +10,6 @@ public interface ITmdbRepository
     public Task<MovieDto?> GetTargetMovie(string date);
     public Task<Dictionary<string, int>> GetMovieList();
     public Task<byte[]?> GetMovieImageById(int id);
+    public void RigMovie(int id);
+    public void UnrigMovie();
 }

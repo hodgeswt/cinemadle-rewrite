@@ -1,7 +1,6 @@
 import { destroyDatabase, goToPage, logIn } from "../support/commands";
 
 describe('about page', () => {
-
     before(() => {
         destroyDatabase();
     });
@@ -26,7 +25,7 @@ describe('about page', () => {
     });
 
     it('should have a functional logout button', () => {
-        const { username } = logIn({initialize: true})
+        logIn({initialize: true})
 
         cy.getByDataTestId('cinemadle-date').should('exist');
 
