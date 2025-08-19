@@ -20,11 +20,11 @@ namespace Cinemadle.Controllers;
 public class CinemadleController : CinemadleControllerBase
 {
     private readonly CinemadleConfig _config;
-    private ITmdbRepository _tmdbRepo;
-    private IGuessRepository _guessRepo;
-    private ILogger<CinemadleController> _logger;
-    private DatabaseContext _db;
-
+    private readonly ITmdbRepository _tmdbRepo;
+    private readonly IGuessRepository _guessRepo;
+    private readonly ILogger<CinemadleController> _logger;
+    private readonly DatabaseContext _db;
+    private readonly IdentityContext _identity;
     private readonly bool _isDevelopment;
 
     public CinemadleController(
@@ -33,14 +33,16 @@ public class CinemadleController : CinemadleControllerBase
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
             IGuessRepository guessRepository,
-            DatabaseContext db
+            DatabaseContext db,
+            IdentityContext identity
     )
     {
         _logger = logger;
-        string type = this.GetType().AssemblyQualifiedName ?? "CinemadleController";
+        string type = GetType().AssemblyQualifiedName ?? "CinemadleController";
         _logger.LogDebug("+ctor({type})", type);
 
         _db = db;
+        _identity = identity;
         _config = configRepository.GetConfig();
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
@@ -126,7 +128,7 @@ public class CinemadleController : CinemadleControllerBase
         {
             image.Mutate(x => x.GaussianBlur(blurFactor));
         }
-        
+
         string base64 = image.ToBase64String(PngFormat.Instance);
 
         return new ImageDto
@@ -367,7 +369,7 @@ public class CinemadleController : CinemadleControllerBase
             {
                 record.Count -= 1;
             }
-            
+
             await _db.SaveChangesAsync();
 
             _logger.LogDebug("-GetMovieImage({date})", date);
@@ -658,4 +660,48 @@ public class CinemadleController : CinemadleControllerBase
 
         return new OkObjectResult(movie!);
     }
+    
+    [HttpDelete("destroy")]
+    public async Task<ActionResult> DestroyAllData()
+    {
+        _logger.LogDebug("+DestroyAllData()");
+        string? allowDestroy = Environment.GetEnvironmentVariable("CINEMADLE_TEST_MODE");
+        if (string.IsNullOrEmpty(allowDestroy) || !bool.Parse(allowDestroy))
+        {
+            _logger.LogWarning("-DestroyAllData(): Unauthorized access");
+            _logger.LogDebug("-DestroyAllData()");
+            return new UnauthorizedResult();
+        }
+
+        try 
+        {
+            _db.Guesses.RemoveRange(_db.Guesses);
+            _db.TargetMovies.RemoveRange(_db.TargetMovies);
+            _db.DataOverrides.RemoveRange(_db.DataOverrides);
+            _db.AnonUsers.RemoveRange(_db.AnonUsers);
+            _db.AnonUserGuesses.RemoveRange(_db.AnonUserGuesses);
+            _db.UserClues.RemoveRange(_db.UserClues);
+            _db.Purchases.RemoveRange(_db.Purchases);
+            _db.UserAccounts.RemoveRange(_db.UserAccounts);
+
+            await _db.SaveChangesAsync();
+
+            _identity.UserLogins.RemoveRange(_identity.UserLogins);
+            _identity.Users.RemoveRange(_identity.Users);
+            _identity.UserClaims.RemoveRange(_identity.UserClaims);
+            _identity.UserTokens.RemoveRange(_identity.UserTokens);
+            _identity.UserRoles.RemoveRange(_identity.UserRoles);
+
+            await _identity.SaveChangesAsync();
+
+            _logger.LogWarning("-DestroyAllData()");
+            return new OkResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("DestroyAllData Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            return new StatusCodeResult(500);
+        }
+    }
+
 }
