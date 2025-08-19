@@ -715,7 +715,7 @@ public class CinemadleController : CinemadleControllerBase
         }
     }
 
-    [HttpGet("/rig/{id}")]
+    [HttpGet("rig/{id}")]
     public ActionResult RigMovie(int id)
     {
         if (!_inTestMode)
@@ -730,7 +730,7 @@ public class CinemadleController : CinemadleControllerBase
         return new OkResult();
     }
 
-    [HttpGet("/rig/undo")]
+    [HttpGet("rig/undo")]
     public ActionResult UnrigMovie()
     {
         if (!_inTestMode)
