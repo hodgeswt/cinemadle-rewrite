@@ -1,8 +1,8 @@
 import { destroyDatabase, goToPage, logIn } from "../support/commands";
 
 describe('about page', () => {
-    before(() => {
-        destroyDatabase();
+    before(async () => {
+        await destroyDatabase();
     });
 
     beforeEach(() => {
@@ -10,7 +10,7 @@ describe('about page', () => {
     })
 
     afterEach(async () => {
-        destroyDatabase();
+        await destroyDatabase();
     });
     
     
