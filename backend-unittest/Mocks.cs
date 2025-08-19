@@ -60,6 +60,18 @@ public class Mocks
         return ctx;
     }
 
+    public static IdentityContext GetIdentityContext()
+    {
+        var opt = new DbContextOptionsBuilder<IdentityContext>()
+            .UseInMemoryDatabase(databaseName: System.Guid.NewGuid().ToString())
+            .Options;
+
+        var ctx = new IdentityContext(opt);
+
+        ctx.Database.EnsureCreated();
+        return ctx;
+    }
+
     public static Mock<ICacheRepository> GetMockedCacheRepository()
     {
         var cacheRepo = new Mock<ICacheRepository>();

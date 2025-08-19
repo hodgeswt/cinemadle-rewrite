@@ -37,7 +37,7 @@ public class CinemadleControllerUnitTest
         Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
         IGuessRepository guessRepo = guessRepoMock.Object;
 
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db);
+        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db, Mocks.GetIdentityContext());
 
         Assert.True(controller.Validate().Value);
     }
@@ -64,7 +64,7 @@ public class CinemadleControllerUnitTest
         Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
         IGuessRepository guessRepo = guessRepoMock.Object;
 
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db);
+        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db, Mocks.GetIdentityContext());
 
         Assert.True(controller.Heartbeat().Value);
     }
@@ -91,7 +91,7 @@ public class CinemadleControllerUnitTest
         Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
         IGuessRepository guessRepo = guessRepoMock.Object;
 
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db);
+        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, db, Mocks.GetIdentityContext());
 
         var anonUserIdResult = await controller.GetAnonUserId();
 
@@ -135,7 +135,8 @@ public class CinemadleControllerUnitTest
             tmdbRepoMock.Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetDatabaseContext()
+            Mocks.GetDatabaseContext(),
+            Mocks.GetIdentityContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -162,7 +163,8 @@ public class CinemadleControllerUnitTest
             tmdbRepoMock.Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetDatabaseContext()
+            Mocks.GetDatabaseContext(),
+            Mocks.GetIdentityContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -186,7 +188,8 @@ public class CinemadleControllerUnitTest
             tmdbRepoMock.Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetDatabaseContext()
+            Mocks.GetDatabaseContext(),
+            Mocks.GetIdentityContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -293,7 +296,8 @@ public class CinemadleControllerUnitTest
             tmdbRepoMock.Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            db
+            db,
+            Mocks.GetIdentityContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -400,7 +404,8 @@ public class CinemadleControllerUnitTest
             tmdbRepoMock.Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            db
+            db,
+            Mocks.GetIdentityContext()
         );
 
         var result = await controller.GuessMovieAnon(date, userId, movieId);
@@ -431,7 +436,8 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedTmdbRepository().Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetDatabaseContext()
+            Mocks.GetDatabaseContext(),
+            Mocks.GetIdentityContext()
         );
 
         var result = await controller.GuessMovieAnon(date, invalidUserId, movieId);
@@ -451,7 +457,8 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedTmdbRepository().Object,
             Mocks.GetMockedWebHostEnvironment().Object,
             Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetDatabaseContext()
+            Mocks.GetDatabaseContext(),
+            Mocks.GetIdentityContext()
         );
 
         controller.ControllerContext = new ControllerContext
