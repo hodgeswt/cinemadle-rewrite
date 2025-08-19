@@ -23,8 +23,8 @@
         {props.title}
     </h1>
     <div class="grid grid-cols-2">
-        {#each props.cards as card}
-            <Card props={card} index={index}/>
+        {#each props.cards as card, i}
+            <Card props={card} index={i} guessIndex={index} />
         {/each}
     </div>
     <Divider />
