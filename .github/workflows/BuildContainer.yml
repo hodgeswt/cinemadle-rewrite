@@ -48,5 +48,6 @@ jobs:
             VITE_STRIPE_FRONTEND_KEY=${{ secrets.VITE_STRIPE_FRONTEND_KEY }}
             VITE_PRODUCT_IDS=${{ secrets.VITE_PRODUCT_IDS }}
             CINEMADLE_ADMIN_EMAIL=${{ secrets.CINEMADLE_ADMIN_EMAIL }}
+            CINEMADLE_TEST_MODE=false
           push: ${{ github.event_name != 'pull_request' }}
           tags: hodgeswt/cinemadle:latest
