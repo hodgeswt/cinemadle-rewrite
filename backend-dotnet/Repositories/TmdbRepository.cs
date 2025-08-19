@@ -17,9 +17,9 @@ public class TmdbRepository : ITmdbRepository
     private ILogger<TmdbRepository> _logger;
 
     private readonly CinemadleConfig _config;
-    private TMDbClient _tmdbClient;
-    private ICacheRepository _cache;
-    private DatabaseContext _db;
+    private readonly TMDbClient _tmdbClient;
+    private readonly ICacheRepository _cache;
+    private readonly DatabaseContext _db;
 
     private bool _initialized { get; set; }
 
@@ -33,6 +33,8 @@ public class TmdbRepository : ITmdbRepository
     private static readonly HttpClient _httpClient = new();
 
     private readonly bool _isDevelopment;
+
+    private int? _riggedMovie { get; set; }
 
     public TmdbRepository(
         ILogger<TmdbRepository> logger,
@@ -111,6 +113,11 @@ public class TmdbRepository : ITmdbRepository
 
     public async Task<MovieDto?> GetTargetMovie(string date)
     {
+        if (_riggedMovie is int riggedId)
+        {
+            return await GetMovieByIdInternal(riggedId);
+        }
+        
         string cacheKey = string.Format(_getTargetMovieCacheKeyTemplate, date);
 
         if (_cache.TryGet<MovieDto>(cacheKey, out MovieDto? movieDto) && movieDto is not null)
@@ -334,4 +341,13 @@ public class TmdbRepository : ITmdbRepository
         }
     }
 
+    public void RigMovie(int id)
+    {
+        _riggedMovie = id;
+    }
+
+    public void UnrigMovie()
+    {
+        _riggedMovie = null;
+    }
 }

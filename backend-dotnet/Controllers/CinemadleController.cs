@@ -26,6 +26,7 @@ public class CinemadleController : CinemadleControllerBase
     private readonly DatabaseContext _db;
     private readonly IdentityContext _identity;
     private readonly bool _isDevelopment;
+    private readonly bool _inTestMode;
 
     public CinemadleController(
             ILogger<CinemadleController> logger,
@@ -47,6 +48,16 @@ public class CinemadleController : CinemadleControllerBase
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _isDevelopment = env.IsDevelopment();
+
+        string? sTestMode = Environment.GetEnvironmentVariable("CINEMADLE_TEST_MODE");
+        if (bool.TryParse(sTestMode ?? string.Empty, out bool testMode) && testMode)
+        {
+            _inTestMode = true;
+        }
+        else
+        {
+            _inTestMode = false;
+        }
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -660,20 +671,20 @@ public class CinemadleController : CinemadleControllerBase
 
         return new OkObjectResult(movie!);
     }
-    
+
+    #region test endpoints
     [HttpDelete("destroy")]
     public async Task<ActionResult> DestroyAllData()
     {
         _logger.LogDebug("+DestroyAllData()");
-        string? allowDestroy = Environment.GetEnvironmentVariable("CINEMADLE_TEST_MODE");
-        if (string.IsNullOrEmpty(allowDestroy) || !bool.Parse(allowDestroy))
+        if (!_inTestMode)
         {
             _logger.LogWarning("-DestroyAllData(): Unauthorized access");
             _logger.LogDebug("-DestroyAllData()");
             return new UnauthorizedResult();
         }
 
-        try 
+        try
         {
             _db.Guesses.RemoveRange(_db.Guesses);
             _db.TargetMovies.RemoveRange(_db.TargetMovies);
@@ -704,4 +715,35 @@ public class CinemadleController : CinemadleControllerBase
         }
     }
 
+    [HttpGet("/rig/{id}")]
+    public ActionResult RigMovie(int id)
+    {
+        if (!_inTestMode)
+        {
+            _logger.LogWarning("-RigMovie(): Unauthorized access");
+            _logger.LogDebug("-RigMovie()");
+            return new UnauthorizedResult();
+        }
+        _logger.LogDebug("+RigMovie()");
+        _tmdbRepo.RigMovie(id);
+        _logger.LogDebug("+RigMovie()");
+        return new OkResult();
+    }
+
+    [HttpGet("/rig/undo")]
+    public ActionResult UnrigMovie()
+    {
+        if (!_inTestMode)
+        {
+            _logger.LogWarning("-UnrigMovie(): Unauthorized access");
+            _logger.LogDebug("-UnrigMovie()");
+            return new UnauthorizedResult();
+        }
+        _logger.LogDebug("+UnrigMovie()");
+        _tmdbRepo.UnrigMovie();
+        _logger.LogDebug("+UnrigMovie()");
+        return new OkResult();
+    }
+
+    #endregion
 }
