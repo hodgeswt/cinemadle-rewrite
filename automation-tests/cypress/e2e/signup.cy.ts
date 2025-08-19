@@ -12,19 +12,18 @@ describe('login page', () => {
   it('renders the whole form', () => {
     cy.visit('/index.html');
 
-    cy.getByDataTestId('login-page-link').click();
+    goToPage('sign up');
 
-    cy.getByDataTestId('page-title').should('have.text', 'log in');
     cy.getByDataTestId('email-input').should('exist');
     cy.getByDataTestId('password-input').should('exist');
-    cy.getByDataTestId('login-button').should('exist');
+    cy.getByDataTestId('passwordconfirm-input').should('exist');
+    cy.getByDataTestId('signup-button').should('exist');
   })
 
-  it('allows login', () => {
+  it('allows signup', () => {
     cy.visit('/index.html');
 
     goToPage('sign up');
-    
 
     const username: string = 'asdf@asdf.com';
     const password: string = 'Password1$';
@@ -35,19 +34,9 @@ describe('login page', () => {
     cy.getByDataTestId('signup-button').click();
 
     cy.getByDataTestId('page-title').should('have.text', 'log in');
+  });
 
-    cy.getByDataTestId('email-input').type(username);
-    cy.getByDataTestId('password-input').type(password);
-    cy.getByDataTestId('login-button').click();
-
-    cy.getByDataTestId('cinemadle-date').should('exist');
-
-    goToPage('about');
-
-    cy.getByDataTestId('user-email').should('have.text', `User: ${username}`)
-  })
-
-  it('detects invalid login', () => {
+  it('does not allow duplicate signup', () => {
     cy.visit('/index.html');
 
     goToPage('sign up');
@@ -62,12 +51,31 @@ describe('login page', () => {
 
     cy.getByDataTestId('page-title').should('have.text', 'log in');
 
-    cy.getByDataTestId('email-input').type(username);
-    cy.getByDataTestId('password-input').type('error');
-    cy.getByDataTestId('login-button').click();
+    goToPage('sign up');
 
+    cy.getByDataTestId('email-input').type(username);
+    cy.getByDataTestId('password-input').type(password);
+    cy.getByDataTestId('passwordconfirm-input').type(password);
+    cy.getByDataTestId('signup-button').click();
 
     cy.getByDataTestId('error-title-text').should('have.text', 'uh-oh!');
-    cy.getByDataTestId('error-body-text').should('have.text', `Unable to log in`);
-  })
-})
+    cy.getByDataTestId('error-body-text').should('have.text', `Username '${username}' is already taken.`);
+  });
+
+  it('detects password mismatch', () => {
+    cy.visit('/index.html');
+
+    goToPage('sign up');
+
+    const username: string = 'asdf@asdf.com';
+    const password: string = 'Password1$';
+
+    cy.getByDataTestId('email-input').type(username);
+    cy.getByDataTestId('password-input').type(password);
+    cy.getByDataTestId('passwordconfirm-input').type('error');
+    cy.getByDataTestId('signup-button').click();
+
+    cy.getByDataTestId('error-title-text').should('have.text', 'uh-oh!');
+    cy.getByDataTestId('error-body-text').should('have.text', `Passwords do not match`);
+  });
+});
