@@ -34,7 +34,7 @@ public class TmdbRepository : ITmdbRepository
 
     private readonly bool _isDevelopment;
 
-    private int? _riggedMovie { get; set; }
+    private static int? RiggedMovie { get; set; }
 
     public TmdbRepository(
         ILogger<TmdbRepository> logger,
@@ -113,7 +113,7 @@ public class TmdbRepository : ITmdbRepository
 
     public async Task<MovieDto?> GetTargetMovie(string date)
     {
-        if (_riggedMovie is int riggedId)
+        if (RiggedMovie is int riggedId)
         {
             return await GetMovieByIdInternal(riggedId);
         }
@@ -343,11 +343,11 @@ public class TmdbRepository : ITmdbRepository
 
     public void RigMovie(int id)
     {
-        _riggedMovie = id;
+        RiggedMovie = id;
     }
 
     public void UnrigMovie()
     {
-        _riggedMovie = null;
+        RiggedMovie = null;
     }
 }

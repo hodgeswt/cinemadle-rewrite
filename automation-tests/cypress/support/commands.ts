@@ -9,6 +9,20 @@ export const destroyDatabase = async () => {
     }
 }
 
+export const rigMovie = async () => {
+    const response = await fetch(`${Cypress.config().baseUrl}/api/cinemadle/rig/85`);
+    if (!response.ok) {
+        throw new Error('unable to rig movie');
+    }
+}
+
+export const unrigMovie = async () => {
+    const response = await fetch(`${Cypress.config().baseUrl}/api/cinemadle/rig/undo`);
+    if (!response.ok) {
+        throw new Error('unable to unrig movie');
+    }
+}
+
 export const goToPage = (page: string) => {
     cy.getByDataTestId('menu-button').click();
     cy.getByDataTestId(`${page.replaceAll(' ', '')}-link`).click();

@@ -1,16 +1,21 @@
-import { destroyDatabase, isoDateNoTime, logIn } from "../support/commands";
+import { destroyDatabase, isoDateNoTime, logIn, rigMovie, unrigMovie } from "../support/commands";
 
 describe('home page', () => {
-    before(() => {
-        destroyDatabase();
+    before(async () => {
+        await destroyDatabase();
+        await rigMovie();
     });
+
+    after(async () => {
+        await unrigMovie();
+    })
 
     beforeEach(() => {
         cy.visit('/index.html');
     })
 
     afterEach(async () => {
-        destroyDatabase();
+        await destroyDatabase();
     });
 
     describe('logged out', () => {
@@ -26,7 +31,7 @@ describe('home page', () => {
         it('should render a guess', () => {
             cy.getByDataTestId('guess-input').type('Shrek 2');
             cy.getByDataTestId('submit-button').click();
-            
+
             cy.getByDataTestId('guess-title').should('have.text', 'Shrek 2');
         });
     });

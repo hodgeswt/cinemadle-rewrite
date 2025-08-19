@@ -1,12 +1,12 @@
 import { destroyDatabase, goToPage, logIn } from "../support/commands";
 
 describe('login page', () => {
-  before(() => {
-    destroyDatabase();
+  before(async () => {
+    await destroyDatabase();
   });
 
   afterEach(async () => {
-      destroyDatabase();
+      await destroyDatabase();
   });
 
   it('renders the whole form', () => {
