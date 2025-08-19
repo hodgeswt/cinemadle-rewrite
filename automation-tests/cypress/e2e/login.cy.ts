@@ -1,4 +1,4 @@
-import { destroyDatabase, goToPage } from "../support/commands";
+import { destroyDatabase, goToPage, logIn } from "../support/commands";
 
 describe('login page', () => {
   before(() => {
@@ -23,22 +23,7 @@ describe('login page', () => {
   it('allows login', () => {
     cy.visit('/index.html');
 
-    goToPage('sign up');
-    
-
-    const username: string = 'asdf@asdf.com';
-    const password: string = 'Password1$';
-
-    cy.getByDataTestId('email-input').type(username);
-    cy.getByDataTestId('password-input').type(password);
-    cy.getByDataTestId('passwordconfirm-input').type(password);
-    cy.getByDataTestId('signup-button').click();
-
-    cy.getByDataTestId('page-title').should('have.text', 'log in');
-
-    cy.getByDataTestId('email-input').type(username);
-    cy.getByDataTestId('password-input').type(password);
-    cy.getByDataTestId('login-button').click();
+    const { username } = logIn({initialize: true});
 
     cy.getByDataTestId('cinemadle-date').should('exist');
 
