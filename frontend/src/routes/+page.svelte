@@ -482,9 +482,9 @@
         </AlertDialog.Root>
 
         <div class="guesses z-10">
-            {#each [...guesses].reverse() as guess (guess)}
+            {#each [...guesses].reverse() as guess, i (guess)}
                 <div animate:flip={{ duration: 1000 }}>
-                    <Guess props={guess} />
+                    <Guess props={guess} index={i} />
                 </div>
             {/each}
         </div>
