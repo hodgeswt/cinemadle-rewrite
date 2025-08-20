@@ -6,7 +6,7 @@ describe('about page', () => {
     });
 
     beforeEach(() => {
-        cy.visit('/index.html');
+        cy.init();
     })
 
     afterEach(() => {

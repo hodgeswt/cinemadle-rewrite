@@ -1,15 +1,15 @@
-Cypress.Commands.add('getByDataTestId', (dataTestId: string): Cypress.Chainable<JQuery<HTMLElement>> => {
-    return cy.get(`[data-testid="${dataTestId}"]`);
+Cypress.Commands.add('getByDataTestId', (dataTestId: string, options?: Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>): Cypress.Chainable<JQuery<HTMLElement>> => {
+    return cy.get(`[data-testid="${dataTestId}"]`, options);
 })
 
-Cypress.Commands.add('maybeGetByDataTestId', (dataTestId: string): Cypress.Chainable<JQuery<HTMLElement>> => {
-    return cy.maybeGet(`[data-testid="${dataTestId}"]`);
+Cypress.Commands.add('maybeGetByDataTestId', (dataTestId: string, options?: Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>): Cypress.Chainable<JQuery<HTMLElement>> => {
+    return cy.maybeGet(`[data-testid="${dataTestId}"]`, options);
 })
 
-Cypress.Commands.add('maybeGet', (selector: string): Cypress.Chainable<JQuery<HTMLElement>> => {
+Cypress.Commands.add('maybeGet', (selector: string, options?: Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>): Cypress.Chainable<JQuery<HTMLElement>> => {
     return cy.get('body').then($body => {
         if ($body.find(selector).length > 0) {
-            return cy.get(selector);
+            return cy.get(selector, options);
         }
         return cy.wrap(null);
     });
@@ -40,12 +40,30 @@ Cypress.Commands.add('customTask', (task: string) => {
     }
 });
 
-export const goToPage = (page: string) => {
-    cy.getByDataTestId('menu-button').click();
-    cy.getByDataTestId(`${page.replaceAll(' ', '')}-link`).click();
+Cypress.Commands.add('init', () => {
+    cy.visit('/index.html');
+    cy.getByDataTestId('guess-input', {timeout: 10000}).should('exist');
+});
 
+export const goToPage = (page: string) => {
+    // Wait for menu button to be ready
+    cy.getByDataTestId('menu-button').should('be.visible').should('be.enabled');
+    cy.getByDataTestId('menu-button').click();
+
+    // Create link ID
+    const linkId = `${page.replaceAll(' ', '')}-link`;
+    
+    // Wait for menu to be fully ready and link to be clickable
+    cy.getByDataTestId(linkId)
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click();
+
+    // Verify navigation 
     if (page !== 'home') {
-        cy.getByDataTestId('page-title').should('have.text', page);
+        cy.getByDataTestId('page-title')
+            .should('be.visible')
+            .should('have.text', page);
     }
 }
 
@@ -77,6 +95,8 @@ export const logIn = (params: LogInParams): LogInParams => {
     cy.getByDataTestId('email-input').type(username);
     cy.getByDataTestId('password-input').type(password);
     cy.getByDataTestId('login-button').click();
+
+    cy.getByDataTestId('cinemadle-date').should('exist');
 
     return { username: username, password: password, initialize: initialize } as LogInParams;
 }

@@ -5,13 +5,15 @@ describe('login page', () => {
     cy.customTask('destroyDatabase');
   });
 
+  beforeEach(() => {
+    cy.init();
+  })
+
   afterEach(() => {
     cy.customTask('destroyDatabase');
   });
 
   it('renders the whole form', () => {
-    cy.visit('/index.html');
-
     cy.getByDataTestId('login-page-link').click();
 
     cy.getByDataTestId('page-title').should('have.text', 'log in');
@@ -21,8 +23,6 @@ describe('login page', () => {
   })
 
   it('allows login', () => {
-    cy.visit('/index.html');
-
     const { username } = logIn({initialize: true});
 
     cy.getByDataTestId('cinemadle-date').should('exist');
@@ -33,8 +33,6 @@ describe('login page', () => {
   })
 
   it('detects invalid login', () => {
-    cy.visit('/index.html');
-
     goToPage('sign up');
 
     const username: string = 'asdf@asdf.com';

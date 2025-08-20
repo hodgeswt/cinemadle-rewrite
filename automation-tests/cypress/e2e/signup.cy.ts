@@ -1,19 +1,20 @@
 import { goToPage } from "../support/commands";
 
-describe('login page', () => {
+describe('sign up page', () => {
   before(() => {
     cy.customTask('destroyDatabase');
   });
+
+  beforeEach(() => {
+    cy.init();
+    goToPage('sign up');
+  })
 
   afterEach(async () => {
     cy.customTask('destroyDatabase');
   });
 
   it('renders the whole form', () => {
-    cy.visit('/index.html');
-
-    goToPage('sign up');
-
     cy.getByDataTestId('email-input').should('exist');
     cy.getByDataTestId('password-input').should('exist');
     cy.getByDataTestId('passwordconfirm-input').should('exist');
@@ -21,10 +22,6 @@ describe('login page', () => {
   })
 
   it('allows signup', () => {
-    cy.visit('/index.html');
-
-    goToPage('sign up');
-
     const username: string = 'asdf@asdf.com';
     const password: string = 'Password1$';
 
@@ -32,15 +29,11 @@ describe('login page', () => {
     cy.getByDataTestId('password-input').type(password);
     cy.getByDataTestId('passwordconfirm-input').type(password);
     cy.getByDataTestId('signup-button').click();
-
+    
     cy.getByDataTestId('page-title').should('have.text', 'log in');
   });
 
   it('does not allow duplicate signup', () => {
-    cy.visit('/index.html');
-
-    goToPage('sign up');
-
     const username: string = 'asdf@asdf.com';
     const password: string = 'Password1$';
 
@@ -63,10 +56,6 @@ describe('login page', () => {
   });
 
   it('detects password mismatch', () => {
-    cy.visit('/index.html');
-
-    goToPage('sign up');
-
     const username: string = 'asdf@asdf.com';
     const password: string = 'Password1$';
 
