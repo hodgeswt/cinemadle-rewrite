@@ -2,26 +2,43 @@ Cypress.Commands.add('getByDataTestId', (dataTestId: string): Cypress.Chainable<
     return cy.get(`[data-testid="${dataTestId}"]`);
 })
 
-export const destroyDatabase = async () => {
-    const response = await fetch(`${Cypress.config().baseUrl}/api/cinemadle/destroy`, { method: 'DELETE' });
-    if (!response.ok) {
-        throw new Error('unable to destroy database');
-    }
-}
+Cypress.Commands.add('maybeGetByDataTestId', (dataTestId: string): Cypress.Chainable<JQuery<HTMLElement>> => {
+    return cy.maybeGet(`[data-testid="${dataTestId}"]`);
+})
 
-export const rigMovie = async () => {
-    const response = await fetch(`${Cypress.config().baseUrl}/api/cinemadle/rig/85`);
-    if (!response.ok) {
-        throw new Error('unable to rig movie');
-    }
-}
+Cypress.Commands.add('maybeGet', (selector: string): Cypress.Chainable<JQuery<HTMLElement>> => {
+    return cy.get('body').then($body => {
+        if ($body.find(selector).length > 0) {
+            return cy.get(selector);
+        }
+        return cy.wrap(null);
+    });
+})
 
-export const unrigMovie = async () => {
-    const response = await fetch(`${Cypress.config().baseUrl}/api/cinemadle/rig/undo`);
-    if (!response.ok) {
-        throw new Error('unable to unrig movie');
+Cypress.Commands.add('customTask', (task: string) => {
+    const baseUrl = Cypress.config().baseUrl;
+    
+    switch(task) {
+        case 'destroyDatabase':
+            return cy.request({
+                method: 'DELETE',
+                url: `${baseUrl}/api/cinemadle/destroy`,
+                failOnStatusCode: true
+            }).then(r => expect(r.status).to.eq(200));
+        case 'rigMovie':
+            return cy.request({
+                method: 'GET',
+                url: `${baseUrl}/api/cinemadle/rig/85`,
+                failOnStatusCode: true
+            }).then(r => expect(r.status).to.eq(200));
+        case 'unrigMovie':
+            return cy.request({
+                method: 'GET',
+                url: `${baseUrl}/api/cinemadle/rig/undo`,
+                failOnStatusCode: true
+            }).then(r => expect(r.status).to.eq(200));
     }
-}
+});
 
 export const goToPage = (page: string) => {
     cy.getByDataTestId('menu-button').click();
@@ -83,3 +100,47 @@ export const isoDateNoTime = (): string => {
 
     return `${year}-${month}-${day}`;
 }
+
+export type GuessCardData = {
+    className: Cypress.Chainable<string>,
+    name: Cypress.Chainable<JQuery<HTMLElement>>,
+    arrowdown1: Cypress.Chainable<JQuery<HTMLElement>>,
+    arrowdown2: Cypress.Chainable<JQuery<HTMLElement>>,
+    arrowup1: Cypress.Chainable<JQuery<HTMLElement>>,
+    arrowup2: Cypress.Chainable<JQuery<HTMLElement>>,
+    direction: Cypress.Chainable<JQuery<HTMLElement>>,
+    tiledata: Cypress.Chainable<JQuery<HTMLElement>>,
+}
+
+export const getGuessCard = (cardId: number, category: string) => {
+    // Start the chain with cy.wrap to ensure we're in Cypress land
+    return cy.wrap(null).then(() => {
+        return cy.contains(category)
+            .invoke('attr', 'data-testid')
+            .then(x => {
+                const splits = (x as string).split('-');
+                if (splits.length < 3) {
+                    throw new Error('test id did not match expectations');
+                }
+                const cardIndex = splits[2];
+
+                return cy.get(`[data-testid^="card-${cardId}-${cardIndex}-tiledata"]`).then($tiledata => {
+                    return cy.wrap({
+                        className: cy.contains(category)
+                            .parent()
+                            .parent()
+                            .parent()
+                            .invoke('attr', 'class'),
+                        name: cy.getByDataTestId(`card-${cardId}-${cardIndex}-title-text`),
+                        arrowdown1: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-arrowdown-1`),
+                        arrowdown2: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-arrowdown-2`),
+                        arrowup1: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-arrowup-1`),
+                        arrowup2: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-arrowup-2`),
+                        direction: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-direction-text`),
+                        tiledata: cy.wrap($tiledata)
+                    });
+                });
+                
+            });
+    });
+};

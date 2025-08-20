@@ -1,16 +1,16 @@
-import { destroyDatabase, goToPage, logIn } from "../support/commands";
+import { goToPage, logIn } from "../support/commands";
 
 describe('about page', () => {
-    before(async () => {
-        await destroyDatabase();
+    before(() => {
+        cy.customTask('destroyDatabase');
     });
 
     beforeEach(() => {
         cy.visit('/index.html');
     })
 
-    afterEach(async () => {
-        await destroyDatabase();
+    afterEach(() => {
+        cy.customTask('destroyDatabase');
     });
     
     

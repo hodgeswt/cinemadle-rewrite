@@ -1,12 +1,12 @@
-import { destroyDatabase, goToPage } from "../support/commands";
+import { goToPage } from "../support/commands";
 
 describe('login page', () => {
-  before(async () => {
-    await destroyDatabase();
+  before(() => {
+    cy.customTask('destroyDatabase');
   });
 
   afterEach(async () => {
-    await destroyDatabase();
+    cy.customTask('destroyDatabase');
   });
 
   it('renders the whole form', () => {
