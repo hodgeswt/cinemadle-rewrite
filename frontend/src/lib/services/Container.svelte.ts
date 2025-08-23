@@ -5,6 +5,7 @@ import { GuessService } from './GuessService.svelte';
 import { AnonGuessService } from "./AnonGuessService";
 import { PurchasesService } from './PurchasesService.svelte';
 import { FeatureFlagService } from './FeatureFlagService';
+import Logger from '$lib/logger';
 
 export class Container {
     private static _it: Container | null;
@@ -15,6 +16,7 @@ export class Container {
     private featureFlagService: FeatureFlagService;
 
     private constructor() {
+        Logger.log("+Container.ctor");
         this.authGuessService = new GuessService();
         this.authGuessService.initialize();
 
@@ -24,6 +26,7 @@ export class Container {
         this.purchasesService = new PurchasesService();
         this.featureFlagService = new FeatureFlagService();
         this.featureFlagService.initialize();
+        Logger.log("-Container.ctor");
     }
 
     public get FeatureFlagService(): FeatureFlagService {

@@ -183,7 +183,7 @@ export async function get(
     try {
         endpoint = endpoint.replace(/^\//, "");
         let uri = useNoBase ? `${host}/${endpoint}` : `${host}/api/cinemadle/${endpoint}`;
-
+        Logger.log("middleware.get: uri {0}", uri);
 
         if (queryParams !== null) {
             let first = true;

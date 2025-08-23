@@ -14,6 +14,7 @@ public class FeatureFlagRepository : IFeatureFlagRepository
         _logger.LogDebug("+FeatureFlagRepository.ctor");
 
         _config = config.GetConfig();
+        _logger.LogDebug("FeatureFlagRepository.ctor: feature flags {flags}", _config.FeatureFlags);
 
         _logger.LogDebug("-FeatureFlagRepository.ctor");
     }
