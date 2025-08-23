@@ -49,7 +49,7 @@
                 </button>
 
                 <div
-                    class={`absolute right-0 mt-2 w-48 ${$isDarkMode ? 'bg-gray-500' : 'bg-white'} shadow-lg rounded-lg transform transition-transform duration-300 ease-in-out ${menuOpen ? "z-[9999999] max-h-screen" : "max-h-0 overflow-hidden"}`}
+                    class={`absolute right-0 mt-2 w-48 ${$isDarkMode ? 'bg-[rgb(18,21,31)]' : 'bg-white'} shadow-lg rounded-lg transform transition-transform duration-300 ease-in-out ${menuOpen ? "z-[9999999] max-h-screen" : "max-h-0 overflow-hidden"}`}
                 >
                     {#if !$userStore.loggedIn}
                         <a
