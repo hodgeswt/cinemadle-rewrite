@@ -96,7 +96,8 @@ export const logIn = (params: LogInParams): LogInParams => {
     cy.getByDataTestId('password-input').type(password);
     cy.getByDataTestId('login-button').click();
 
-    cy.getByDataTestId('cinemadle-date').should('exist');
+
+    cy.getByDataTestId('cinemadle-date', {timeout: 10000}).should('exist');
 
     return { username: username, password: password, initialize: initialize } as LogInParams;
 }
@@ -135,7 +136,7 @@ export type GuessCardData = {
 export const getGuessCard = (cardId: number, category: string) => {
     // Start the chain with cy.wrap to ensure we're in Cypress land
     return cy.wrap(null).then(() => {
-        return cy.contains(category)
+        return cy.contains(category.toUpperCase())
             .invoke('attr', 'data-testid')
             .then(x => {
                 const splits = (x as string).split('-');
@@ -146,7 +147,7 @@ export const getGuessCard = (cardId: number, category: string) => {
 
                 return cy.get(`[data-testid^="card-${cardId}-${cardIndex}-tiledata"]`).then($tiledata => {
                     return cy.wrap({
-                        className: cy.contains(category)
+                        className: cy.contains(category.toUpperCase())
                             .parent()
                             .parent()
                             .parent()

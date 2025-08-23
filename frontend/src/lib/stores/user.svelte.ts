@@ -58,7 +58,7 @@ const createUserStore = () => {
     return {
         subscribe,
         setLoggedIn: (email: string, jwt: string, refreshToken: string) => {
-            guessStore.update(g => []);
+            guessStore.update(s => ({ ...s, guesses: [] }));
             return update(user => ({
                 ...user,
                 email,
@@ -68,7 +68,7 @@ const createUserStore = () => {
             }));
         },
         setLoggedOut: () => {
-            guessStore.update(g => []);
+            guessStore.update(s => ({ ...s, guesses: [] }));
             return update(_ => ({
                 email: '',
                 jwt: '',

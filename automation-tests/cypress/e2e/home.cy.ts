@@ -34,8 +34,8 @@ describe('home page', () => {
 
             cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
             
-            getGuessCard(0, 'box office').then((boxOffice) => {
-                boxOffice.name.should('have.text', 'box office');
+            getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
+                boxOffice.name.should('have.text', 'BOX OFFICE');
                 boxOffice.arrowdown1.should('exist');
                 boxOffice.arrowdown2.should('exist');
                 boxOffice.arrowup1.should('not.exist');
@@ -45,8 +45,8 @@ describe('home page', () => {
             })
             
 
-            getGuessCard(0, 'creatives').then((creatives) => {
-                creatives.name.should('have.text', 'creatives');
+            getGuessCard(0, 'CREATIVES').then((creatives) => {
+                creatives.name.should('have.text', 'CREATIVES');
                 creatives.arrowdown1.should('not.exist');
                 creatives.arrowdown2.should('not.exist');
                 creatives.arrowup1.should('not.exist');
@@ -55,8 +55,8 @@ describe('home page', () => {
                 creatives.className.should('contain', 'bg-gray-300');
             })
 
-            getGuessCard(0, 'rating').then((rating) => {
-                rating.name.should('have.text', 'rating');
+            getGuessCard(0, 'RATING').then((rating) => {
+                rating.name.should('have.text', 'RATING');
                 rating.arrowdown1.should('not.exist');
                 rating.arrowdown2.should('not.exist');
                 rating.arrowup1.should('not.exist');
@@ -66,8 +66,8 @@ describe('home page', () => {
             })
             
 
-            getGuessCard(0, 'genre').then((genre) => {
-                genre.name.should('have.text', 'genre');
+            getGuessCard(0, 'GENRE').then((genre) => {
+                genre.name.should('have.text', 'GENRE');
                 genre.arrowdown1.should('not.exist');
                 genre.arrowdown2.should('not.exist');
                 genre.arrowup1.should('not.exist');
@@ -81,8 +81,8 @@ describe('home page', () => {
                 genre.className.should('contain', 'bg-gray-300');
             })
 
-            getGuessCard(0, 'cast').then((cast) => {
-                cast.name.should('have.text', 'cast');
+            getGuessCard(0, 'CAST').then((cast) => {
+                cast.name.should('have.text', 'CAST');
                 cast.arrowdown1.should('not.exist');
                 cast.arrowdown2.should('not.exist');
                 cast.arrowup1.should('not.exist');
@@ -97,8 +97,8 @@ describe('home page', () => {
             })
             
 
-            getGuessCard(0, 'year').then((year) => {
-                year.name.should('have.text', 'year');
+            getGuessCard(0, 'YEAR').then((year) => {
+                year.name.should('have.text', 'YEAR');
                 year.arrowdown1.should('exist');
                 year.arrowdown2.should('exist');
                 year.arrowup1.should('not.exist');

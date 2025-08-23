@@ -56,13 +56,13 @@
                     {#if !$userStore.loggedIn}
                         <a
                             href="/login"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                             data-testid="login-link"
                             >log in</a
                         >
                         <a
                             href="/signup"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                             data-testid="signup-link"
                             >sign up</a
                         >
@@ -70,7 +70,7 @@
                         {#if paymentsEnabled}
                             <a
                                 href="/purchase"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                                class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                                 data-testid="purchase-link"
                                 >purchase</a
                             >
@@ -78,19 +78,19 @@
                     {/if}
                     <a
                         href="/about"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                        class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                         data-testid="about-link"
                         >about</a
                     >
                     <a
                         href="/devinfo"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                        class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                         data-testid="devinfo-link"
                         >dev info</a
                     >
                     <a
                         href="/"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                        class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
                         data-testid="home-link"
                         >home</a
                     >
