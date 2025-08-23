@@ -61,7 +61,7 @@ describe('home page', () => {
 
             cy.contains('Five Visual Clues').should('exist');
 
-            cy.getByDataTestId('business-link').click({force: true});
+            cy.get('[data-testid="business-link"]').click({force: true});
         })
 
         cy.wait(8000);
