@@ -87,6 +87,7 @@ public class Program
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
         builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
         builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
+        builder.Services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
         builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
 

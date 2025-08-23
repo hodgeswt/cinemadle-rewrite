@@ -1,5 +1,4 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel.DTO;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +39,8 @@ public class Mocks
         GameLength = 10,
         PaymentSuccessUrl = "http://localhost:5173/paymentSuccess",
         PaymentFailureUrl = "http://localhost:5173/paymentFailure",
-        AddOnMapping = []
+        AddOnMapping = [],
+        FeatureFlags = []
     };
 
     public static IMemoryCache GetMemoryCache()
@@ -125,10 +125,18 @@ public class Mocks
         return tmdbRepoMock;
     }
 
-    public static Mock<IWebHostEnvironment> GetMockedWebHostEnvironment() {
+    public static Mock<IWebHostEnvironment> GetMockedWebHostEnvironment()
+    {
         Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
 
         return webHostEnvMock;
+    }
+
+    public static Mock<IFeatureFlagRepository> GetMockedFeatureFlagRepository()
+    {
+        Mock<IFeatureFlagRepository> flagRepoMock = new();
+
+        return flagRepoMock;
     }
 }
