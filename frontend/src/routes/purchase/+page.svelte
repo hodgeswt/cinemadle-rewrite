@@ -12,6 +12,7 @@
     import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
     import { Container } from "$lib/services";
     import { browser } from "$app/environment";
+    import { FeatureFlags } from "$lib/domain";
 
     let openError = writable(false);
     let errorMessage = $state("");
@@ -21,6 +22,8 @@
     let quantities = $state({} as { [key: string]: number });
 
     let purchasesService = (): PurchasesService => Container.it().PurchasesService;
+
+    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
 
     if (!$userStore.loggedIn) {
         if (browser) {
@@ -39,6 +42,9 @@
     } as { [key: string]: string }
 
     onMount(async () => {
+        if (!await paymentsEnabled) {
+            goto("/");
+        }
         let result = await purchasesService().getQuantities();
         if (result.ok) {
             quantities = result.data!.quantities;

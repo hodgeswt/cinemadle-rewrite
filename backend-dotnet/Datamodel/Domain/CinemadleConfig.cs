@@ -22,4 +22,5 @@ public class CinemadleConfig
     public required string PaymentSuccessUrl { get; set; }
     public required string PaymentFailureUrl { get; set; }
     public required Dictionary<string, AddOnDetails> AddOnMapping { get; set; }
+    public required Dictionary<string, bool> FeatureFlags { get; set; }
 }

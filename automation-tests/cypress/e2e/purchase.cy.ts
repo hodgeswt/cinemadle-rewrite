@@ -19,8 +19,7 @@ describe('home page', () => {
         cy.getByDataTestId('noitems-text').should('have.text', 'no items yet. purchase some to get started!');
     });
 
-    it('should redirect to stripe on purchase', () => {
-        
+    it('should allow full purchase', () => {
         cy.getByDataTestId('visualcluepurchase-button').click();
 
         cy.origin('https://checkout.stripe.com', () => {
@@ -28,7 +27,7 @@ describe('home page', () => {
                 return false
             })
 
-            cy.contains('Ten Visual Clues').should('exist');
+            cy.contains('Five Visual Clues').should('exist');
 
             cy.get('.CheckoutInput[name="email"]').type('asdf@asdf.com');
             cy.get('.Button[aria-label="Pay with card"]').click({force: true});
@@ -49,5 +48,24 @@ describe('home page', () => {
         goToPage('purchase');
         cy.getByDataTestId('product-name-text').should('have.text', 'visual clue');
         cy.getByDataTestId('product-quantity-text').should('have.text', '10');
+    })
+
+    it('should redirect to failure on failed purchase', () => {
+        
+        cy.getByDataTestId('visualcluepurchase-button').click();
+
+        cy.origin('https://checkout.stripe.com', () => {
+            cy.on('uncaught:exception', (e) => {
+                return false
+            })
+
+            cy.contains('Five Visual Clues').should('exist');
+
+            cy.getByDataTestId('business-link').click({force: true});
+        })
+
+        cy.wait(8000);
+
+        cy.getByDataTestId('page-title').should('have.text', 'purchase failed');
     })
 });

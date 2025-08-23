@@ -1,10 +1,14 @@
 <script lang="ts">
+    import { FeatureFlags } from "$lib/domain";
+    import { Container } from "$lib/services";
     import { userStore } from "$lib/stores";
     import { isoDateNoTime } from "$lib/util";
     import { Menu } from "@lucide/svelte";
 
     export let showEmail = false;
     export let showDate = false;
+
+    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
 
     let menuOpen = false;
 
@@ -46,12 +50,14 @@
                             >sign up</a
                         >
                     {:else}
-                        <a
-                            href="/purchase"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            data-testid="purchase-link"
-                            >purchase</a
-                        >
+                        {#if paymentsEnabled}
+                            <a
+                                href="/purchase"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                data-testid="purchase-link"
+                                >purchase</a
+                            >
+                        {/if}
                     {/if}
                     <a
                         href="/about"

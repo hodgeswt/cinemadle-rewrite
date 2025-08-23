@@ -11,7 +11,7 @@
         validateAndRefreshToken,
         healthcheck,
     } from "$lib/middleware";
-    import { type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
+    import { FeatureFlags, type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
     import { onMount, untrack } from "svelte";
     import { find } from "$lib/fuzzy";
     import { Skeleton } from "$lib/components/ui/skeleton";
@@ -65,6 +65,8 @@
 
     let done = $derived(guesses.length >= LIMIT && win);
 
+    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
+
     let loading = $state(true);
     let guessServicePing = $state(0);
 
@@ -116,13 +118,19 @@
                     }
                 }
 
-                let quantitiesResult = await purchasesService().getQuantities();
-                if (quantitiesResult.ok) {
-                    const q = quantitiesResult.data!.quantities;
-                    if ("VisualClue" in q) {
-                        visualClueCount = q["VisualClue"];
+                if (await paymentsEnabled) {
+                    let quantitiesResult = await purchasesService().getQuantities();
+                    if (quantitiesResult.ok) {
+                        const q = quantitiesResult.data!.quantities;
+                        if ("VisualClue" in q) {
+                            visualClueCount = q["VisualClue"];
+                        }
                     }
                 }
+                else {
+                    visualClueCount = -1;
+                }
+                
             }
 
             while (!guessService().isInitialized()) {
@@ -352,7 +360,7 @@
 
         {#if $userStore.loggedIn}
             {#if guesses.length >= 6}
-                {#if visualClueCount > 0}
+                {#if visualClueCount > 0 || visualClueCount === -1}
                     <div
                         class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
                     >
@@ -362,7 +370,7 @@
                                 <span
                                     class="text-sm text-gray-700"
                                     data-testid="hint-text"
-                                    >need a hint? (remaining: {visualClueCount})</span
+                                    >need a hint? {visualClueCount !== -1 ? `(remaining: ${visualClueCount})` : ""}</span
                                 >
                             </div>
                             <Button
@@ -400,7 +408,7 @@
                         </div>
                     </div>
                 {/if}
-            {:else}
+            {:else if visualClueCount !== -1}
                 <div
                     class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
                 >

@@ -4,6 +4,7 @@ import { type IGuessService } from './IGuessService';
 import { GuessService } from './GuessService.svelte';
 import { AnonGuessService } from "./AnonGuessService";
 import { PurchasesService } from './PurchasesService.svelte';
+import { FeatureFlagService } from './FeatureFlagService';
 
 export class Container {
     private static _it: Container | null;
@@ -11,6 +12,7 @@ export class Container {
     private authGuessService: IGuessService;
     private anonGuessService: IGuessService;
     private purchasesService: PurchasesService;
+    private featureFlagService: FeatureFlagService;
 
     private constructor() {
         this.authGuessService = new GuessService();
@@ -20,6 +22,12 @@ export class Container {
         this.anonGuessService.initialize();
 
         this.purchasesService = new PurchasesService();
+        this.featureFlagService = new FeatureFlagService();
+        this.featureFlagService.initialize();
+    }
+
+    public get FeatureFlagService(): FeatureFlagService {
+        return this.featureFlagService;
     }
 
     public get PurchasesService(): PurchasesService {

@@ -1,6 +1,19 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { FeatureFlags } from "$lib/domain";
+    import { Container } from "$lib/services";
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
+    import { onMount } from "svelte";
+
+    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
+    
+    onMount(async () => {
+        if (!await paymentsEnabled) {
+            goto("/");
+        }
+    });
+    
 </script>
 
 <PageWrapper>

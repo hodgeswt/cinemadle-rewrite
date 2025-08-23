@@ -18,11 +18,14 @@ public class PaymentsController : CinemadleControllerBase
     private readonly DatabaseContext _db;
     private readonly IPaymentRepository _paymentRepo;
     private readonly CinemadleConfig _config;
+    private readonly IFeatureFlagRepository _flagRepo;
+    private bool? _paymentsEnabled;
     public PaymentsController(
         ILogger<PaymentsController> logger,
         DatabaseContext db,
         IPaymentRepository paymentRepo,
-        IConfigRepository config
+        IConfigRepository config,
+        IFeatureFlagRepository flagRepo
     )
     {
         _logger = logger;
@@ -31,15 +34,34 @@ public class PaymentsController : CinemadleControllerBase
         _db = db;
         _paymentRepo = paymentRepo;
         _config = config.GetConfig();
+        _flagRepo = flagRepo;
 
         _logger.LogDebug("-PaymentsController.ctor");
     }
 
+    public async Task<bool> PaymentsEnabled()
+    {
+        if (_paymentsEnabled is not null)
+        {
+            return (bool)_paymentsEnabled;
+        }
+
+        _paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
+
+        return (bool)_paymentsEnabled;
+    }
+
     [HttpGet("quantities")]
     [Authorize]
-    public ActionResult GetQuantities()
+    public async Task<ActionResult> GetQuantities()
     {
         _logger.LogDebug("+GetQuantities()");
+        if (!await PaymentsEnabled())
+        {
+            _logger.LogDebug("-GetQuantities()");
+            return new NotFoundResult();
+        }
+
         string? userId = GetUserId();
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -86,6 +108,11 @@ public class PaymentsController : CinemadleControllerBase
     [Authorize]
     public async Task<ActionResult> MakePurchase([FromBody] PurchaseDetailsDto purchase)
     {
+        if (!await PaymentsEnabled())
+        {
+            _logger.LogDebug("-MakePurchase()");
+            return new NotFoundResult();
+        }
         _logger.LogDebug("+MakePurchase({purchase})", purchase);
         string? userId = GetUserId();
 
@@ -110,6 +137,11 @@ public class PaymentsController : CinemadleControllerBase
 
     private async Task<bool> TryProcessLineItem(string userId, string productId, long quantity)
     {
+        if (!await PaymentsEnabled())
+        {
+            _logger.LogDebug("-TryProcessLineItem()");
+            return false;
+        }
         UserAccount? acct = _db.UserAccounts.Include(x => x.AddOns).Where(x => x.UserId == userId).FirstOrDefault();
 
         bool addAccount = acct is null;
@@ -172,6 +204,11 @@ public class PaymentsController : CinemadleControllerBase
     public async Task<ActionResult> Webhook()
     {
         _logger.LogDebug("+Webhook()");
+        if (!await PaymentsEnabled())
+        {
+            _logger.LogDebug("-Webhook()");
+            return new NotFoundResult();
+        }
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         try
         {

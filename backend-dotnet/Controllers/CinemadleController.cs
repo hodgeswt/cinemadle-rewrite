@@ -12,6 +12,7 @@ using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Cinemadle.Controllers;
 
@@ -22,6 +23,7 @@ public class CinemadleController : CinemadleControllerBase
     private readonly CinemadleConfig _config;
     private readonly ITmdbRepository _tmdbRepo;
     private readonly IGuessRepository _guessRepo;
+    private readonly IFeatureFlagRepository _flagRepo;
     private readonly ILogger<CinemadleController> _logger;
     private readonly DatabaseContext _db;
     private readonly IdentityContext _identity;
@@ -34,6 +36,7 @@ public class CinemadleController : CinemadleControllerBase
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
             IGuessRepository guessRepository,
+            IFeatureFlagRepository flagRepo,
             DatabaseContext db,
             IdentityContext identity
     )
@@ -48,6 +51,7 @@ public class CinemadleController : CinemadleControllerBase
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _isDevelopment = env.IsDevelopment();
+        _flagRepo = flagRepo;
 
         string? sTestMode = Environment.GetEnvironmentVariable("CINEMADLE_TEST_MODE");
         if (bool.TryParse(sTestMode ?? string.Empty, out bool testMode) && testMode)
@@ -74,6 +78,27 @@ public class CinemadleController : CinemadleControllerBase
     {
         _logger.LogDebug("Heartbeat");
         return true;
+    }
+
+    [HttpGet("featureFlags")]
+    public async Task<ActionResult> GetFeatureFlags()
+    {
+        _logger.LogDebug("+GetFeatureFlags()");
+
+        try
+        {
+            return new OkObjectResult(new FeatureFlagsDto
+            {
+                FeatureFlags = await _flagRepo.GetAll()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetFeatureFlags Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetFeatureFlags()");
+
+            return new StatusCodeResult(500);
+        }
     }
 
     [HttpGet("anonUserId")]

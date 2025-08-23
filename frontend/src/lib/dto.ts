@@ -63,6 +63,18 @@ export type QuantitiesDto = {
     quantities: { [key: string]: number }
 }
 
+export type FeatureFlagsDto = {
+    featureFlags: { [key: string]: boolean }
+}
+
+export function isFeatureFlagsDto(obj: any): obj is FeatureFlagsDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return isDictionary(obj.featureFlags, 'string', 'boolean', false);
+}
+
 export function isQuantitiesDto(obj: any): obj is QuantitiesDto {
     if (!hasValue(obj)) {
         return false;

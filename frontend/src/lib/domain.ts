@@ -18,6 +18,10 @@ export type CardDomain = {
     modifiers: { [key: string]: string[] };
 };
 
+export enum FeatureFlags {
+    PaymentsEnabled = "PaymentsEnabled"
+}
+
 export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {
     if (!hasValue(obj)) {
         return false;

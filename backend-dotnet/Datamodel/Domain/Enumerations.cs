@@ -32,3 +32,8 @@ public enum AddOn
     VisualClue,
     CategoryReveal,
 }
+
+public enum FeatureFlags
+{
+    PaymentsEnabled
+}
