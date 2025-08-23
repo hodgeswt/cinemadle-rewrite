@@ -7,6 +7,7 @@ import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
 import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
+import { guessStore } from "$lib/stores";
 
 export class AnonGuessService extends GuessServiceShared implements IGuessService {
     private readonly anonUserIdKey = 'anonUserId';
@@ -97,11 +98,13 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
     }
 
     public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
-        Logger.log("GuessService.getPreviousGuesses()");
+        Logger.log("+GuessService.getPreviousGuesses()");
 
         const anonUserId = await this.getAnonUserId();
 
         if (anonUserId === undefined) {
+            Logger.log("GuessService.getPreviousGuesses(): unknown anon user id");
+            Logger.log("-GuessService.getPreviousGuesses()");
             return err(AnonGuessService.unableToGetPreviousError);
         }
 
@@ -137,6 +140,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         const anonUserId = await this.getAnonUserId();
 
         if (anonUserId === undefined) {
+            Logger.log("GuessService.svelte.ts: undefined userid");
             return err(GuessServiceShared.guessError);
         }
 
@@ -146,8 +150,10 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         );
 
         const title = skipTitleMap !== true ? guess : this.getTitle(guess);
+        Logger.log("GuessService.svelte.ts: title {0}", title);
 
         if (this._guesses.includes(title)) {
+            Logger.log("GuessService.svelte.ts: bad title {0}", title);
             return err(AnonGuessService.duplicateGuessError);
         }
 
@@ -157,17 +163,25 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
                 let domain = GuessDtoToDomain(dto, title);
 
                 if (domain.ok) {
-                    this._guesses.push(title);
+                    Logger.log("GuessService.svelte.ts: good title {0}", title);
+                    if (!this._guesses.includes(title)) {
+                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
+
+                    }
                     return ok(domain.data as GuessDomain);
                 } else {
+                    Logger.log("GuessService.svelte.ts: bad data", title);
                     return err(AnonGuessService.guessError)
                 }
             }
-            catch {
+            catch (e) {
+                Logger.log("GuessService.svelte.ts: caught error {0}", e);
                 return err(AnonGuessService.guessError)
             }
         }
 
+        Logger.log("GuessService.svelte.ts: bad result");
         return err(AnonGuessService.guessError);
     }
 }
+

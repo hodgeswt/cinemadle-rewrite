@@ -6,7 +6,7 @@
     import Divider from "./Divider.svelte";
 
     export let props: GuessDomain = {
-         title: "Unknown Movie",
+         title: "unknown movie",
          cards: [],
          win: false
      };

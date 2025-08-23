@@ -4,11 +4,12 @@ import { err, ok, type Result } from "$lib/result";
 import { isoDateNoTime } from "$lib/util";
 import type { IGuessService } from "./IGuessService";
 import { userStore } from "$lib/stores";
-import { get as sget } from 'svelte/store';
 import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
 import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
+import { get as sget } from 'svelte/store';
+import { guessStore } from "$lib/stores";
 
 export class GuessService extends GuessServiceShared implements IGuessService {
     constructor() {
@@ -84,7 +85,9 @@ export class GuessService extends GuessServiceShared implements IGuessService {
                 let domain = GuessDtoToDomain(dto, title);
 
                 if (domain.ok) {
-                    this._guesses.push(title);
+                    if (!this._guesses.includes(title)) {
+                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
+                    }
                     return ok(domain.data as GuessDomain);
                 } else {
                     return err(GuessService.guessError)
@@ -113,7 +116,7 @@ export class GuessService extends GuessServiceShared implements IGuessService {
                 const g = await this.guess(`${id}`, true);
 
                 if (g.ok) {
-                    o.push(g.data!);
+                    o.push(g.data! as GuessDomain);
                 }
             }
 

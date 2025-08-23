@@ -1,6 +1,8 @@
 import { hasValue } from '$lib/util';
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { get as sget } from 'svelte/store';
+import { guessStore } from './guessStore.svelte';
 
 type UserStoreData = {
     email: string;
@@ -55,19 +57,25 @@ const createUserStore = () => {
 
     return {
         subscribe,
-        setLoggedIn: (email: string, jwt: string, refreshToken: string) => update(user => ({
-            ...user,
-            email,
-            jwt,
-            loggedIn: true,
-            refreshToken,
-        })),
-        setLoggedOut: () => update(_ => ({
-            email: '',
-            jwt: '',
-            loggedIn: false,
-            refreshToken: ''
-        }))
+        setLoggedIn: (email: string, jwt: string, refreshToken: string) => {
+            guessStore.update(g => []);
+            return update(user => ({
+                ...user,
+                email,
+                jwt,
+                loggedIn: true,
+                refreshToken,
+            }));
+        },
+        setLoggedOut: () => {
+            guessStore.update(g => []);
+            return update(_ => ({
+                email: '',
+                jwt: '',
+                loggedIn: false,
+                refreshToken: ''
+            }));
+        }
     }
 }
 

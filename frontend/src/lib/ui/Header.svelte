@@ -21,11 +21,13 @@
     }
 </script>
 
-<div class="w-full flex justify-between items-center mb-4">
-    <h1 class="flex-1 text-4xl font-extrabold leading-none tracking-tight" data-testid="cinemadle-title">
-        cinemadle
-    </h1>
-
+<div class="w-full flex justify-between items-center">
+    <div class="flex-1 flex items-center gap-3">
+        <h1 class="text-4xl font-extrabold leading-none tracking-tight {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc]' : 'bg-gradient-to-r from-green-500 to-green-600'} bg-clip-text text-transparent" data-testid="cinemadle-title">
+            cinemadle
+        </h1>
+       
+    </div>
     <div class="flex-1 flex flex-col text-right justify-center">
         <div class="flex-1 flex justify-end items-center gap-2">
             <button
@@ -97,11 +99,17 @@
         </div>
     </div>
 </div>
-{#if showDate}
-    <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="cinemadle-date">
+
+ {#if showDate}
+    <span 
+        class="inline-block rounded-full px-3 py-1 text-base font-semibold
+            {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc] text-gray-500' : 'bg-gradient-to-r from-green-500 via-green-400 to-green-600'} border-gray-200 dark:border-gray-700 mb-2"
+        data-testid="cinemadle-date"
+    >
         {isoDateNoTime()}
-    </h2>
+    </span>
 {/if}
+
 {#if $userStore.loggedIn && showEmail}
     <p class="block text-sm pb-4 {$isDarkMode ? 'text-white-500' : 'text-gray-700'}" data-testid="user-email">
         User: {$userStore.email}

@@ -1,0 +1,1 @@
+export type { DialogProps } from './DialogProps.ts';

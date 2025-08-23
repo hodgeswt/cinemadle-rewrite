@@ -3,6 +3,7 @@ import type { GameSummaryDto, ImageDto } from "$lib/dto";
 import Logger from "$lib/logger";
 import { getPossibleMovies, loadPreviousGuesses } from "$lib/middleware";
 import { type Result } from "$lib/result";
+import { guessStore } from "$lib/stores";
 import type { IGuessService } from "./IGuessService";
 
 export abstract class GuessServiceShared implements IGuessService {
@@ -13,13 +14,13 @@ export abstract class GuessServiceShared implements IGuessService {
     static unableToLoadGameSummaryError = "unable to load game summary.";
 
     private _initialized;
-    protected _possibleGuesses: PossibleMediaDomain;
-    protected _guesses: string[];
+    protected _possibleGuesses: PossibleMediaDomain = {};
+    protected _guesses: string[] = [];
 
     constructor() {
-        this._possibleGuesses = {} as PossibleMediaDomain;
+        guessStore.subscribe(x => this._possibleGuesses = x.possibleGuesses ?? {});
+        guessStore.subscribe(x => this._guesses = x.guesses.map(x => x.title));
         this._initialized = false;
-        this._guesses = [] as string[];
     }
 
     possibleGuesses(): PossibleMediaDomain {
@@ -46,7 +47,7 @@ export abstract class GuessServiceShared implements IGuessService {
         if (result.ok) {
             Logger.log("GuessServiceShared.initialize(): initialized");
             Logger.log("GuessServiceShared.initialize(): possible guesses: {0}", result.data!);
-            this._possibleGuesses = result.data!;
+            guessStore.update(s => ({ ...s, possibleGuesses: result.data! }));
             this._initialized = true;
         }
 
@@ -54,9 +55,10 @@ export abstract class GuessServiceShared implements IGuessService {
     }
 
     protected getTitle(guess: string): string {
+        Logger.log("GuessServiceShared.getTitle({0})", guess);
         return Object.keys(this._possibleGuesses).find(
             (x) => this._possibleGuesses[x].toString() === guess,
-        ) ?? "Unknown";
+        ) ?? "unknown";
     }
 
     abstract getPreviousGuesses(): Promise<Result<GuessDomain[]>>;

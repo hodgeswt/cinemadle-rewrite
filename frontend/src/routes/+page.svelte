@@ -8,17 +8,13 @@
     import { isDarkMode } from "$lib/stores/theme";
     import {
         PING_LIMIT,
-        getAnswer,
         validateAndRefreshToken,
         healthcheck,
     } from "$lib/middleware";
-    import { FeatureFlags, type GuessDomain, type PossibleMediaDomain } from "$lib/domain";
-    import { onMount, untrack } from "svelte";
-    import { find } from "$lib/fuzzy";
+    import { FeatureFlags } from "$lib/domain";
+    import { onMount } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
-    import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import { writable } from "svelte/store";
-    import { userStore } from "$lib/stores";
+    import { guessStore, userStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
     import type { LoginDto } from "$lib/dto";
     import { Container, type IGuessService } from "$lib/services";
@@ -28,74 +24,21 @@
     import VisualClue from "$lib/ui/VisualClue.svelte";
     import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
     import { goto } from "$app/navigation";
+    import Dialog from "$lib/ui/Dialog.svelte";
+    import { MainState } from "./page.state.svelte";
 
-    let guessValue = $state("");
-    let errorMessage = $state("");
-    let shareData = $state([] as string[]);
-
-    let openError = writable(false);
-    let openShare = writable(false);
-    let openVisualClue = writable(false);
-    let visualClueCountDecremented = $state(false);
-    let showAnswer = writable(false);
-    let guesses = $state([] as GuessDomain[]);
-
-    let searchOpen = $state(false);
-
-    let titles = $derived(guesses.map((x) => x.title));
+    const mainState = new MainState();
 
     let guessService = (): IGuessService => Container.it().GuessService;
-    let purchasesService = (): PurchasesService =>
-        Container.it().PurchasesService;
-
-    let possibleGuesses = $state({} as PossibleMediaDomain);
-
-    let visualClueCount = $state(0);
-
-    let filteredGuesses = $derived(
-        find(guessValue, Object.keys(possibleGuesses))
-            .filter((_, i) => i < 10)
-            .filter((x) => !titles.includes(x)),
-    );
-
-    const LIMIT = 10;
-
-    let remaining = $derived(LIMIT - guesses.length);
-    let win = $derived(guesses.filter((x) => x.win).length > 0);
-    let lose = $derived(guesses.length >= LIMIT && !win);
-
-    let done = $derived(guesses.length >= LIMIT && win);
+    let purchasesService = (): PurchasesService => Container.it().PurchasesService;
 
     const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
 
-    let loading = $state(true);
-    let guessServicePing = $state(0);
-
-    let serverDown = $state(false);
-
-    let answer = $state(null as GuessDomain | null);
-
-    $effect(() => {
-        if (lose) {
-            untrack(async () => {
-                let a = await getAnswer();
-
-                if (a.ok) {
-                    answer = a.data!;
-                    showAnswer.set(true);
-                } else {
-                    errorMessage =
-                        "Unable to pull answer from server. Try again later";
-                    openError.set(true);
-                }
-            });
-        }
-    });
-
     onMount(async () => {
+        Logger.log("+page.svelte.onMount");
         try {
             if (!(await healthcheck())) {
-                serverDown = true;
+                mainState.serverDown = true;
                 return;
             }
 
@@ -124,50 +67,49 @@
                     if (quantitiesResult.ok) {
                         const q = quantitiesResult.data!.quantities;
                         if ("VisualClue" in q) {
-                            visualClueCount = q["VisualClue"];
+                            mainState.visualClueCount = q["VisualClue"];
                         }
                     }
                 }
                 else {
-                    visualClueCount = -1;
+                    mainState.visualClueCount = -1;
                 }
                 
             }
 
             while (!guessService().isInitialized()) {
-                if (guessServicePing === PING_LIMIT) {
-                    serverDown = true;
+                if (mainState.guessServicePing === PING_LIMIT) {
+                    mainState.serverDown = true;
                     return;
                 }
 
-                guessServicePing += 1;
+                mainState.guessServicePing += 1;
                 await new Promise((x) => setTimeout(x, 1000));
             }
 
-            possibleGuesses = guessService().possibleGuesses();
-            Logger.log(
-                "+page.svelte.onMount: possibleGuesses: {0}",
-                possibleGuesses,
-            );
-
             const prev = await guessService().getPreviousGuesses();
             if (!prev.ok) {
+                Logger.log("+page.svelte.onMount: failed guesses");
                 throw new Error(prev.error!);
             }
+
+            Logger.log("+page.svelte.onMount: Prev guesses {0}", prev.data!);
 
             for (const g of prev.data!) {
                 Logger.log(
                     "+page.svelte.onMount: Making previous guess {0}",
                     g.title,
                 );
-                guesses.push(g);
+                if (!$guessStore.guesses.includes(g)) {
+                    $guessStore.guesses.push(g);
+                }
             }
 
-            loading = false;
+            mainState.loading = false;
         } catch (e) {
-            errorMessage = "Unable to contact server.";
-            openError.set(true);
-            loading = false;
+            mainState.errorMessage = "Unable to contact server.";
+            mainState.errorOpen.set(true);
+            mainState.loading = false;
         }
     });
 
@@ -175,28 +117,23 @@
         const result = await guessService().getGameSummary();
 
         if (!result.ok) {
-            shareData = [result.error!];
+            mainState.shareData = [result.error!];
         } else {
-            shareData = result.data!.summary;
+            mainState.shareData = result.data!.summary;
         }
 
-        openShare.set(true);
-    }
-
-    function closeShare(_event: Event): void {
-        shareData = [] as string[];
-        openShare.set(false);
+        mainState.shareOpen.set(true);
     }
 
     async function deviceShare(): Promise<void> {
         if (navigator.share) {
             navigator.share({
                 title: "cinemadle",
-                text: shareData.join("\n"),
+                text: mainState.shareData.join("\n"),
                 url: "https://cinemadle.com",
             });
         } else {
-            navigator.clipboard.writeText(shareData.join("\n"));
+            navigator.clipboard.writeText(mainState.shareData.join("\n"));
             toast("copied to clipboard");
         }
     }
@@ -204,67 +141,56 @@
     function guessChange(_event: Event): void {
         Logger.log(
             "+page.svelte.guessChange(): Input changed: {0}",
-            guessValue,
+            mainState.guessInput,
         );
-        if (guessValue !== "") {
-            searchOpen = true;
+        if (mainState.guessInput !== "") {
+            mainState.searchOpen = true;
         } else {
-            searchOpen = false;
+            mainState.searchOpen = false;
         }
     }
 
     async function makeGuess(guess: string): Promise<void> {
         let result = await guessService().guess(guess);
 
-        if (result.ok) {
-            guesses.push(result.data!);
-        } else {
-            errorMessage = result.error!;
-            openError.set(true);
+        if (!result.ok) {
+            mainState.errorMessage = result.error!;
+            mainState.errorOpen.set(true);
         }
     }
 
     function showVisualClue(_event: Event): void {
-        if (!visualClueCountDecremented) {
-            visualClueCount -= 1;
+        if (!mainState.visualCluesDecremented) {
+            mainState.visualClueCount -= 1;
         }
 
-        openVisualClue.set(true);
-    }
-
-    function closeVisualClue(): void {
-        openVisualClue.set(false);
-    }
-
-    function closeDialog() {
-        openError.set(false);
-        errorMessage = "";
+        mainState.visualClueOpen.set(true);
     }
 
     function showAnswerButton(_event: Event): void {
-        showAnswer.set(true);
+        mainState.answerOpen.set(true);
     }
 
     async function handleSelect(value: string): Promise<void> {
-        guessValue = "";
+        mainState.guessInput = "";
         makeGuess(value);
     }
 
     async function handleGuess(event: Event | null): Promise<void> {
         event?.preventDefault();
 
-        makeGuess(guessValue);
-        guessValue = "";
+        makeGuess(mainState.guessInput);
+        mainState.guessInput = "";
     }
 
     function closeAnswer(_event: Event): void {
-        showAnswer.set(false);
+        mainState.answerOpen.set(false);
     }
 </script>
 
 <PageWrapper>
     <Header showDate={true} />
-    {#if win}
+    {#if mainState.win}
         <div class="flex items-center mb-4">
             <h2
                 class="flex-1 text-3xl font-semibold text-green-400 leading-none tracking-tight"
@@ -281,7 +207,7 @@
             </Button>
         </div>
     {/if}
-    {#if lose}
+    {#if mainState.lose}
         <div class="flex items-center mb-4">
             <h2
                 class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
@@ -304,16 +230,16 @@
         </div>
     {/if}
 
-    {#if !loading && !serverDown}
-        {#if remaining > 0 && !win}
+    {#if !mainState.loading && !mainState.serverDown}
+        {#if mainState.remaining > 0 && !mainState.win}
             <div class="flex space-x-2 mb-4">
                 <Input
                     type="text"
-                    placeholder={`Guess... ${remaining} remaining`}
-                    bind:value={guessValue}
+                    placeholder={`Guess... ${mainState.remaining} remaining`}
+                    bind:value={mainState.guessInput}
                     onchange={guessChange}
                     class="flex-1 text-base"
-                    disabled={done}
+                    disabled={mainState.done}
                     data-testid="guess-input"
                 />
 
@@ -322,7 +248,7 @@
                     size="icon"
                     onclick={handleGuess}
                     class="relative -z-1000"
-                    disabled={done || guessValue.trim() === ""}
+                    disabled={mainState.done || mainState.guessInput.trim() === ""}
                     data-testid="submit-button"
                 >
                     <Search />
@@ -330,11 +256,11 @@
             </div>
         {/if}
 
-        {#if filteredGuesses.length > 0}
+        {#if mainState.filteredGuesses.length > 0}
             <ul
                 class="mt-1 {$isDarkMode ? 'bg-gray-900' : 'bg-white'} {$isDarkMode ? 'border-gray-700' : 'border-gray-300'} border rounded shadow-xl absolute z-[9999999]"
             >
-                {#each filteredGuesses as possibleGuess}
+                {#each mainState.filteredGuesses as possibleGuess}
                     <li class="p-2 text-lg">
                         <button
                             onclick={() => {
@@ -360,8 +286,8 @@
         {/if}
 
         {#if $userStore.loggedIn}
-            {#if guesses.length >= 6}
-                {#if visualClueCount > 0 || visualClueCount === -1}
+            {#if $guessStore.guesses.length >= 6}
+                {#if mainState.visualClueCount > 0 || mainState.visualClueCount === -1}
                     <div
                         class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                     >
@@ -371,7 +297,7 @@
                                 <span
                                     class="text-sm {$isDarkMode ? 'text-white' : 'text-indigo-400'}"
                                     data-testid="hint-text"
-                                    >need a hint? {visualClueCount !== -1 ? `(remaining: ${visualClueCount})` : ""}</span
+                                    >need a hint? {mainState.visualClueCount !== -1 ? `(remaining: ${mainState.visualClueCount})` : ""}</span
                                 >
                             </div>
                             <Button
@@ -409,7 +335,7 @@
                         </div>
                     </div>
                 {/if}
-            {:else if visualClueCount !== -1}
+            {:else if mainState.visualClueCount !== -1}
                 <div
                     class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                 >
@@ -417,7 +343,7 @@
                         <div class="flex items-center space-x-2">
                             <Info class={$isDarkMode ? 'text-white' : 'text-indigo-400'} />
                             <span class="text-sm {$isDarkMode ? 'text-white' : 'text-gray-700'}" data-testid="visualcluesremaining-text">
-                                visual clues remaining: {visualClueCount}
+                                visual clues remaining: {mainState.visualClueCount}
                             </span>
                         </div>
                     </div>
@@ -425,79 +351,36 @@
             {/if}
         {/if}
 
-        <AlertDialog.Root bind:open={$openError}>
-            <AlertDialog.Content>
-                <AlertDialog.Title data-testid="error-title-text">uh-oh!</AlertDialog.Title>
-                <AlertDialog.Description data-testid="error-body-text">
-                    {errorMessage}
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
-                        ok
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+        <Dialog open={mainState.errorOpen} title="uh-oh!" id="error" confirmButton="ok">
+            {mainState.errorMessage}
+        </Dialog>
 
-        <AlertDialog.Root bind:open={$openShare}>
-            <AlertDialog.Content>
-                <AlertDialog.Title data-testid="results-title-text">your results</AlertDialog.Title>
-                <AlertDialog.Description data-testid="results-body-text">
-                    {#each shareData as line}
-                        <div class="leading-none">{line}</div>
-                    {/each}
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeShare} class="m-2" data-testid="share-close-button">
-                        close
-                    </AlertDialog.Action>
-                    <AlertDialog.Action on:click={deviceShare} class="m-2" data-testid="share-share-button">
-                        share
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+        <Dialog open={mainState.shareOpen} title="your results" id="results" confirmButton="close" cancelButton="share" cancelCallback={() => deviceShare()}>
+            {#each mainState.shareData as line}
+                <div class="leading-none">{line}</div>
+            {/each}
+        </Dialog>
 
-        <AlertDialog.Root bind:open={$openVisualClue}>
-            <AlertDialog.Content>
-                <AlertDialog.Title data-testid="visualclue-title-text">visual clue</AlertDialog.Title>
-                <AlertDialog.Description>
-                    <VisualClue />
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeVisualClue} class="m-2" data-testid="visualclue-close-button">
-                        close
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+        <Dialog open={mainState.visualClueOpen} title="visual clue" id="visualclue" confirmButton="ok">
+            <VisualClue />
+        </Dialog>
 
-        <AlertDialog.Root bind:open={$showAnswer}>
-            <AlertDialog.Content>
-                <AlertDialog.Title data-testid="answer-title-text">the answer is...</AlertDialog.Title>
-                <AlertDialog.Description data-testid="answer-body">
-                    {#if answer !== null}
-                        <Guess props={answer} />
-                    {:else}
-                        unable to pull answer from server
-                    {/if}
-                </AlertDialog.Description>
-                <AlertDialog.Footer>
-                    <AlertDialog.Action on:click={closeAnswer} class="m-2" data-testid="answer-close-button">
-                        close
-                    </AlertDialog.Action>
-                </AlertDialog.Footer>
-            </AlertDialog.Content>
-        </AlertDialog.Root>
+        <Dialog open={mainState.answerOpen} title="the mainState.answer is..." id="answer" confirmButton="ok">
+            {#if mainState.answer !== null}
+                <Guess props={mainState.answer} />
+            {:else}
+                unable to pull mainState.answer from server
+            {/if}
+        </Dialog>
 
         <div class="guesses z-10">
-            {#each [...guesses].reverse() as guess, i (guess)}
+            {#each [...$guessStore.guesses].reverse() as guess, i (guess)}
                 <div animate:flip={{ duration: 1000 }}>
                     <Guess props={guess} index={i} />
                 </div>
             {/each}
         </div>
-    {:else if loading && !serverDown}
+    {:else if mainState.loading && !mainState.serverDown}
         <div class="min-w-3xl w-full">
             <Skeleton class="h-12 w-full mb-4" />
         </div>
@@ -508,12 +391,12 @@
         </div>
     {/if}
 
-    {#if serverDown}
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="serverdown-text">
+    {#if mainState.serverDown}
+        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="mainState.serverDown-text">
             server down. please try again later
         </h2>
     {/if}
-    {#if guesses.length > 0}
+    {#if $guessStore.guesses.length > 0}
         <BuyMeAPizza />
     {/if}
 </PageWrapper>

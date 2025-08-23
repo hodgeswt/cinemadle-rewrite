@@ -8,7 +8,7 @@
 
     const {props = {
         color: "gray",
-        title: "Unknown Movie",
+        title: "unknown category",
         data: [],
         direction: 0,
         modifiers: {},
@@ -16,21 +16,28 @@
 
     const darkModeMap: { [key: string]: string } = {
         'gray': 'bg-[rgba(255,255,255,0.08)]',
-        'yellow': 'bg-gradient-to-br from-[#ffd700] to-[#ffeb3b]',
+        'yellow': 'bg-gradient-to-br from-[#ffeb3b] to-[#ffd700]',
+        'green': 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]'
+    }
+
+    const lightModeMap: { [key: string]: string } = {
+        'gray': 'bg-gradient-to-br from-gray-200 to-gray-300',
+        'yellow': 'bg-gradient-to-br from-[#ffeb3b] to-[#ffd700]',
         'green': 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]'
     }
 
     let bg: string = $state("");
     $effect(() => {
-        bg = $isDarkMode ? darkModeMap[props.color] : `bg-${props.color}-300`;
+        bg = $isDarkMode ? darkModeMap[props.color] : lightModeMap[props.color];
     })
 
     function mapTitle(x: string): string {
+        let y = x;
         if (x === "boxOffice") {
-            return "box office";
+            y = "box office";
         }
 
-        return x;
+        return y.toUpperCase();
     }
 
     function formatNumber(x: string | number): string {
@@ -78,11 +85,13 @@
 
 <div class="p-2 h-full">
     <div
-        class={`p-4 flex flex-col h-full rounded-lg shadow-md overflow-hidden ${bg}`}
+        class={`p-4 flex flex-col h-full rounded-lg shadow-md overflow-hidden ${bg} 
+            backdrop-blur-md bg-opacity-70 border border-white/40`
+        }
     >
         <h2 class="text-lg font-bold mb-2 flex sm:flex-row sm:justify-between sm:items-center gap-1">
             <span class="flex items-center flex-shrink min-w-0">
-                <span data-testid={`card-${guessIndex}-${index}-title-text`} class={$isDarkMode ? 'text-gray-500' : 'text-black'}>{mapTitle(props.title)}</span>
+                <span data-testid={`card-${guessIndex}-${index}-title-text`} class={`${$isDarkMode ? 'text-gray-700' : 'text-gray-500'} text-sm`}>{mapTitle(props.title)}</span>
                 {#if props.direction === 2}
                     <span class="flex-shrink-0 ml-2" data-testid={`card-${guessIndex}-${index}-arrowup-1`}>
                         <ArrowUp class="inline w-4 h-4 {$isDarkMode ? 'text-gray-500' : 'text-black'}"/>
@@ -118,12 +127,12 @@
         <ul class="list-none list-inside flex-grow overflow-y-auto">
             {#each props.data as datum, i}
                 {#if props.modifiers[datum]?.includes("bold") === true}
-                    <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} flex items-center break-words">
+                    <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} text-xl flex items-center break-words">
                         <span class="truncate flex-grow" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>{formatNumber(datum)}</span>
                         <Sparkles class="scale-75 flex-shrink-0 ml-1" data-testid={`card-${guessIndex}-${index}-sparkles-${i}`} />
                     </li>
                 {:else}
-                    <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} break-words" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>{formatNumber(datum)}</li>
+                    <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} text-xl break-words" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>{formatNumber(datum)}</li>
                 {/if}
             {/each}
         </ul>

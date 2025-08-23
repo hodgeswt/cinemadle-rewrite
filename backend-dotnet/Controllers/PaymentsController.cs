@@ -39,7 +39,7 @@ public class PaymentsController : CinemadleControllerBase
         _logger.LogDebug("-PaymentsController.ctor");
     }
 
-    public async Task<bool> PaymentsEnabled()
+    private async Task<bool> PaymentsEnabled()
     {
         if (_paymentsEnabled is not null)
         {
