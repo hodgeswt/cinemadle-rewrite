@@ -4,6 +4,7 @@
     import { ArrowUp } from "@lucide/svelte";
     import { ArrowDown } from "@lucide/svelte";
     import { Sparkles } from "@lucide/svelte";
+    import { isDarkMode } from "$lib/stores/theme";
 
     export let props: CardDomain = {
         color: "gray",
@@ -69,7 +70,9 @@
 
 <div class="p-2 h-full">
     <div
-        class={`p-4 flex flex-col h-full rounded-lg shadow-md bg-${props.color}-300 overflow-hidden`}
+        class={`p-4 flex flex-col h-full rounded-lg shadow-md overflow-hidden ${
+            `bg-${props.color}-${isDarkMode ? '500' : '300'}`
+        }`}
     >
         <h2 class="text-lg font-bold mb-2 flex sm:flex-row sm:justify-between sm:items-center gap-1">
             <span class="flex items-center flex-shrink min-w-0">

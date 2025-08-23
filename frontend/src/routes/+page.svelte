@@ -5,6 +5,7 @@
     import { Info, Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
     import { flip } from "svelte/animate";
+    import { isDarkMode } from "$lib/stores/theme";
     import {
         PING_LIMIT,
         getAnswer,
@@ -331,7 +332,7 @@
 
         {#if filteredGuesses.length > 0}
             <ul
-                class="mt-1 bg-white border border-gray-300 rounded shadow-xl absolute z-[9999999]"
+                class="mt-1 {$isDarkMode ? 'bg-gray-900' : 'bg-white'} {$isDarkMode ? 'border-gray-700' : 'border-gray-300'} border rounded shadow-xl absolute z-[9999999]"
             >
                 {#each filteredGuesses as possibleGuess}
                     <li class="p-2 text-lg">
@@ -362,13 +363,13 @@
             {#if guesses.length >= 6}
                 {#if visualClueCount > 0 || visualClueCount === -1}
                     <div
-                        class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                        class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <Info class="text-indigo-600" />
+                                <Info class={$isDarkMode ? 'text-white' : 'text-indigo-600'} />
                                 <span
-                                    class="text-sm text-gray-700"
+                                    class="text-sm {$isDarkMode ? 'text-white' : 'text-indigo-400'}"
                                     data-testid="hint-text"
                                     >need a hint? {visualClueCount !== -1 ? `(remaining: ${visualClueCount})` : ""}</span
                                 >
@@ -386,12 +387,12 @@
                     </div>
                 {:else}
                     <div
-                        class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                        class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <Info class="text-indigo-600" />
-                                <span class="text-sm text-gray-700"
+                                <Info class={$isDarkMode ? 'text-white' : 'text-indigo-400'} />
+                                <span class="text-sm {$isDarkMode ? 'text-white' : 'text-indigo-400'}"
                                     data-testid="hint-text"
                                     >need a hint?</span
                                 >
@@ -410,12 +411,12 @@
                 {/if}
             {:else if visualClueCount !== -1}
                 <div
-                    class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200"
+                    class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <Info class="text-indigo-600" />
-                            <span class="text-sm text-gray-700" data-testid="visualcluesremaining-text">
+                            <Info class={$isDarkMode ? 'text-white' : 'text-indigo-400'} />
+                            <span class="text-sm {$isDarkMode ? 'text-white' : 'text-gray-700'}" data-testid="visualcluesremaining-text">
                                 visual clues remaining: {visualClueCount}
                             </span>
                         </div>
