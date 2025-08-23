@@ -47,7 +47,7 @@ describe('home page', () => {
 
         goToPage('purchase');
         cy.getByDataTestId('product-name-text').should('have.text', 'visual clue');
-        cy.getByDataTestId('product-quantity-text').should('have.text', '10');
+        cy.getByDataTestId('product-quantity-text').should('have.text', '5');
     })
 
     it('should redirect to failure on failed purchase', () => {

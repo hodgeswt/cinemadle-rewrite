@@ -21,7 +21,7 @@ describe('about page', () => {
 
     it('should have buy me a pizza button', () => {
         goToPage('about');
-        cy.getByDataTestId('buymeapizza-text').should('have.text', '🍕 Buy me a pizza');
+        cy.getByDataTestId('buymeapizza-text').should('have.text', '🍕 buy me a pizza');
     });
 
     it('should have a functional logout button', () => {

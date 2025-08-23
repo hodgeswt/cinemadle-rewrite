@@ -137,7 +137,7 @@
 
     <p class="mb-4" data-testid="body2-text">visual clues allow you to view a blurry visual hint for a day's game (any number of times during the game)</p>
     <Button type="submit" size="icon" onclick={purchaseVisualClue} class="w-full mb-4" disabled={purchaseVisualClueDisabled} data-testid="visualcluepurchase-button">
-        <p class="m-1">buy 10 visual clues</p>
+        <p class="m-1">buy 5 visual clues</p>
     </Button>
 
     <!--<Button type="submit" size="icon" onclick={purchaseCategoryReveal} class="w-full mb-4" disabled={purchaseCategoryRevealDisabled} data-testid="categoryrevealpurchase-button">
