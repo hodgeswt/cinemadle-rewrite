@@ -64,6 +64,7 @@
 
                 if (await paymentsEnabled) {
                     let quantitiesResult = await purchasesService().getQuantities();
+                    mainState.paymentsEnabled = true;
                     if (quantitiesResult.ok) {
                         const q = quantitiesResult.data!.quantities;
                         if ("VisualClue" in q) {
@@ -73,6 +74,7 @@
                 }
                 else {
                     mainState.visualClueCount = -1;
+                    mainState.paymentsEnabled = false;
                 }
                 
             }
@@ -287,7 +289,7 @@
 
         {#if $userStore.loggedIn}
             {#if $guessStore.guesses.length >= 6}
-                {#if mainState.visualClueCount > 0 || mainState.visualClueCount === -1}
+                {#if mainState.visualClueCount > 0 || !mainState.paymentsEnabled}
                     <div
                         class="mb-4 p-4 {$isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode ? 'border-indigo-800' : 'border-indigo-200'}"
                     >
@@ -297,7 +299,7 @@
                                 <span
                                     class="text-sm {$isDarkMode ? 'text-white' : 'text-indigo-400'}"
                                     data-testid="hint-text"
-                                    >need a hint? {mainState.visualClueCount !== -1 ? `(remaining: ${mainState.visualClueCount})` : ""}</span
+                                    >need a hint? {mainState.paymentsEnabled ? `(remaining: ${mainState.visualClueCount})` : ""}</span
                                 >
                             </div>
                             <Button
@@ -365,7 +367,7 @@
             <VisualClue />
         </Dialog>
 
-        <Dialog open={mainState.answerOpen} title="the mainState.answer is..." id="answer" confirmButton="ok">
+        <Dialog open={mainState.answerOpen} title="the answer is..." id="answer" confirmButton="ok">
             {#if mainState.answer !== null}
                 <Guess props={mainState.answer} />
             {:else}

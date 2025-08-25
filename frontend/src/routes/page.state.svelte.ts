@@ -16,6 +16,7 @@ export class MainState {
     guessServicePing = $state(0);
     serverDown = $state(false);
     answer = $state(null as GuessDomain | null);
+    paymentsEnabled = $state(false);
 
     shareOpen = writable(false);
     visualClueOpen = writable(false);
