@@ -50,4 +50,6 @@ jobs:
             CINEMADLE_TEST_MODE=true
             CINEMADLE_ADMIN_EMAIL=${{ secrets.CINEMADLE_ADMIN_EMAIL }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: hodgeswt/cinemadle-test:latest
+          tags: |
+            hodgeswt/cinemadle-test:latest
+            hodgeswt/cinemadle-test:${{ github.run_number }}

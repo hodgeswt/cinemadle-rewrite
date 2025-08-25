@@ -43,4 +43,7 @@ jobs:
           context: .
           file: Dockerfile-Migrator
           push: ${{ github.event_name != 'pull_request' }}
-          tags: hodgeswt/cinemadle-migrator:latest
+          tags: |
+            hodgeswt/cinemadle-migrator:latest
+            hodgeswt/cinemadle-migrator:${{ github.run_number }}
+

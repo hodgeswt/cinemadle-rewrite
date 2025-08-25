@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Database;
 
-[Index(nameof(UserId))]
+[Index(nameof(UserId), IsUnique = true)]
 public class UserAccount
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
