@@ -4,6 +4,7 @@ import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
 import { untrack } from "svelte";
 import { writable } from "svelte/store";
+import Logger from "$lib/logger";
 
 export class MainState {
     guessInput = $state("");
@@ -23,8 +24,8 @@ export class MainState {
     errorOpen = writable(false);
     answerOpen = writable(false);
 
-    private guesses: GuessDomain[] = [];
-    private possibleGuesses: PossibleMediaDomain = {};
+    private guesses: GuessDomain[] = $state([]);
+    private possibleGuesses: PossibleMediaDomain = $state({});
 
     LIMIT = 10;
     remaining = $derived(this.LIMIT - this.guesses.length);
@@ -42,7 +43,7 @@ export class MainState {
 
 
     constructor() {
-        guessStore.subscribe((x) => this.guesses = x.guesses);
+        guessStore.subscribe((x) => {this.guesses = x.guesses;});
         guessStore.subscribe((x) => this.possibleGuesses = x.possibleGuesses ?? {});
 
         $effect(() => {

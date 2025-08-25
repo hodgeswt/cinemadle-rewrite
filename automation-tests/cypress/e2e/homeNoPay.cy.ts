@@ -39,6 +39,8 @@ describe('home page', () => {
             cy.getByDataTestId('visualclue-button').should('have.text', 'view visual clue');
             cy.getByDataTestId('visualclue-button').click();
 
+            cy.getByDataTestId('visualclue-image').should('exist');
+            cy.getByDataTestId('visualclue-image', {timeout: 10000}).should('be.visible');
         });
     });
 });
