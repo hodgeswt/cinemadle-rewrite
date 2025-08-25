@@ -135,7 +135,8 @@ public class TmdbRepository : ITmdbRepository
             return await GetMovieByIdInternal(dbTargetMovie.TargetMovieId);
         }
 
-        int seed = _isDevelopment ? 1 : 0;
+        int seed = _isDevelopment ? 2025 : 0;
+        _logger.LogDebug("GetTargetMovie({date}): Seed, {seed}", date, seed);
 
         string dateStripped = date.Replace("-", string.Empty);
         seed += int.Parse(dateStripped);

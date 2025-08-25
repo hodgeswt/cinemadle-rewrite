@@ -323,20 +323,25 @@ public class CinemadleController : CinemadleControllerBase
             return new UnauthorizedResult();
         }
 
-        UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
-        if (userAccount is null)
-        {
-            _logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
-            _logger.LogDebug("-GetMovieImage({date})", date);
-            return new NotFoundResult();
-        }
+        bool paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
 
-        AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-        if ((addOn?.Count ?? 0) <= 0)
+        if (paymentsEnabled)
         {
-            _logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
-            _logger.LogDebug("-GetMovieImage({date})", date);
-            return new UnauthorizedResult();
+            UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
+            if (userAccount is null)
+            {
+                _logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new NotFoundResult();
+            }
+
+            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+            if ((addOn?.Count ?? 0) <= 0)
+            {
+                _logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new UnauthorizedResult();
+            }
         }
 
         try
@@ -394,16 +399,19 @@ public class CinemadleController : CinemadleControllerBase
 
             }
 
-            AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-
-            if (record is null)
+            if (paymentsEnabled)
             {
-                return new StatusCodeResult(500);
-            }
+                AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
 
-            if (clue is null)
-            {
-                record.Count -= 1;
+                if (record is null)
+                {
+                    return new StatusCodeResult(500);
+                }
+
+                if (clue is null)
+                {
+                    record.Count -= 1;
+                }
             }
 
             await _db.SaveChangesAsync();

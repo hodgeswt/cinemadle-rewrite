@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using NLog.Extensions.Logging;
 
 namespace Cinemadle;
 
@@ -99,10 +100,18 @@ public class Program
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<IdentityContext>();
 
-        builder.Logging.ClearProviders();
-        builder.Logging.AddConsole();
+        NLog.LogManager.Configuration = new NLogLoggingConfiguration(builder.Configuration.GetSection("NLog"));
+
+        builder.Services.AddLogging(l =>
+        {
+            l.ClearProviders();
+            l.AddNLog();
+        });
 
         var app = builder.Build();
+
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("cinemadle started at {Time}", DateTime.UtcNow);
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
