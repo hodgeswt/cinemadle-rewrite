@@ -236,8 +236,10 @@
             <Button
                 class="bg-red-400"
                 on:click={showShareSheet}
-                data-testid="customgame-share-button">share</Button
+                data-testid="customgame-share-button"
             >
+                share
+            </Button>
             <Button
                 class="bg-red-400 ml-2"
                 on:click={showAnswerButton}

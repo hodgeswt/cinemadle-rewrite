@@ -36,7 +36,7 @@
                 {confirmButton}
             </AlertDialog.Action>
             {#if cancelButton !== ""}
-                <AlertDialog.Action onclick={() => {cancelClose()}} class="m-2" data-testid="share-close-button">
+                <AlertDialog.Action onclick={() => {cancelClose()}} data-testid="share-close-button">
                     {cancelButton}
                 </AlertDialog.Action>
             {/if}
