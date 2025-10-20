@@ -100,6 +100,53 @@ export class GuessService extends GuessServiceShared implements IGuessService {
 
         return err(GuessService.guessError);
     }
+
+    public async guessCustomGame(customGameId: string, guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
+        if (guess.trim() === "") {
+            return err("Invalid guess");
+        }
+
+        if (!customGameId || customGameId.trim() === "") {
+            return err("Invalid custom game ID");
+        }
+
+        Logger.log("GuessService.svelte.ts: guessCustomGame: customGameId: {0}, guess: {1}, skipTitleMap: {2}", customGameId, guess, skipTitleMap);
+
+        const id = skipTitleMap !== true ? this._possibleGuesses[guess] : guess;
+
+        let result = await get(
+            `/custom/${customGameId}/guess/${id}`,
+            null,
+            { Authorization: sget(userStore).jwt },
+        );
+
+        const title = skipTitleMap !== true ? guess : this.getTitle(guess);
+
+        if (this._guesses.includes(title)) {
+            return err(GuessService.duplicateGuessError);
+        }
+
+        if (result.ok) {
+            try {
+                let dto = JSON.parse(result.data as string);
+                let domain = GuessDtoToDomain(dto, title);
+
+                if (domain.ok) {
+                    if (!this._guesses.includes(title)) {
+                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
+                    }
+                    return ok(domain.data as GuessDomain);
+                } else {
+                    return err(GuessService.guessError)
+                }
+            }
+            catch {
+                return err(GuessService.guessError)
+            }
+        }
+
+        return err(GuessService.guessError);
+    }
     
     public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
         Logger.log("GuessService.getPreviousGuesses()");

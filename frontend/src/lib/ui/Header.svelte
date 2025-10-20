@@ -75,6 +75,12 @@
                                 >purchase</a
                             >
                         {/if}
+                        <a
+                            href="/customCreate"
+                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                            data-testid="customcreate-link"
+                            >create custom game</a
+                        >
                     {/if}
                     <a
                         href="/about"

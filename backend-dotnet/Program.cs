@@ -9,6 +9,8 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using NLog.Extensions.Logging;
+using Cinemadle.Jobs;
+using Quartz;
 
 namespace Cinemadle;
 
@@ -91,6 +93,19 @@ public class Program
         builder.Services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
         builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
+        builder.Services.AddScoped<CustomGameRemovalJob>();
+
+        builder.Services.AddQuartz(qb =>
+        {
+            JobKey jobKey = new(nameof(CustomGameRemovalJob));
+            qb.AddJob<CustomGameRemovalJob>(opts => opts.WithIdentity(jobKey));
+            qb.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity($"{nameof(CustomGameRemovalJob)}-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithInterval(TimeSpan.FromHours(24))
+                    .RepeatForever()));
+        });
 
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("Admin", policy =>

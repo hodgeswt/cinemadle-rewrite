@@ -4,6 +4,7 @@ import type { Result } from "$lib/result";
 
 export interface IGuessService {
     guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
+    guessCustomGame(customGameId: string, guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
     isInitialized(): boolean;
     initialize(): Promise<boolean>;
     possibleGuesses(): PossibleMediaDomain;

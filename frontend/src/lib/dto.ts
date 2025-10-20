@@ -67,6 +67,30 @@ export type FeatureFlagsDto = {
     featureFlags: { [key: string]: boolean }
 }
 
+export type CustomGameCreateDto = {
+    id: number;
+}
+
+export type CustomGameDto = {
+    id: number;
+}
+
+export function isCustomGameCreateDto(obj: any): obj is CustomGameCreateDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return typeof obj.id === 'number';
+}
+
+export function isCustomGameDto(obj: any): obj is CustomGameDto {
+    if (!hasValue(obj)) {
+        return false;
+    }
+
+    return typeof obj.id === 'number';
+}
+
 export function isFeatureFlagsDto(obj: any): obj is FeatureFlagsDto {
     if (!hasValue(obj)) {
         return false;

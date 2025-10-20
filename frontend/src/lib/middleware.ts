@@ -1,9 +1,9 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
-import type { GuessDomain, PossibleMediaDomain } from "./domain";
+import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain } from "./domain";
 import { isLoginDto } from "./dto";
 import Logger from "./logger";
-import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain } from "./mappers";
+import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto } from "./mappers";
 import { isoDateNoTime } from "./util";
 
 export const PING_LIMIT = 10;
@@ -103,6 +103,36 @@ export async function loadPreviousGuesses(userToken: string): Promise<Result<num
 
     const raw = data.data!
     return ok(JSON.parse(raw))
+}
+
+export async function createCustomGame(movieId: number, userToken: string): Promise<Result<boolean>> {
+    Logger.log("middleware.createCustomGame: movieId {0}", movieId);
+
+    const customGameCreate: CustomGameCreateDomain = { id: movieId };
+    const dtoResult = CustomGameCreateDomainToDto(customGameCreate);
+
+    if (!dtoResult.ok) {
+        Logger.log("middleware.createCustomGame: failed to convert domain to DTO");
+        return err("Invalid custom game data");
+    }
+
+    const result = await post(
+        "custom/create",
+        false,
+        JSON.stringify(dtoResult.data),
+        {
+            "Authorization": userToken,
+            "Content-Type": "application/json"
+        }
+    );
+
+    if (!result.ok) {
+        Logger.log("middleware.createCustomGame: got bad response from server: {0}", result.error);
+        return err(result.error!);
+    }
+
+    Logger.log("middleware.createCustomGame: successfully created custom game");
+    return ok(true);
 }
 
 export async function post(

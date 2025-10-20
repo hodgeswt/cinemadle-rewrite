@@ -29,6 +29,7 @@ export abstract class GuessServiceShared implements IGuessService {
     }
 
     abstract guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
+    abstract guessCustomGame(customGameId: string, guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
     abstract getVisualClue(): Promise<Result<ImageDto>>;
     abstract getGameSummary(): Promise<Result<GameSummaryDto>>;
 

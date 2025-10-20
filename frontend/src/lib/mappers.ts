@@ -1,5 +1,5 @@
-import { isGuessDto, isPossibleMediaDto, isMediaDto } from "$lib/dto";
-import type { CardDomain, GuessDomain, PossibleMediaDomain } from "$lib/domain";
+import { isGuessDto, isPossibleMediaDto, isMediaDto, isCustomGameCreateDto, isCustomGameDto } from "$lib/dto";
+import type { CardDomain, GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "$lib/domain";
 import { isPossibleMediaDomain } from "$lib/domain";
 import { err, ok, type Result } from "$lib/result";
 
@@ -111,3 +111,24 @@ export function PossibleMediaDtoToDomain(possibleMedia: any): Result<PossibleMed
 
     return ok(o)
 }
+
+export function CustomGameCreateDtoToDomain(dto: any): Result<CustomGameCreateDomain> {
+    if (!isCustomGameCreateDto(dto)) {
+        return err("Invalid data type");
+    }
+
+    return ok({ id: dto.id });
+}
+
+export function CustomGameCreateDomainToDto(domain: CustomGameCreateDomain): Result<any> {
+    return ok({ id: domain.id });
+}
+
+export function CustomGameDtoToDomain(dto: any): Result<CustomGameDomain> {
+    if (!isCustomGameDto(dto)) {
+        return err("Invalid data type");
+    }
+
+    return ok({ id: dto.id });
+}
+
