@@ -27,7 +27,8 @@ export type CustomGameCreateDomain = {
 }
 
 export type CustomGameDomain = {
-    id: number;
+    id: string;
+    targetMovieId: number;
 }
 
 export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {

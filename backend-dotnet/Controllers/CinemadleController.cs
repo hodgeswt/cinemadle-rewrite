@@ -723,17 +723,24 @@ public class CinemadleController : CinemadleControllerBase
                 return new NotFoundResult();
             }
 
-            _db.CustomGames.Add(new CustomGame
+            CustomGame newCustomGame = new()
             {
+                Id = Guid.NewGuid().ToString(),
                 TargetMovieId = customGame.Id,
                 CreatorUserId = userId,
-                Inserted = DateTime.Now
-            });
+                Inserted = DateTime.UtcNow
+            };
+
+            _db.CustomGames.Add(newCustomGame);
 
             await _db.SaveChangesAsync();
 
             _logger.LogDebug("-CreateCustomGame()");
-            return new OkResult();
+            return new OkObjectResult(new CustomGameDto
+            {
+                Id = newCustomGame.Id,
+                TargetMovieId = newCustomGame.TargetMovieId
+            });
         }
         catch (Exception ex)
         {
@@ -768,7 +775,8 @@ public class CinemadleController : CinemadleControllerBase
             _logger.LogDebug("-GetCustomGame({id})", id);
             return new OkObjectResult(new CustomGameDto
             {
-                Id = customGame.TargetMovieId,
+                Id = customGame.Id,
+                TargetMovieId = customGame.TargetMovieId
             });
         }
         catch (Exception ex)
@@ -1012,6 +1020,7 @@ public class CinemadleController : CinemadleControllerBase
             _db.UserClues.RemoveRange(_db.UserClues);
             _db.Purchases.RemoveRange(_db.Purchases);
             _db.UserAccounts.RemoveRange(_db.UserAccounts);
+            _db.CustomGames.RemoveRange(_db.CustomGames);
 
             await _db.SaveChangesAsync();
 

@@ -14,11 +14,13 @@
 	import { onMount } from "svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import { writable } from "svelte/store";
+	import { toast } from "svelte-sonner";
 
 	const openError = writable(false);
+	const openSuccess = writable(false);
 
 	let errorMessage = $state("");
-	let successMessage = $state("");
+	let shareLink = $state("");
 	let movieSearch = $state("");
 	let filteredMovies = $state([] as string[]);
 	let possibleMovies = $state({} as { [key: string]: number });
@@ -172,7 +174,7 @@
 	async function submitCustomGame(event: SubmitEvent): Promise<void> {
 		event.preventDefault();
 
-		successMessage = "";
+		shareLink = "";
 		const { id, title } = resolveSelection();
 
 		if (id === null || title === null) {
@@ -194,7 +196,9 @@
 			return;
 		}
 
-		successMessage = `${title} is ready as a custom game.`;
+		const customGame = result.data!;
+		shareLink = `https://cinemadle.com/customGame/${customGame.id}`;
+		openSuccess.set(true);
 		selectedMovieTitle = "";
 		movieSearch = "";
 		filteredMovies = topSuggestions();
@@ -203,6 +207,16 @@
 	function closeDialog(): void {
 		openError.set(false);
 		errorMessage = "";
+	}
+
+	function closeSuccessDialog(): void {
+		openSuccess.set(false);
+		shareLink = "";
+	}
+
+	function copyShareLink(): void {
+		navigator.clipboard.writeText(shareLink);
+		toast("copied to clipboard");
 	}
 </script>
 
@@ -297,14 +311,22 @@
 		</form>
 	{/if}
 
-	{#if successMessage !== ""}
-		<div
-			class="mt-6 p-4 border {$isDarkMode ? 'border-green-700 bg-green-900 text-green-100' : 'border-green-200 bg-green-50 text-green-700'} rounded-lg"
-			data-testid="customcreate-success"
-		>
-			{successMessage}
-		</div>
-	{/if}
+	<AlertDialog.Root bind:open={$openSuccess}>
+		<AlertDialog.Content>
+			<AlertDialog.Title data-testid="success-title-text">custom game ready!</AlertDialog.Title>
+			<AlertDialog.Description data-testid="success-body-text">
+				share this link with your friends to let them play your custom game
+			</AlertDialog.Description>
+			<AlertDialog.Footer>
+				<AlertDialog.Cancel on:click={closeSuccessDialog} data-testid="success-close-button">
+					close
+				</AlertDialog.Cancel>
+				<AlertDialog.Action on:click={copyShareLink} data-testid="success-copy-button">
+					copy link
+				</AlertDialog.Action>
+			</AlertDialog.Footer>
+		</AlertDialog.Content>
+	</AlertDialog.Root>
 
 	<AlertDialog.Root bind:open={$openError}>
 		<AlertDialog.Content>

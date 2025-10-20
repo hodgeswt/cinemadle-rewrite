@@ -1,9 +1,9 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
-import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain } from "./domain";
+import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "./domain";
 import { isLoginDto } from "./dto";
 import Logger from "./logger";
-import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto } from "./mappers";
+import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
 export const PING_LIMIT = 10;
@@ -105,7 +105,7 @@ export async function loadPreviousGuesses(userToken: string): Promise<Result<num
     return ok(JSON.parse(raw))
 }
 
-export async function createCustomGame(movieId: number, userToken: string): Promise<Result<boolean>> {
+export async function createCustomGame(movieId: number, userToken: string): Promise<Result<CustomGameDomain>> {
     Logger.log("middleware.createCustomGame: movieId {0}", movieId);
 
     const customGameCreate: CustomGameCreateDomain = { id: movieId };
@@ -131,8 +131,22 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
         return err(result.error!);
     }
 
-    Logger.log("middleware.createCustomGame: successfully created custom game");
-    return ok(true);
+    try {
+        const parsed = JSON.parse(result.data!);
+        const domainResult = CustomGameDtoToDomain(parsed);
+
+        if (!domainResult.ok) {
+            Logger.log("middleware.createCustomGame: failed to map dto to domain");
+            return err("Invalid custom game data");
+        }
+
+        const domain = domainResult.data!;
+        Logger.log("middleware.createCustomGame: successfully created custom game {0}", domain.id);
+        return ok(domain);
+    } catch (e) {
+        Logger.log("middleware.createCustomGame: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game data");
+    }
 }
 
 export async function post(

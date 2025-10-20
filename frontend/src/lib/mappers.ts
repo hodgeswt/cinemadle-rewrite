@@ -129,6 +129,6 @@ export function CustomGameDtoToDomain(dto: any): Result<CustomGameDomain> {
         return err("Invalid data type");
     }
 
-    return ok({ id: dto.id });
+    return ok({ id: dto.id, targetMovieId: dto.targetMovieId });
 }
 

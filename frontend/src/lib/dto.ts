@@ -72,7 +72,8 @@ export type CustomGameCreateDto = {
 }
 
 export type CustomGameDto = {
-    id: number;
+    id: string;
+    targetMovieId: number;
 }
 
 export function isCustomGameCreateDto(obj: any): obj is CustomGameCreateDto {
@@ -88,7 +89,8 @@ export function isCustomGameDto(obj: any): obj is CustomGameDto {
         return false;
     }
 
-    return typeof obj.id === 'number';
+    return typeof obj.id === 'string'
+        && typeof obj.targetMovieId === 'number';
 }
 
 export function isFeatureFlagsDto(obj: any): obj is FeatureFlagsDto {
