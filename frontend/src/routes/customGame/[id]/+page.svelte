@@ -29,9 +29,9 @@
     import { CustomGameState } from "./page.state.svelte";
     import { get } from "svelte/store";
 
-    export let params: { id: string };
+    export let data: { id: string };
 
-    const customGameId = params.id;
+    const customGameId = data.id;
     const pageState = new CustomGameState(customGameId);
 
     let guessService = (): IGuessService => Container.it().GuessService;
