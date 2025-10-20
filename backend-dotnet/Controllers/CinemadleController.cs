@@ -305,7 +305,12 @@ public class CinemadleController : CinemadleControllerBase
         {
             IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(x => x.UserId == userId && x.GameId == date).OrderBy(x => x.SequenceId);
 
-            if (userGuesses.Count() < _config.GameLength)
+            // Check if user has won
+            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
+
+            // Allow summary if user has completed the game OR won
+            if (userGuesses.Count() < _config.GameLength && !hasWon)
             {
                 _logger.LogDebug("-GetGameSummary({date}): User tried summary gen on guess {guess}", date, userGuesses.Count());
                 _logger.LogDebug("-GetGameSummary({date})", date);
@@ -1126,18 +1131,22 @@ public class CinemadleController : CinemadleControllerBase
                 x => x.UserId == userId && x.GameId == customGameId
             ).OrderBy(x => x.SequenceId);
 
-            if (userGuesses.Count() < _config.GameLength)
-            {
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): User tried summary gen on guess {guess}", customGameId, userGuesses.Count());
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
             // Get target movie for the custom game
             MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
             if (targetMovie is null)
             {
                 _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Target movie not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            // Check if user has won
+            bool hasWon = userGuesses.Any(x => x.GuessMediaId == customGame.TargetMovieId);
+
+            // Allow summary if user has completed the game OR won
+            if (userGuesses.Count() < _config.GameLength && !hasWon)
+            {
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): User tried summary gen on guess {guess}", customGameId, userGuesses.Count());
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
                 return new NotFoundResult();
             }
 
@@ -1166,8 +1175,7 @@ public class CinemadleController : CinemadleControllerBase
                 gameSummary.Add(string.Join("", guessDto.Fields.Select(x => MapColorToEmoji(x.Value.Color))));
             }
 
-            gameSummary.Add($"cinemadle custom game {customGameId}");
-            gameSummary.Add("play at https://cinemadle.com");
+            gameSummary.Add($"play at https://cinemadle.com/customGame/{customGameId}");
 
             _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
             return new OkObjectResult(new GameSummaryDto
