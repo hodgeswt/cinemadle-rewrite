@@ -170,6 +170,35 @@ public class CinemadleController : CinemadleControllerBase
         };
     }
 
+    private async Task<ImageDto?> GetBlurredImageForMovie(int movieId, float blurFactor)
+    {
+        _logger.LogDebug("+GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
+
+        byte[]? imageBytes = await _tmdbRepo.GetMovieImageById(movieId);
+
+        if (imageBytes is null)
+        {
+            _logger.LogDebug("GetBlurredImageForMovie({movieId}, {blurFactor}): Unable to find target movie image", movieId, blurFactor);
+            _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
+            return null;
+        }
+
+        using Image image = Image.Load(imageBytes);
+
+        if (blurFactor > 0)
+        {
+            image.Mutate(x => x.GaussianBlur(blurFactor));
+        }
+
+        string base64 = image.ToBase64String(PngFormat.Instance);
+
+        _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
+        return new ImageDto
+        {
+            ImageData = base64
+        };
+    }
+
     private static string MapColorToEmoji(string color)
     {
         return color switch
@@ -783,6 +812,163 @@ public class CinemadleController : CinemadleControllerBase
         {
             _logger.LogError("GetCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
             _logger.LogDebug("-GetCustomGame({id})", id);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/target")]
+    public async Task<ActionResult> GetCustomGameTarget(string customGameId)
+    {
+        _logger.LogDebug("+GetCustomGameTarget({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Target movie not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+            return new OkObjectResult(targetMovie);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetCustomGameTarget Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/target/image")]
+    public async Task<ActionResult> GetCustomGameImage(string customGameId)
+    {
+        _logger.LogDebug("+GetCustomGameImage({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        bool paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
+
+        if (paymentsEnabled)
+        {
+            UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
+            if (userAccount is null)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): user account does not exist", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new NotFoundResult();
+            }
+
+            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+            if ((addOn?.Count ?? 0) <= 0)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): user had no visual clues", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new UnauthorizedResult();
+            }
+        }
+
+        try
+        {
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetCustomGameImage({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            int userGuesses = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId).Count();
+
+            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): User attempted to access image on guess {number}", customGameId, userGuesses);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new UnauthorizedResult();
+            }
+
+            bool win = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId && x.GuessMediaId == customGame.TargetMovieId).Any();
+
+            float blurFactor = (userGuesses >= _config.GameLength || win)
+                ? 0.0F
+                : _config.MovieImageBlurFactors[userGuesses.ToString()];
+
+            ImageDto? image = await GetBlurredImageForMovie(customGame.TargetMovieId, blurFactor);
+
+            if (image is null)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): No image found", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new NotFoundResult();
+            }
+
+            Clue? clue = _db.UserClues.FirstOrDefault(x => x.GameId == customGameId && x.UserId == userId && x.ClueType == ClueType.Visual);
+            if (clue is null)
+            {
+                try
+                {
+                    _db.UserClues.Add(new Clue
+                    {
+                        UserId = userId,
+                        GameId = customGameId,
+                        ClueType = ClueType.Visual,
+                        Inserted = DateTime.Now
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("GetCustomGameImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+                    _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+
+                    return new StatusCodeResult(500);
+                }
+            }
+
+            if (paymentsEnabled)
+            {
+                AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+
+                if (record is null)
+                {
+                    return new StatusCodeResult(500);
+                }
+
+                if (clue is null)
+                {
+                    record.Count -= 1;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+            return new OkObjectResult(image);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetCustomGameImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
 
             return new StatusCodeResult(500);
         }

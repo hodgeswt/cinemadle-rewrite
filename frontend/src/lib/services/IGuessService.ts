@@ -8,7 +8,7 @@ export interface IGuessService {
     isInitialized(): boolean;
     initialize(): Promise<boolean>;
     possibleGuesses(): PossibleMediaDomain;
-    getPreviousGuesses(): Promise<Result<GuessDomain[]>>;
-    getVisualClue(): Promise<Result<ImageDto>>;
-    getGameSummary(): Promise<Result<GameSummaryDto>>;
+    getPreviousGuesses(customGameId?: string): Promise<Result<GuessDomain[]>>;
+    getVisualClue(customGameId?: string): Promise<Result<ImageDto>>;
+    getGameSummary(customGameId?: string): Promise<Result<GameSummaryDto>>;
 }

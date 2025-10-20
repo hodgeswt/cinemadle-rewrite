@@ -1,7 +1,7 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "./domain";
-import { isLoginDto } from "./dto";
+import { isLoginDto, isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "./dto";
 import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
@@ -105,6 +105,26 @@ export async function loadPreviousGuesses(userToken: string): Promise<Result<num
     return ok(JSON.parse(raw))
 }
 
+export async function loadCustomGamePreviousGuesses(customGameId: string, userToken: string): Promise<Result<number[]>> {
+    const data = await get(`custom/${customGameId}/guesses`, null, { "Authorization": userToken });
+
+    if (!data.ok) {
+        return err(data.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(data.data!);
+        if (!Array.isArray(parsed)) {
+            return err("Invalid custom game guesses data");
+        }
+
+        return ok(parsed as number[]);
+    } catch (e) {
+        Logger.log("loadCustomGamePreviousGuesses: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game guesses data");
+    }
+}
+
 export async function createCustomGame(movieId: number, userToken: string): Promise<Result<CustomGameDomain>> {
     Logger.log("middleware.createCustomGame: movieId {0}", movieId);
 
@@ -146,6 +166,106 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
     } catch (e) {
         Logger.log("middleware.createCustomGame: failed to parse response {0}", JSON.stringify(e));
         return err("Invalid custom game data");
+    }
+}
+
+export async function getCustomGame(customGameId: string, userToken: string): Promise<Result<CustomGameDomain>> {
+    Logger.log("middleware.getCustomGame: customGameId {0}", customGameId);
+
+    const result = await get(`custom/${customGameId}`, null, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getCustomGame: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        const domainResult = CustomGameDtoToDomain(parsed);
+
+        if (!domainResult.ok) {
+            Logger.log("middleware.getCustomGame: invalid payload");
+            return err("Invalid custom game data");
+        }
+
+        return ok(domainResult.data!);
+    } catch (e) {
+        Logger.log("middleware.getCustomGame: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game data");
+    }
+}
+
+export async function getCustomGameSummary(customGameId: string, userToken: string): Promise<Result<GameSummaryDto>> {
+    Logger.log("middleware.getCustomGameSummary: customGameId {0}", customGameId);
+
+    const result = await get(`custom/${customGameId}/gameSummary`, null, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getCustomGameSummary: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        if (!isGameSummaryDto(parsed)) {
+            Logger.log("middleware.getCustomGameSummary: invalid payload {0}", parsed);
+            return err("Invalid custom game summary data");
+        }
+
+        return ok(parsed as GameSummaryDto);
+    } catch (e) {
+        Logger.log("middleware.getCustomGameSummary: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game summary data");
+    }
+}
+
+export async function getCustomGameAnswer(customGameId: string, userToken: string): Promise<Result<GuessDomain>> {
+    Logger.log("middleware.getCustomGameAnswer: customGameId {0}", customGameId);
+
+    const result = await get(`custom/${customGameId}/target`, null, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getCustomGameAnswer: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        const domain = MediaDtoToGuessDomain(parsed, true);
+
+        if (!domain.ok) {
+            Logger.log("middleware.getCustomGameAnswer: failed to convert media dto to domain");
+            return err("Invalid custom game answer data");
+        }
+
+        return ok(domain.data!);
+    } catch (e) {
+        Logger.log("middleware.getCustomGameAnswer: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game answer data");
+    }
+}
+
+export async function getCustomGameVisualClue(customGameId: string, userToken: string): Promise<Result<ImageDto>> {
+    Logger.log("middleware.getCustomGameVisualClue: customGameId {0}", customGameId);
+
+    const result = await get(`custom/${customGameId}/target/image`, null, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getCustomGameVisualClue: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        if (!isImageDto(parsed)) {
+            Logger.log("middleware.getCustomGameVisualClue: invalid payload {0}", parsed);
+            return err("Invalid custom game visual clue data");
+        }
+
+        return ok(parsed as ImageDto);
+    } catch (e) {
+        Logger.log("middleware.getCustomGameVisualClue: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid custom game visual clue data");
     }
 }
 

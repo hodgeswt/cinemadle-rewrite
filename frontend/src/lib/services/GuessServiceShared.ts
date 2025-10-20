@@ -30,8 +30,8 @@ export abstract class GuessServiceShared implements IGuessService {
 
     abstract guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
     abstract guessCustomGame(customGameId: string, guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
-    abstract getVisualClue(): Promise<Result<ImageDto>>;
-    abstract getGameSummary(): Promise<Result<GameSummaryDto>>;
+    abstract getVisualClue(customGameId?: string): Promise<Result<ImageDto>>;
+    abstract getGameSummary(customGameId?: string): Promise<Result<GameSummaryDto>>;
 
     isInitialized(): boolean {
         return this._initialized;
@@ -62,5 +62,5 @@ export abstract class GuessServiceShared implements IGuessService {
         ) ?? "unknown";
     }
 
-    abstract getPreviousGuesses(): Promise<Result<GuessDomain[]>>;
+    abstract getPreviousGuesses(customGameId?: string): Promise<Result<GuessDomain[]>>;
 }
