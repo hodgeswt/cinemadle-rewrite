@@ -207,7 +207,7 @@
 </script>
 
 <PageWrapper>
-    <Header showDate={true} />
+    <Header showDate={true} customGameId={customGameId} />
     {#if pageState.win}
         <div class="flex items-center mb-4">
             <h2

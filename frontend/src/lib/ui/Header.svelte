@@ -7,7 +7,11 @@
     import { Menu, Sun, Moon } from "@lucide/svelte";
     import { onMount } from "svelte";
 
-    const { showEmail = false, showDate = false } = $props();
+    const { showEmail = false, showDate = false, customGameId = null } = $props<{
+        showEmail?: boolean;
+        showDate?: boolean;
+        customGameId?: string | null;
+    }>();
 
     let paymentsEnabled = $state(false);
     let menuOpen = $state(false);
@@ -112,7 +116,7 @@
             {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc] text-gray-500' : 'bg-gradient-to-r from-green-500 via-green-400 to-green-600'} border-gray-200 dark:border-gray-700 mb-2"
         data-testid="cinemadle-date"
     >
-        {isoDateNoTime()}
+        {customGameId ? `Custom Game: ${customGameId}` : isoDateNoTime()}
     </span>
 {/if}
 
