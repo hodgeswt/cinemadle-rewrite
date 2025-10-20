@@ -202,7 +202,7 @@
             </h2>
             <Button
                 class="bg-green-400"
-                on:click={showShareSheet}
+                onclick={showShareSheet}
                 data-testid="share-button"
             >
                 share
@@ -219,12 +219,12 @@
             </h2>
             <Button
                 class="bg-red-400"
-                on:click={showShareSheet}
+                onclick={showShareSheet}
                 data-testid="share-button">share</Button
             >
             <Button
                 class="bg-red-400 ml-2"
-                on:click={showAnswerButton}
+                onclick={showAnswerButton}
                 data-testid="seeanswer-button"
             >
                 see answer
@@ -303,7 +303,7 @@
                                 >
                             </div>
                             <Button
-                                on:click={showVisualClue}
+                                onclick={showVisualClue}
                                 variant="secondary"
                                 size="sm"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -326,7 +326,7 @@
                                 >
                             </div>
                             <Button
-                                on:click={() => goto("/purchase")}
+                                onclick={() => goto("/purchase")}
                                 variant="secondary"
                                 size="sm"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white"

@@ -241,7 +241,7 @@
 			<Skeleton class="h-10 w-32" />
 		</div>
 	{:else}
-		<form class="space-y-6" on:submit|preventDefault={submitCustomGame}>
+		<form class="space-y-6" onsubmit={submitCustomGame}>
 			<div class="relative">
 				<label for="movie-search" class="block text-sm font-medium mb-1">
 					movie title
@@ -251,9 +251,9 @@
 					type="text"
 					placeholder="Search for a movie"
 					bind:value={movieSearch}
-					on:input={handleInput}
-					on:focus={handleFocus}
-					on:blur={handleBlur}
+					oninput={handleInput}
+					onfocus={handleFocus}
+					onblur={handleBlur}
 					autocomplete="off"
 					class="text-base"
 					data-testid="customcreate-search-input"
@@ -268,7 +268,7 @@
 								<button
 									type="button"
 									class="w-full text-left hover:{$isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded"
-									on:click={() => selectMovie(title)}
+									onclick={() => selectMovie(title)}
 									data-testid={`customcreate-suggestion-${title.replaceAll(" ", "-")}`}
 								>
 									{title}
@@ -293,7 +293,7 @@
 				variant="secondary"
 				size="icon"
 				class="w-full"
-				on:click={selectRandomMovie}
+				onclick={selectRandomMovie}
 				data-testid="customcreate-random"
 			>
 				<p class="m-1">pick a random movie</p>
@@ -318,10 +318,10 @@
 				share this link with your friends to let them play your custom game
 			</AlertDialog.Description>
 			<AlertDialog.Footer>
-				<AlertDialog.Cancel on:click={closeSuccessDialog} data-testid="success-close-button">
+				<AlertDialog.Cancel onclick={closeSuccessDialog} data-testid="success-close-button">
 					close
 				</AlertDialog.Cancel>
-				<AlertDialog.Action on:click={copyShareLink} data-testid="success-copy-button">
+				<AlertDialog.Action onclick={copyShareLink} data-testid="success-copy-button">
 					copy link
 				</AlertDialog.Action>
 			</AlertDialog.Footer>
@@ -335,7 +335,7 @@
 				{errorMessage}
 			</AlertDialog.Description>
 			<AlertDialog.Footer>
-				<AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
+				<AlertDialog.Action onclick={closeDialog} data-testid="error-ok-button">
 					ok
 				</AlertDialog.Action>
 			</AlertDialog.Footer>
