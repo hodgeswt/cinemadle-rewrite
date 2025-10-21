@@ -113,7 +113,13 @@ jobs:
               exit 0
             fi
             echo "Not ready yet, checking logs..."
-            docker logs --tail 10 cinemadle-backend
+            if [ -f ~/.local/share/AppData/cinemadle.log ]; then
+              echo "=== cinemadle.log contents after start ==="
+              cat ~/.local/share/AppData/cinemadle.log
+              echo "=== end of cinemadle.log ==="
+            else
+              echo "cinemadle.log file not found yet"
+            fi
             sleep 2
           done
           echo "Backend failed to start within 60 seconds"
