@@ -86,6 +86,7 @@ jobs:
             --name cinemadle-backend \
             -p 5000:5000 \
             -v ~/.local/share/AppData:/root/.local/share/AppData \
+            -v ~/.local/share/AppData:/app/AppData \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
             -e ASPNETCORE_URLS=http://+:5000 \
@@ -97,10 +98,10 @@ jobs:
           docker logs cinemadle-backend
           echo ""
           if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-            echo "=== cinemadle.log contents after start ==="
+            echo "=== Application log file after start ==="
             cat ~/.local/share/AppData/cinemadle.log
           else
-            echo "cinemadle.log file not found yet"
+            echo "cinemadle.log not found yet"
           fi
         
       - name: Wait for backend to be ready
@@ -114,11 +115,10 @@ jobs:
             fi
             echo "Not ready yet, checking logs..."
             if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-              echo "=== cinemadle.log contents after start ==="
-              cat ~/.local/share/AppData/cinemadle.log
-              echo "=== end of cinemadle.log ==="
+              echo "=== Application log (last 20 lines) ==="
+              tail -20 ~/.local/share/AppData/cinemadle.log
             else
-              echo "cinemadle.log file not found yet"
+              echo "Log file not available yet"
             fi
             sleep 2
           done
@@ -127,10 +127,10 @@ jobs:
           docker logs cinemadle-backend
           echo ""
           if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-            echo "=== cinemadle.log contents ==="
+            echo "=== Full application log file ==="
             cat ~/.local/share/AppData/cinemadle.log
           else
-            echo "cinemadle.log file not found"
+            echo "cinemadle.log not found"
           fi
           exit 1
 
