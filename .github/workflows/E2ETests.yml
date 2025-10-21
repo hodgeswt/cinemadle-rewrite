@@ -73,12 +73,28 @@ jobs:
             -e CINEMADLE_TEST_MODE=true \
             -e ASPNETCORE_URLS=http://+:5000 \
             cinemadle-e2e:${{ github.run_number }}
+          sleep 5
+          echo "Container status:"
+          docker ps -a | grep cinemadle-backend
+          echo "Initial container logs:"
+          docker logs cinemadle-backend
         
       - name: Wait for backend to be ready
         run: |
           echo "Waiting for backend to start..."
-          timeout 60 bash -c 'until curl -f http://localhost:5000/api/cinemadle/heartbeat; do sleep 2; done'
-          echo "Backend is ready!"
+          for i in {1..30}; do
+            echo "Attempt $i of 30..."
+            if curl -f http://localhost:5000/api/cinemadle/heartbeat; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Not ready yet, checking logs..."
+            docker logs --tail 10 cinemadle-backend
+            sleep 2
+          done
+          echo "Backend failed to start within 60 seconds"
+          docker logs cinemadle-backend
+          exit 1
 
       - name: Install test dependencies
         working-directory: automation-tests
