@@ -69,6 +69,15 @@ jobs:
           mkdir -p ~/.local/share/AppData
           chmod -R 777 ~/.local/share/AppData
 
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Run database migrations
+        working-directory: backend-dotnet
+        run: |
+          dotnet ef database update --no-build --configuration Release --context DatabaseContext
+          dotnet ef database update --no-build --configuration Release --context IdentityContext
+
       - name: Start backend server
         working-directory: backend-dotnet
         env:
