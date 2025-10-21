@@ -75,6 +75,7 @@ jobs:
       - name: Run database migrations
         run: |
           docker run --rm \
+            -v ~/.local/share/AppData:/root/.local/share/AppData \
             -v ~/.local/share/AppData:/app/AppData \
             -w /app \
             cinemadle-migrator:${{ github.run_number }}
@@ -85,6 +86,7 @@ jobs:
           docker run -d \
             --name cinemadle-backend \
             -p 5000:5000 \
+            -v ~/.local/share/AppData:/root/.local/share/AppData \
             -v ~/.local/share/AppData:/app/AppData \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
@@ -167,9 +169,9 @@ jobs:
       - name: Show application log file
         if: always()
         run: |
-          if [ -f ~/.local/share/AppData/cinemadle.log ]; then
+          if [ -f ~/app-logs/cinemadle.log ]; then
             echo "=== cinemadle.log contents ==="
-            cat ~/.local/share/AppData/cinemadle.log
+            cat ~/app-logs/cinemadle.log
           else
             echo "cinemadle.log file not found"
           fi
@@ -185,3 +187,4 @@ jobs:
           docker rmi cinemadle-e2e:${{ github.run_number }} || true
           docker rmi cinemadle-migrator:${{ github.run_number }} || true
           rm -rf ~/.local/share/AppData
+          rm -rf ~/app-logs
