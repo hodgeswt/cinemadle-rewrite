@@ -64,6 +64,11 @@ jobs:
         working-directory: backend-dotnet
         run: dotnet build --configuration Release --no-restore
 
+      - name: Create database directory
+        run: |
+          mkdir -p ~/.local/share/AppData
+          chmod -R 777 ~/.local/share/AppData
+
       - name: Start backend server
         working-directory: backend-dotnet
         env:
@@ -83,7 +88,7 @@ jobs:
       - name: Serve frontend
         working-directory: frontend
         run: |
-          npx vite preview --host 0.0.0.0 --port 5173 &
+          python -m http.server 5173 &
           echo $! > frontend.pid
 
       - name: Wait for frontend to be ready
