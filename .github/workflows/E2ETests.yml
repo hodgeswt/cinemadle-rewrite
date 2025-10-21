@@ -56,12 +56,29 @@ jobs:
           load: true
           tags: cinemadle-e2e:${{ github.run_number }}
 
+      - name: Build migrator Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile-Migrator
+          push: false
+          load: true
+          tags: cinemadle-migrator:${{ github.run_number }}
+
       - name: Setup config directory
         run: |
           mkdir -p ~/.local/share/AppData
           echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ~/.local/share/AppData/CinemadleConfig.json
           chmod 644 ~/.local/share/AppData/CinemadleConfig.json
           chmod 777 ~/.local/share/AppData
+
+      - name: Run database migrations
+        run: |
+          docker run --rm \
+            -v ~/.local/share/AppData:/root/.local/share/AppData \
+            -w /app \
+            cinemadle-migrator:${{ github.run_number }}
+          echo "Migrations completed successfully"
 
       - name: Start backend container
         run: |
@@ -136,4 +153,5 @@ jobs:
         run: |
           docker rm cinemadle-backend || true
           docker rmi cinemadle-e2e:${{ github.run_number }} || true
+          docker rmi cinemadle-migrator:${{ github.run_number }} || true
           rm -rf ~/.local/share/AppData
