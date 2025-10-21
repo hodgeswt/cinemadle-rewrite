@@ -75,7 +75,7 @@ jobs:
       - name: Run database migrations
         run: |
           docker run --rm \
-            -v ~/.local/share/AppData:/root/.local/share/AppData \
+            -v ~/.local/share/AppData:/app/AppData \
             -w /app \
             cinemadle-migrator:${{ github.run_number }}
           echo "Migrations completed successfully"
@@ -85,7 +85,6 @@ jobs:
           docker run -d \
             --name cinemadle-backend \
             -p 5000:5000 \
-            -v ~/.local/share/AppData:/root/.local/share/AppData \
             -v ~/.local/share/AppData:/app/AppData \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
