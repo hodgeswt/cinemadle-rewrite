@@ -35,76 +35,57 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: |
-            frontend/package-lock.json
-            automation-tests/package-lock.json
+          cache-dependency-path: automation-tests/package-lock.json
 
-      - name: Set Up Dotnet
-        uses: actions/setup-dotnet@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
         with:
-          dotnet-version: 8.0.117
+          context: .
+          build-args: |
+            VITE_API_ENDPOINT=http://localhost:5000
+            VITE_STRIPE_FRONTEND_KEY=""
+            VITE_PRODUCT_IDS=""
+            CINEMADLE_TEST_MODE=true
+          push: false
+          load: true
+          tags: cinemadle-e2e:${{ github.run_number }}
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend
-        env:
-          VITE_API_ENDPOINT: http://localhost:5000
-          VITE_STRIPE_FRONTEND_KEY: ""
-          VITE_PRODUCT_IDS: ""
-        run: npm run build
-
-      - name: Restore backend dependencies
-        working-directory: backend-dotnet
-        run: dotnet restore
-
-      - name: Build backend
-        working-directory: backend-dotnet
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Create database directory
+      - name: Setup config directory
         run: |
           mkdir -p ~/.local/share/AppData
-          chmod -R 777 ~/.local/share/AppData
+          echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ~/.local/share/AppData/CinemadleConfig.json
+          chmod 644 ~/.local/share/AppData/CinemadleConfig.json
 
-      - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef
-
-      - name: Run database migrations
-        working-directory: backend-dotnet
+      - name: Run DB migrations
         run: |
-          dotnet ef database update --no-build --configuration Release --context DatabaseContext
-          dotnet ef database update --no-build --configuration Release --context IdentityContext
+          docker run --rm \
+            -v ~/.local/share/AppData:/root/.local/share/AppData \
+            -e ASPNETCORE_ENVIRONMENT=Development \
+            cinemadle-e2e:${{ github.run_number }} \
+            dotnet /app/Cinemadle.Backend.dll migrate
 
-      - name: Start backend server
-        working-directory: backend-dotnet
-        env:
-          ASPNETCORE_ENVIRONMENT: Development
-          CINEMADLE_TEST_MODE: true
-          ASPNETCORE_URLS: http://localhost:5000
+      - name: Start backend container
         run: |
-          dotnet run --configuration Release --no-build &
-          echo $! > backend.pid
+          docker run -d \
+            --name cinemadle-backend \
+            -p 5000:5000 \
+            -v ~/.local/share/AppData:/root/.local/share/AppData \
+            -e ASPNETCORE_ENVIRONMENT=Development \
+            -e CINEMADLE_TEST_MODE=true \
+            -e ASPNETCORE_URLS=http://+:5000 \
+            cinemadle-e2e:${{ github.run_number }}
         
       - name: Wait for backend to be ready
         run: |
           echo "Waiting for backend to start..."
           timeout 60 bash -c 'until curl -f http://localhost:5000/api/cinemadle/heartbeat; do sleep 2; done'
           echo "Backend is ready!"
-
-      - name: Serve frontend
-        working-directory: frontend
-        run: |
-          python -m http.server 5173 &
-          echo $! > frontend.pid
-
-      - name: Wait for frontend to be ready
-        run: |
-          echo "Waiting for frontend to start..."
-          timeout 30 bash -c 'until curl -f http://localhost:5173; do sleep 2; done'
-          echo "Frontend is ready!"
 
       - name: Install test dependencies
         working-directory: automation-tests
@@ -113,7 +94,7 @@ jobs:
       - name: Run E2E tests (excluding Stripe tests)
         working-directory: automation-tests
         env:
-          CYPRESS_HOSTNAME: http://localhost:5173
+          CYPRESS_HOSTNAME: http://localhost:5000
         run: |
           npx cypress run --spec "cypress/e2e/about.cy.ts,cypress/e2e/home.cy.ts,cypress/e2e/homeNoPay.cy.ts,cypress/e2e/login.cy.ts,cypress/e2e/signup.cy.ts"
 
@@ -133,12 +114,17 @@ jobs:
           path: automation-tests/cypress/videos
           if-no-files-found: ignore
 
-      - name: Stop servers
+      - name: Show container logs
+        if: always()
+        run: docker logs cinemadle-backend
+
+      - name: Stop container
+        if: always()
+        run: docker stop cinemadle-backend || true
+
+      - name: Cleanup
         if: always()
         run: |
-          if [ -f backend-dotnet/backend.pid ]; then
-            kill $(cat backend-dotnet/backend.pid) || true
-          fi
-          if [ -f frontend/frontend.pid ]; then
-            kill $(cat frontend/frontend.pid) || true
-          fi
+          docker rm cinemadle-backend || true
+          docker rmi cinemadle-e2e:${{ github.run_number }} || true
+          rm -rf ~/.local/share/AppData/CinemadleConfig.json
