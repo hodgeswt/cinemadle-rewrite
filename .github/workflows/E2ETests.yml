@@ -79,9 +79,6 @@ jobs:
             -w /app \
             cinemadle-migrator:${{ github.run_number }}
           echo "Migrations completed successfully"
-          if [ -f ~/.local/share/AppData/cinemadle.db ]; then
-            find ~/.local/share/AppData -maxdepth 1 -name 'cinemadle.db*' -exec chmod 666 {} +
-          fi
 
       - name: Start backend container
         run: |
