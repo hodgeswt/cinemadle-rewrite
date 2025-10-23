@@ -113,14 +113,20 @@ jobs:
             echo "Container status:"
             docker ps -a | grep cinemadle-backend || echo "Container not found"
             
+            echo "Checking if process is running in container:"
+            docker exec cinemadle-backend ps aux 2>&1 || echo "Cannot exec into container"
+            
             if curl -f http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
             fi
             
             echo "Not ready yet, checking logs..."
-            echo "=== Container logs (last 30 lines) ==="
-            docker logs --tail 30 cinemadle-backend
+            echo "=== Container logs (all) ==="
+            docker logs cinemadle-backend 2>&1
+            
+            echo "=== Files in /app ==="
+            docker exec cinemadle-backend ls -la /app 2>&1 || echo "Cannot list files"
             
             if [ -f ~/.local/share/AppData/cinemadle.log ]; then
               echo "=== Application log (last 20 lines) ==="
@@ -132,7 +138,7 @@ jobs:
           done
           echo "Backend failed to start within 60 seconds"
           echo "=== Full container logs ==="
-          docker logs cinemadle-backend
+          docker logs cinemadle-backend 2>&1
           echo ""
           if [ -f ~/.local/share/AppData/cinemadle.log ]; then
             echo "=== Full application log file ==="
