@@ -116,24 +116,31 @@ jobs:
             echo "Checking if process is running in container:"
             docker exec cinemadle-backend ps aux 2>&1 || echo "Cannot exec into container"
             
+            echo "Container command:"
+            docker inspect cinemadle-backend --format='{{.Config.Cmd}}'
+            
+            echo "Environment variables:"
+            docker exec cinemadle-backend env | grep -E "ASPNETCORE|CINEMADLE" 2>&1 || echo "Cannot get env"
+            
             if curl -f http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
             fi
             
             echo "Not ready yet, checking logs..."
-            echo "=== Container logs (all) ==="
+            echo "=== Container stdout ==="
             docker logs cinemadle-backend 2>&1
             
-            echo "=== Files in /app ==="
-            docker exec cinemadle-backend ls -la /app 2>&1 || echo "Cannot list files"
-            
             if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-              echo "=== Application log (last 20 lines) ==="
-              tail -20 ~/.local/share/AppData/cinemadle.log
+              echo "=== Application log ==="
+              cat ~/.local/share/AppData/cinemadle.log
             else
               echo "Log file not available yet"
             fi
+            
+            echo "Trying to see if dotnet process crashed:"
+            docker exec cinemadle-backend sh -c "dmesg 2>/dev/null || echo 'dmesg not available'" 2>&1 || echo "Cannot check dmesg"
+            
             sleep 2
           done
           echo "Backend failed to start within 60 seconds"
