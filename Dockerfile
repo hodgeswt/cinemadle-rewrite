@@ -38,6 +38,9 @@ RUN mkdir -p /app/AppData
 COPY --from=builder /app/backend/out ./
 COPY --from=frontend-builder /app/frontend/build ./wwwroot
 
+# Needed so LocalApplicationData exists
+RUN mkdir -p $HOME/.local/share
+
 ARG CINEMADLE_ADMIN_EMAIL=""
 ENV CINEMADLE_ADMIN_EMAIL=${CINEMADLE_ADMIN_EMAIL}
 ARG CINEMADLE_TEST_MODE="false"
