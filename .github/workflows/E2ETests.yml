@@ -80,6 +80,9 @@ jobs:
             -w /app \
             cinemadle-migrator:${{ github.run_number }}
           echo "Migrations completed successfully"
+          if [ -f ~/.local/share/AppData/cinemadle.db ]; then
+            find ~/.local/share/AppData -maxdepth 1 -name 'cinemadle.db*' -exec chmod 666 {} +
+          fi
 
       - name: Start backend container
         run: |
@@ -87,6 +90,7 @@ jobs:
             --name cinemadle-backend \
             -p 5000:8080 \
             -v ~/.local/share/AppData:/app/AppData \
+            -v ~/.local/share/AppData:/home/app/.local/share/AppData \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
             -e Logging__Console__FormatterName=Simple \
@@ -97,12 +101,12 @@ jobs:
       - name: Wait for backend to be ready
         run: |
           echo "Waiting for backend to start..."
-          for i in {1..5}; do
-            echo "Attempt $i of 5..."
+          for i in {1..30}; do
+            echo "Attempt $i of 30..."
             echo "Container status:"
             docker ps -a | grep cinemadle-backend || echo "Container not found"
             
-            if curl -f http://localhost:5000/api/cinemadle/heartbeat; then
+            if curl -sf http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
             fi
@@ -110,7 +114,13 @@ jobs:
           done
           echo "Backend failed to start within 60 seconds"
           echo "=== Full container logs ==="
-          cat ~/.local/share/AppData/cinemadle.log
+          docker logs cinemadle-backend || true
+          echo "=== Application log file ==="
+          if [ -f ~/.local/share/AppData/cinemadle.log ]; then
+            cat ~/.local/share/AppData/cinemadle.log
+          else
+            echo "cinemadle.log file not found"
+          fi
           exit 1
 
       - name: Install test dependencies

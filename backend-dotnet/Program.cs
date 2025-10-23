@@ -136,12 +136,17 @@ public class Program
             app.UseDeveloperExceptionPage();
         }
 
+        logger.LogInformation("Ensuring database is created");
         using var scope = app.Services.CreateScope();
         DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.EnsureCreated();
+        logger.LogInformation("Database ensured created");
+        logger.LogInformation("Ensuring identity database is created");
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
         identityDb.Database.EnsureCreated();
+        logger.LogInformation("Identity database ensured created");
 
+        logger.LogInformation("Ensuring roles are created");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         foreach (CustomRoles customRole in Enum.GetValues(typeof(CustomRoles)))
@@ -149,20 +154,33 @@ public class Program
             string roleName = customRole.ToString();
             if (!await roleManager.RoleExistsAsync(roleName))
             {
+                logger.LogInformation("Creating role {RoleName}", roleName);
                 await roleManager.CreateAsync(new IdentityRole(roleName));
             }
+            else
+            {
+                logger.LogInformation("Role {RoleName} already exists", roleName);
+            }
         }
-        
+
+        logger.LogInformation("Roles ensured created");
+        logger.LogInformation("Checking for admin user assignment");
         string? adminEmail = Environment.GetEnvironmentVariable("CINEMADLE_ADMIN_EMAIL");
 
         if (!string.IsNullOrWhiteSpace(adminEmail))
         {
+            logger.LogInformation("Admin email found");
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
             IdentityUser? admin = await userManager.FindByEmailAsync(adminEmail);
             if (admin is not null && !await userManager.IsInRoleAsync(admin, nameof(CustomRoles.Admin)))
             {
+                logger.LogInformation("Assigning admin role to user with email");
                 await userManager.AddToRoleAsync(admin, nameof(CustomRoles.Admin));
+            }
+            else
+            {
+                logger.LogInformation("Admin user not found or already assigned");
             }
         }
 
@@ -184,7 +202,9 @@ public class Program
         app.MapIdentityApi<IdentityUser>();
         app.UseStaticFiles();
         app.MapControllers();
-        app.UseCors("AllowFrontend"); ;
+        app.UseCors("AllowFrontend");
+
+        logger.LogInformation("Starting application");
         app.Run();
     }
 }
