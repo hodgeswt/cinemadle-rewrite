@@ -91,6 +91,7 @@ jobs:
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
             -e ASPNETCORE_URLS=http://+:5000 \
+            -e ASPNETCORE_HTTP_PORTS=5000 \
             -e Logging__Console__FormatterName=Simple \
             -e DOTNET_LOGGING_CONSOLE_DISABLECOLORS=true \
             cinemadle-e2e:${{ github.run_number }}
