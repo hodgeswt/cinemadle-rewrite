@@ -10,4 +10,6 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 COPY backend-dotnet/. .
 COPY migrate-container.sh .
 
+RUN mkdir -p $HOME/.local/share
+
 ENTRYPOINT ["./migrate-container.sh"]
