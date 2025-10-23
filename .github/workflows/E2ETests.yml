@@ -84,20 +84,18 @@ jobs:
         run: |
           docker run -d \
             --name cinemadle-backend \
-            -p 5000:8080 \
+            -p 5000:5566 \
             -v ~/.local/share/AppData:/root/.local/share/AppData \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e CINEMADLE_TEST_MODE=true \
-            -e Logging__Console__FormatterName=Simple \
-            -e DOTNET_LOGGING_CONSOLE_DISABLECOLORS=true \
             cinemadle-e2e:${{ github.run_number }}
           sleep 5
         
       - name: Wait for backend to be ready
         run: |
           echo "Waiting for backend to start..."
-          for i in {1..30}; do
-            echo "Attempt $i of 30..."
+          for i in {1..10}; do
+            echo "Attempt $i of 10..."
             echo "Container status:"
             docker ps -a | grep cinemadle-backend || echo "Container not found"
             if curl -sf http://localhost:5000/api/cinemadle/heartbeat; then
@@ -106,7 +104,7 @@ jobs:
             fi
             sleep 2
           done
-          echo "Backend failed to start within 60 seconds"
+          echo "Backend failed to start within 20 seconds"
           echo "=== Full container logs ==="
           docker logs cinemadle-backend || true
           echo "=== Application log file ==="
