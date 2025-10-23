@@ -100,7 +100,6 @@ jobs:
             echo "Attempt $i of 30..."
             echo "Container status:"
             docker ps -a | grep cinemadle-backend || echo "Container not found"
-            
             if curl -sf http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
