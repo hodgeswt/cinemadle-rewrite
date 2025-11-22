@@ -41,7 +41,7 @@ Cypress.Commands.add('customTask', (task: string) => {
 });
 
 Cypress.Commands.add('init', () => {
-    cy.visit('/index.html');
+    cy.visit('/');
     cy.getByDataTestId('guess-input', {timeout: 10000}).should('exist');
 });
 
