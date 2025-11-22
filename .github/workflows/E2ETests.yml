@@ -85,6 +85,10 @@ jobs:
         working-directory: automation-tests
         run: npm ci
 
+      - name: Prime server (prevent performance failure on first test)
+        run: |
+          curl -X POST http://localhost:5000/api/cinemadle/movielist
+
       - name: Run E2E tests (excluding Stripe tests)
         working-directory: automation-tests
         env:
