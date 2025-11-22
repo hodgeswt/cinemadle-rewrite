@@ -7,7 +7,11 @@
     import { Menu, Sun, Moon } from "@lucide/svelte";
     import { onMount } from "svelte";
 
-    const { showEmail = false, showDate = false } = $props();
+    const { showEmail = false, showDate = false, customGameId = null } = $props<{
+        showEmail?: boolean;
+        showDate?: boolean;
+        customGameId?: string | null;
+    }>();
 
     let paymentsEnabled = $state(false);
     let menuOpen = $state(false);
@@ -75,6 +79,12 @@
                                 >purchase</a
                             >
                         {/if}
+                        <a
+                            href="/customCreate"
+                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                            data-testid="customcreate-link"
+                            >create custom game</a
+                        >
                     {/if}
                     <a
                         href="/about"
@@ -106,7 +116,7 @@
             {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc] text-gray-500' : 'bg-gradient-to-r from-green-500 via-green-400 to-green-600'} border-gray-200 dark:border-gray-700 mb-2"
         data-testid="cinemadle-date"
     >
-        {isoDateNoTime()}
+        {customGameId ? `Custom Game: ${customGameId}` : isoDateNoTime()}
     </span>
 {/if}
 

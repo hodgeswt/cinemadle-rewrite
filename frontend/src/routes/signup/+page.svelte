@@ -108,7 +108,7 @@
                 {errorMessage}
             </AlertDialog.Description>
             <AlertDialog.Footer>
-                <AlertDialog.Action on:click={closeDialog} data-testid="error-ok-button">
+                <AlertDialog.Action onclick={closeDialog} data-testid="error-ok-button">
                     ok
                 </AlertDialog.Action>
             </AlertDialog.Footer>

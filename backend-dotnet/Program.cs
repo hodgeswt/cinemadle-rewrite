@@ -9,6 +9,8 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using NLog.Extensions.Logging;
+using Cinemadle.Jobs;
+using Quartz;
 
 namespace Cinemadle;
 
@@ -91,6 +93,19 @@ public class Program
         builder.Services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
         builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
+        builder.Services.AddScoped<CustomGameRemovalJob>();
+
+        builder.Services.AddQuartz(qb =>
+        {
+            JobKey jobKey = new(nameof(CustomGameRemovalJob));
+            qb.AddJob<CustomGameRemovalJob>(opts => opts.WithIdentity(jobKey));
+            qb.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity($"{nameof(CustomGameRemovalJob)}-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithInterval(TimeSpan.FromHours(24))
+                    .RepeatForever()));
+        });
 
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("Admin", policy =>
@@ -121,12 +136,17 @@ public class Program
             app.UseDeveloperExceptionPage();
         }
 
+        logger.LogInformation("Ensuring database is created");
         using var scope = app.Services.CreateScope();
         DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.EnsureCreated();
+        logger.LogInformation("Database ensured created");
+        logger.LogInformation("Ensuring identity database is created");
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
         identityDb.Database.EnsureCreated();
+        logger.LogInformation("Identity database ensured created");
 
+        logger.LogInformation("Ensuring roles are created");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         foreach (CustomRoles customRole in Enum.GetValues(typeof(CustomRoles)))
@@ -134,42 +154,46 @@ public class Program
             string roleName = customRole.ToString();
             if (!await roleManager.RoleExistsAsync(roleName))
             {
+                logger.LogInformation("Creating role {RoleName}", roleName);
                 await roleManager.CreateAsync(new IdentityRole(roleName));
             }
+            else
+            {
+                logger.LogInformation("Role {RoleName} already exists", roleName);
+            }
         }
-        
+
+        logger.LogInformation("Roles ensured created");
+        logger.LogInformation("Checking for admin user assignment");
         string? adminEmail = Environment.GetEnvironmentVariable("CINEMADLE_ADMIN_EMAIL");
 
         if (!string.IsNullOrWhiteSpace(adminEmail))
         {
+            logger.LogInformation("Admin email found");
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
             IdentityUser? admin = await userManager.FindByEmailAsync(adminEmail);
             if (admin is not null && !await userManager.IsInRoleAsync(admin, nameof(CustomRoles.Admin)))
             {
+                logger.LogInformation("Assigning admin role to user with email");
                 await userManager.AddToRoleAsync(admin, nameof(CustomRoles.Admin));
+            }
+            else
+            {
+                logger.LogInformation("Admin user not found or already assigned");
             }
         }
 
-        app.UseStatusCodePages(async context =>
+        if (!app.Environment.IsDevelopment())
         {
-            var response = context.HttpContext.Response;
-
-            if (response.StatusCode == 404)
-            {
-                response.Clear();
-                response.StatusCode = 302;
-                response.Redirect("/index.html");
-            }
-
-            await Task.CompletedTask;
-        });
-        app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
+        }
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
-        app.UseStaticFiles();
         app.MapControllers();
-        app.UseCors("AllowFrontend"); ;
+        app.UseCors("AllowFrontend");
+
+        logger.LogInformation("Starting application");
         app.Run();
     }
 }

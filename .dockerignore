@@ -1,0 +1,14 @@
+# Global ignores
+.git
+.gitignore
+Dockerfile*
+**/.DS_Store
+**/Thumbs.db
+npm-debug.log*
+.dockerignore
+
+# Frontend artifacts not needed inside the build context
+frontend/node_modules
+frontend/.svelte-kit
+frontend/build
+frontend/.vite

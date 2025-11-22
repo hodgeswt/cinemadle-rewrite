@@ -10,5 +10,8 @@ export default defineConfig({
     },
     baseUrl: process.env['CYPRESS_HOSTNAME'] || '',
   },
+  env: {
+    backendUrl: process.env['CYPRESS_BACKEND_URL'] || '',
+  },
   experimentalModifyObstructiveThirdPartyCode: true,
 });

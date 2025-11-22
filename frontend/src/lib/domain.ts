@@ -22,6 +22,15 @@ export enum FeatureFlags {
     PaymentsEnabled = "PaymentsEnabled"
 }
 
+export type CustomGameCreateDomain = {
+    id: number;
+}
+
+export type CustomGameDomain = {
+    id: string;
+    targetMovieId: number;
+}
+
 export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {
     if (!hasValue(obj)) {
         return false;

@@ -16,7 +16,12 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         super();
     }
 
-    public async getGameSummary(): Promise<Result<GameSummaryDto>> {
+    public async getGameSummary(customGameId?: string): Promise<Result<GameSummaryDto>> {
+        if (customGameId) {
+            Logger.log("AnonGuessService.getGameSummary(): custom games unsupported for anon users");
+            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        }
+
         const anonUserId = await this.getAnonUserId();
 
         if (anonUserId === undefined) {
@@ -43,7 +48,12 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         return ok(data);
     }
 
-    public async getVisualClue(): Promise<Result<ImageDto>> {
+    public async getVisualClue(customGameId?: string): Promise<Result<ImageDto>> {
+        if (customGameId) {
+            Logger.log("AnonGuessService.getVisualClue(): custom games unsupported for anon users");
+            return err(AnonGuessService.unableToLoadImageError);
+        }
+
         const anonUserId = await this.getAnonUserId();
 
         if (anonUserId === undefined) {
@@ -97,7 +107,12 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         return storedAnonUserId;
     }
 
-    public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
+    public async getPreviousGuesses(customGameId?: string): Promise<Result<GuessDomain[]>> {
+        if (customGameId) {
+            Logger.log("AnonGuessService.getPreviousGuesses(): custom games unsupported for anon users");
+            return err(AnonGuessService.unableToGetPreviousError);
+        }
+
         Logger.log("+GuessService.getPreviousGuesses()");
 
         const anonUserId = await this.getAnonUserId();
@@ -181,6 +196,11 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         }
 
         Logger.log("GuessService.svelte.ts: bad result");
+        return err(AnonGuessService.guessError);
+    }
+
+    public async guessCustomGame(_customGameId: string, _guess: string, _skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
+        Logger.log("AnonGuessService.guessCustomGame(): custom games unsupported for anon users");
         return err(AnonGuessService.guessError);
     }
 }

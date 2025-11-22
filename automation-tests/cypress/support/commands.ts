@@ -16,32 +16,32 @@ Cypress.Commands.add('maybeGet', (selector: string, options?: Partial<Cypress.Lo
 })
 
 Cypress.Commands.add('customTask', (task: string) => {
-    const baseUrl = Cypress.config().baseUrl;
+    const backendUrl = Cypress.env().backendUrl;
     
     switch(task) {
         case 'destroyDatabase':
             return cy.request({
                 method: 'DELETE',
-                url: `${baseUrl}/api/cinemadle/destroy`,
+                url: `${backendUrl}/api/cinemadle/destroy`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'rigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${baseUrl}/api/cinemadle/rig/85`,
+                url: `${backendUrl}/api/cinemadle/rig/85`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'unrigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${baseUrl}/api/cinemadle/rig/undo`,
+                url: `${backendUrl}/api/cinemadle/rig/undo`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
     }
 });
 
 Cypress.Commands.add('init', () => {
-    cy.visit('/index.html');
+    cy.visit('/');
     cy.getByDataTestId('guess-input', {timeout: 10000}).should('exist');
 });
 

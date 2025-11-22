@@ -1,5 +1,5 @@
 import type { GuessDomain } from "$lib/domain";
-import { get, loadPreviousGuesses } from "$lib/middleware";
+import { get, loadPreviousGuesses, loadCustomGamePreviousGuesses, getCustomGameSummary as fetchCustomGameSummary, getCustomGameVisualClue } from "$lib/middleware";
 import { err, ok, type Result } from "$lib/result";
 import { isoDateNoTime } from "$lib/util";
 import type { IGuessService } from "./IGuessService";
@@ -16,7 +16,18 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         super();
     }
 
-    public async getGameSummary(): Promise<Result<GameSummaryDto>> {
+    public async getGameSummary(customGameId?: string): Promise<Result<GameSummaryDto>> {
+        if (customGameId) {
+            const jwt = sget(userStore).jwt;
+            const result = await fetchCustomGameSummary(customGameId, jwt);
+
+            if (!result.ok) {
+                return err(GuessService.unableToLoadGameSummaryError);
+            }
+
+            return ok(result.data!);
+        }
+
         let result = await get(
             '/gameSummary',
             { date: isoDateNoTime() },
@@ -37,7 +48,18 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         return ok(data);
     }
 
-    public async getVisualClue(): Promise<Result<ImageDto>> {
+    public async getVisualClue(customGameId?: string): Promise<Result<ImageDto>> {
+        if (customGameId) {
+            const jwt = sget(userStore).jwt;
+            const result = await getCustomGameVisualClue(customGameId, jwt);
+
+            if (!result.ok) {
+                return err(GuessService.unableToLoadImageError);
+            }
+
+            return ok(result.data!);
+        }
+
         let result = await get(
             '/target/image',
             { date: isoDateNoTime() },
@@ -100,20 +122,72 @@ export class GuessService extends GuessServiceShared implements IGuessService {
 
         return err(GuessService.guessError);
     }
+
+    public async guessCustomGame(customGameId: string, guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>> {
+        if (guess.trim() === "") {
+            return err("Invalid guess");
+        }
+
+        if (!customGameId || customGameId.trim() === "") {
+            return err("Invalid custom game ID");
+        }
+
+        Logger.log("GuessService.svelte.ts: guessCustomGame: customGameId: {0}, guess: {1}, skipTitleMap: {2}", customGameId, guess, skipTitleMap);
+
+        const id = skipTitleMap !== true ? this._possibleGuesses[guess] : guess;
+
+        let result = await get(
+            `/custom/${customGameId}/guess/${id}`,
+            null,
+            { Authorization: sget(userStore).jwt },
+        );
+
+        const title = skipTitleMap !== true ? guess : this.getTitle(guess);
+
+        if (this._guesses.includes(title)) {
+            return err(GuessService.duplicateGuessError);
+        }
+
+        if (result.ok) {
+            try {
+                let dto = JSON.parse(result.data as string);
+                let domain = GuessDtoToDomain(dto, title);
+
+                if (domain.ok) {
+                    if (!this._guesses.includes(title)) {
+                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
+                    }
+                    return ok(domain.data as GuessDomain);
+                } else {
+                    return err(GuessService.guessError)
+                }
+            }
+            catch {
+                return err(GuessService.guessError)
+            }
+        }
+
+        return err(GuessService.guessError);
+    }
     
-    public async getPreviousGuesses(): Promise<Result<GuessDomain[]>> {
-        Logger.log("GuessService.getPreviousGuesses()");
+    public async getPreviousGuesses(customGameId?: string): Promise<Result<GuessDomain[]>> {
+        Logger.log("GuessService.getPreviousGuesses({0})", customGameId ?? "daily");
 
         const jwt = sget(userStore).jwt;
 
-        const prev = await loadPreviousGuesses(jwt);
+        const prev = customGameId
+            ? await loadCustomGamePreviousGuesses(customGameId, jwt)
+            : await loadPreviousGuesses(jwt);
 
         let o: GuessDomain[] = [] as GuessDomain[];
 
         if (prev.ok) {
             Logger.log("GuessService.getPreviousGuesses(): guesses: {0}", prev.data!);
             for (const id of prev.data!) {
-                const g = await this.guess(`${id}`, true);
+                const guessId = `${id}`;
+                const g = customGameId
+                    ? await this.guessCustomGame(customGameId, guessId, true)
+                    : await this.guess(guessId, true);
 
                 if (g.ok) {
                     o.push(g.data! as GuessDomain);

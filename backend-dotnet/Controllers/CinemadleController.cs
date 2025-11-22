@@ -6,13 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+using TMDbLib.Objects.Movies;
 
 namespace Cinemadle.Controllers;
 
@@ -137,7 +135,6 @@ public class CinemadleController : CinemadleControllerBase
         return new OkObjectResult(userId);
     }
 
-
     private async Task<ImageDto?> GetBlurredImage(string date, float blurFactor)
     {
         _logger.LogDebug("+GetBlurredImage({date}, {blurFactor})", date, blurFactor);
@@ -167,6 +164,35 @@ public class CinemadleController : CinemadleControllerBase
 
         string base64 = image.ToBase64String(PngFormat.Instance);
 
+        return new ImageDto
+        {
+            ImageData = base64
+        };
+    }
+
+    private async Task<ImageDto?> GetBlurredImageForMovie(int movieId, float blurFactor)
+    {
+        _logger.LogDebug("+GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
+
+        byte[]? imageBytes = await _tmdbRepo.GetMovieImageById(movieId);
+
+        if (imageBytes is null)
+        {
+            _logger.LogDebug("GetBlurredImageForMovie({movieId}, {blurFactor}): Unable to find target movie image", movieId, blurFactor);
+            _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
+            return null;
+        }
+
+        using Image image = Image.Load(imageBytes);
+
+        if (blurFactor > 0)
+        {
+            image.Mutate(x => x.GaussianBlur(blurFactor));
+        }
+
+        string base64 = image.ToBase64String(PngFormat.Instance);
+
+        _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
         return new ImageDto
         {
             ImageData = base64
@@ -279,7 +305,12 @@ public class CinemadleController : CinemadleControllerBase
         {
             IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(x => x.UserId == userId && x.GameId == date).OrderBy(x => x.SequenceId);
 
-            if (userGuesses.Count() < _config.GameLength)
+            // Check if user has won
+            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
+
+            // Allow summary if user has completed the game OR won
+            if (userGuesses.Count() < _config.GameLength && !hasWon)
             {
                 _logger.LogDebug("-GetGameSummary({date}): User tried summary gen on guess {guess}", date, userGuesses.Count());
                 _logger.LogDebug("-GetGameSummary({date})", date);
@@ -705,6 +736,462 @@ public class CinemadleController : CinemadleControllerBase
         return new OkObjectResult(movie!);
     }
 
+    [Authorize]
+    [HttpPost("custom/create")]
+    public async Task<ActionResult> CreateCustomGame([FromBody] CustomGameCreateDto customGame)
+    {
+        _logger.LogDebug("+CreateCustomGame({customGame})", customGame);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            MovieDto? movie = await _tmdbRepo.GetMovieById(customGame.Id);
+            if (movie is null)
+            {
+                _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
+                return new NotFoundResult();
+            }
+
+            CustomGame newCustomGame = new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                TargetMovieId = customGame.Id,
+                CreatorUserId = userId,
+                Inserted = DateTime.UtcNow
+            };
+
+            _db.CustomGames.Add(newCustomGame);
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogDebug("-CreateCustomGame()");
+            return new OkObjectResult(new CustomGameDto
+            {
+                Id = newCustomGame.Id,
+                TargetMovieId = newCustomGame.TargetMovieId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("CreateCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{id}")]
+    public async Task<ActionResult> GetCustomGame(string id)
+    {
+        _logger.LogDebug("+GetCustomGame({id})", id);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetCustomGame({id})", id);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == id);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetCustomGame({id})", id);
+                return new NotFoundResult();
+            }
+
+            _logger.LogDebug("-GetCustomGame({id})", id);
+            return new OkObjectResult(new CustomGameDto
+            {
+                Id = customGame.Id,
+                TargetMovieId = customGame.TargetMovieId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetCustomGame({id})", id);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/target")]
+    public async Task<ActionResult> GetCustomGameTarget(string customGameId)
+    {
+        _logger.LogDebug("+GetCustomGameTarget({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Target movie not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+            return new OkObjectResult(targetMovie);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetCustomGameTarget Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/target/image")]
+    public async Task<ActionResult> GetCustomGameImage(string customGameId)
+    {
+        _logger.LogDebug("+GetCustomGameImage({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        bool paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
+
+        if (paymentsEnabled)
+        {
+            UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
+            if (userAccount is null)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): user account does not exist", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new NotFoundResult();
+            }
+
+            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+            if ((addOn?.Count ?? 0) <= 0)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): user had no visual clues", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new UnauthorizedResult();
+            }
+        }
+
+        try
+        {
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetCustomGameImage({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            int userGuesses = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId).Count();
+
+            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): User attempted to access image on guess {number}", customGameId, userGuesses);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new UnauthorizedResult();
+            }
+
+            bool win = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId && x.GuessMediaId == customGame.TargetMovieId).Any();
+
+            float blurFactor = (userGuesses >= _config.GameLength || win)
+                ? 0.0F
+                : _config.MovieImageBlurFactors[userGuesses.ToString()];
+
+            ImageDto? image = await GetBlurredImageForMovie(customGame.TargetMovieId, blurFactor);
+
+            if (image is null)
+            {
+                _logger.LogDebug("GetCustomGameImage({customGameId}): No image found", customGameId);
+                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+                return new NotFoundResult();
+            }
+
+            Clue? clue = _db.UserClues.FirstOrDefault(x => x.GameId == customGameId && x.UserId == userId && x.ClueType == ClueType.Visual);
+            if (clue is null)
+            {
+                try
+                {
+                    _db.UserClues.Add(new Clue
+                    {
+                        UserId = userId,
+                        GameId = customGameId,
+                        ClueType = ClueType.Visual,
+                        Inserted = DateTime.Now
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("GetCustomGameImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+                    _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+
+                    return new StatusCodeResult(500);
+                }
+            }
+
+            if (paymentsEnabled)
+            {
+                AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+
+                if (record is null)
+                {
+                    return new StatusCodeResult(500);
+                }
+
+                if (clue is null)
+                {
+                    record.Count -= 1;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+            return new OkObjectResult(image);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetCustomGameImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/guesses")]
+    public ActionResult GetPastGuessesCustomGame(string customGameId)
+    {
+        _logger.LogDebug("+GetPastGuessesCustomGame({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            // Verify custom game exists
+            CustomGame? customGame = _db.CustomGames.FirstOrDefault(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetPastGuessesCustomGame({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            IEnumerable<UserGuess> guesses = _db.Guesses.Where(
+                x => x.GameId == customGameId && x.UserId == userId
+            )
+            .OrderBy(x => x.SequenceId);
+
+            _logger.LogDebug("GetPastGuessesCustomGame({customGameId}): {data}", customGameId, guesses.Count());
+
+            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
+            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetPastGuessesCustomGame Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/guess/{movieId}")]
+    public async Task<ActionResult> GuessMovieCustomGame(string customGameId, int movieId)
+    {
+        _logger.LogDebug("+GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            // Verify custom game exists and get target movie
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Custom game not found", customGameId, movieId);
+                return new NotFoundResult();
+            }
+
+            // Get the guess movie
+            MovieDto? guessMovie = await _tmdbRepo.GetMovieById(movieId);
+            if (guessMovie is null)
+            {
+                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Guess movie not found", customGameId, movieId);
+                return new NotFoundResult();
+            }
+
+            // Get the target movie
+            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Target movie not found", customGameId, movieId);
+                return new NotFoundResult();
+            }
+
+            // Create guess DTO
+            GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+            if (guessDto is null)
+            {
+                _logger.LogError("GuessMovieCustomGame: unable to create guess DTO");
+                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
+                return new StatusCodeResult(500);
+            }
+
+            // Check if this guess already exists
+            UserGuess? existingGuess = _db.Guesses.FirstOrDefault(
+                x => x.GuessMediaId == movieId && x.GameId == customGameId && x.UserId == userId
+            );
+
+            // If not, save the guess
+            if (existingGuess is null)
+            {
+                int seqNo = (_db.Guesses.Where(
+                    x => x.GameId == customGameId && x.UserId == userId
+                )
+                .OrderByDescending(x => x.SequenceId)
+                .FirstOrDefault()?.SequenceId ?? 0) + 1;
+
+                _db.Guesses.Add(new UserGuess
+                {
+                    GameId = customGameId,
+                    UserId = userId,
+                    GuessMediaId = movieId,
+                    SequenceId = seqNo,
+                    Inserted = DateTime.Now,
+                });
+
+                await _db.SaveChangesAsync();
+            }
+
+            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
+            return new OkObjectResult(guessDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GuessMovieCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("custom/{customGameId}/gameSummary")]
+    public async Task<ActionResult> GetGameSummaryCustomGame(string customGameId)
+    {
+        _logger.LogDebug("+GetGameSummaryCustomGame({customGameId})", customGameId);
+        string? userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
+            return new UnauthorizedResult();
+        }
+
+        try
+        {
+            // Verify custom game exists
+            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
+            if (customGame is null)
+            {
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Custom game not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(
+                x => x.UserId == userId && x.GameId == customGameId
+            ).OrderBy(x => x.SequenceId);
+
+            // Get target movie for the custom game
+            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Target movie not found", customGameId);
+                return new NotFoundResult();
+            }
+
+            // Check if user has won
+            bool hasWon = userGuesses.Any(x => x.GuessMediaId == customGame.TargetMovieId);
+
+            // Allow summary if user has completed the game OR won
+            if (userGuesses.Count() < _config.GameLength && !hasWon)
+            {
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): User tried summary gen on guess {guess}", customGameId, userGuesses.Count());
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
+                return new NotFoundResult();
+            }
+
+            // Generate summary using the existing logic
+            var guessDtos = await Task.WhenAll(userGuesses.Select(async x => 
+            {
+                MovieDto? guessMovie = await _tmdbRepo.GetMovieById(x.GuessMediaId);
+                if (guessMovie is null) return null;
+                return _guessRepo.Guess(guessMovie, targetMovie);
+            }));
+
+            if (guessDtos is null || !guessDtos.All(x => x is not null))
+            {
+                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Unable to make guess data", customGameId);
+                return new NotFoundResult();
+            }
+
+            List<string> gameSummary = [];
+            foreach (GuessDto? guessDto in guessDtos)
+            {
+                if (guessDto is null)
+                {
+                    return new NotFoundResult();
+                }
+
+                gameSummary.Add(string.Join("", guessDto.Fields.Select(x => MapColorToEmoji(x.Value.Color))));
+            }
+
+            gameSummary.Add($"play at https://cinemadle.com/customGame/{customGameId}");
+
+            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
+            return new OkObjectResult(new GameSummaryDto
+            {
+                Summary = gameSummary
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("GetGameSummaryCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
+
+            return new StatusCodeResult(500);
+        }
+    }
+
     #region test endpoints
     [HttpDelete("destroy")]
     public async Task<ActionResult> DestroyAllData()
@@ -727,6 +1214,7 @@ public class CinemadleController : CinemadleControllerBase
             _db.UserClues.RemoveRange(_db.UserClues);
             _db.Purchases.RemoveRange(_db.Purchases);
             _db.UserAccounts.RemoveRange(_db.UserAccounts);
+            _db.CustomGames.RemoveRange(_db.CustomGames);
 
             await _db.SaveChangesAsync();
 

@@ -85,6 +85,29 @@ namespace Cinemadle.Migrations
                     b.ToTable("UserClues");
                 });
 
+            modelBuilder.Entity("Cinemadle.Database.CustomGame", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatorUserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Inserted")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TargetMovieId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.ToTable("CustomGames");
+                });
+
             modelBuilder.Entity("Cinemadle.Database.DataOverride", b =>
                 {
                     b.Property<int>("Id")
@@ -143,6 +166,30 @@ namespace Cinemadle.Migrations
                     b.ToTable("Purchases");
                 });
 
+            modelBuilder.Entity("Cinemadle.Database.Statistic", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Statistics");
+                });
+
             modelBuilder.Entity("Cinemadle.Database.TargetMovie", b =>
                 {
                     b.Property<string>("Id")
@@ -178,7 +225,8 @@ namespace Cinemadle.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("UserAccounts");
                 });

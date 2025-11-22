@@ -12,6 +12,7 @@
     let imageData = $state("");
 
     let guessService = (): IGuessService => Container.it().GuessService;
+    const { customGameId = null } = $props<{ customGameId?: string | null }>();
 
     onMount(async () => {
         while (!guessService().isInitialized()) {
@@ -25,7 +26,7 @@
             await new Promise((x) => setTimeout(x, 1000));
         }
 
-        const result = await guessService().getVisualClue();
+        const result = await guessService().getVisualClue(customGameId ?? undefined);
 
         if (!result.ok) {
             serverDown = true;
@@ -38,7 +39,7 @@
         imageData = result.data!.imageData;
         loading = false;
         serverDown = false;
-    })
+    });
 </script>
 
 {#if loading}

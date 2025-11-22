@@ -12,6 +12,9 @@ public class DatabaseContext : DbContext
     public DbSet<Clue> UserClues { get; set; }
     public DbSet<PurchaseDetails> Purchases { get; set; }
     public DbSet<UserAccount> UserAccounts { get; set; }
+    public DbSet<CustomGame> CustomGames { get; set; }
+
+    public DbSet<Statistic> Statistics { get; set; }
     public string DbPath { get; set; }
 
     public DatabaseContext(DbContextOptions<DatabaseContext> opts) : base(opts)
