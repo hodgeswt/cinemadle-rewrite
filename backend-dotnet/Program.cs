@@ -1,16 +1,14 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel.DTO;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using NLog.Extensions.Logging;
 using Cinemadle.Jobs;
 using Quartz;
+using Microsoft.OpenApi;
 
 namespace Cinemadle;
 
@@ -32,20 +30,10 @@ public class Program
                 Scheme = "Bearer"
             });
 
-            opts.AddSecurityRequirement(new OpenApiSecurityRequirement
-               {
-                   {
-                       new OpenApiSecurityScheme
-                       {
-                           Reference = new OpenApiReference
-                           {
-                               Type = ReferenceType.SecurityScheme,
-                               Id = "Bearer"
-                           }
-                       },
-                       Array.Empty<string>()
-                   }
-               });
+            opts.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            {
+                [new OpenApiSecuritySchemeReference("bearer", document)] = []
+            });
         });
 
         builder.Services.AddCors(opts =>
@@ -72,7 +60,7 @@ public class Program
         builder.Services.Configure<ForwardedHeadersOptions>(opts =>
         {
             opts.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
-            opts.KnownNetworks.Clear();
+            opts.KnownIPNetworks.Clear();
             opts.KnownProxies.Clear();
         });
 
