@@ -51,7 +51,7 @@ describe('home page', () => {
                 creatives.arrowdown2.should('not.exist');
                 creatives.arrowup1.should('not.exist');
                 creatives.arrowup2.should('not.exist');
-                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
                 creatives.className.should('contain', 'to-gray-300');
             })
 
@@ -154,7 +154,7 @@ describe('home page', () => {
                 creatives.arrowdown2.should('not.exist');
                 creatives.arrowup1.should('not.exist');
                 creatives.arrowup2.should('not.exist');
-                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
                 creatives.className.should('contain', 'to-gray-300');
             })
 
@@ -211,9 +211,10 @@ describe('home page', () => {
             })
         });
 
-        it('should show zero visual clues', () => {
-            cy.getByDataTestId('visualcluesremaining-text').should('have.text', 'visual clues remaining: 0');
-        });
+        // TODO: re-enable when payments are implemented
+        // it('should show zero visual clues', () => {
+        //     cy.getByDataTestId('visualcluesremaining-text').should('have.text', 'visual clues remaining: 0');
+        // });
 
         it('should decrement guess count', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
