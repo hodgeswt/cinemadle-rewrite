@@ -9,6 +9,7 @@ using NLog.Extensions.Logging;
 using Cinemadle.Jobs;
 using Quartz;
 using Microsoft.OpenApi;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle;
 
@@ -127,17 +128,17 @@ public class Program
         logger.LogInformation("Ensuring database is created");
         using var scope = app.Services.CreateScope();
         DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
         logger.LogInformation("Database ensured created");
         logger.LogInformation("Ensuring identity database is created");
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
-        identityDb.Database.EnsureCreated();
+        identityDb.Database.Migrate();
         logger.LogInformation("Identity database ensured created");
 
         logger.LogInformation("Ensuring roles are created");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        foreach (CustomRoles customRole in Enum.GetValues(typeof(CustomRoles)))
+        foreach (CustomRoles customRole in Enum.GetValues<CustomRoles>())
         {
             string roleName = customRole.ToString();
             if (!await roleManager.RoleExistsAsync(roleName))

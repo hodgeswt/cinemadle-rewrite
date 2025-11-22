@@ -24,7 +24,7 @@ function Update-Cinemadle {
 
     $composeFile = if ($e2e) { "docker-compose.e2e.yaml" } else { "docker-compose.yaml" }
 
-    ./devops/migrate.ps1 -e2e:$e2e
+    # ./devops/migrate.ps1 -e2e:$e2e
     docker compose -f $composeFile up -d
 }
 

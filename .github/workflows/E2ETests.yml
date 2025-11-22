@@ -65,7 +65,6 @@ jobs:
           echo "Waiting for backend to start..."
           for i in {1..10}; do
             echo "Attempt $i of 10..."
-            echo "Container status:"
             if curl -sf http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
@@ -74,8 +73,8 @@ jobs:
           done
           echo "Backend failed to start within 20 seconds"
           echo "=== Application log file ==="
-          if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-            cat ~/.local/share/AppData/cinemadle.log
+          if [ -f ./volumes/cinemadle.log ]; then
+            cat ./volumes/cinemadle.log
           else
             echo "cinemadle.log file not found"
           fi
@@ -130,8 +129,8 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker rm cinemadle-backend || true
-          docker rm cinemadle-frontend || true
+          docker rm cinemadle-e2e || true
+          docker rm cinemadle-frontend-e2e || true
           docker rmi cinemadle-e2e:latest || true
           docker rmi cinemadle-frontend-e2e:latest || true
           docker rmi cinemadle-migrator:latest || true
