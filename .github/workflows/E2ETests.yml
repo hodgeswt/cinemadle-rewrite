@@ -37,59 +37,34 @@ jobs:
           cache: 'npm'
           cache-dependency-path: automation-tests/package-lock.json
 
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          build-args: |
-            VITE_API_ENDPOINT=http://localhost:5000
-            VITE_STRIPE_FRONTEND_KEY=""
-            VITE_PRODUCT_IDS=""
-            CINEMADLE_TEST_MODE=true
-          push: false
-          load: true
-          tags: cinemadle-e2e:${{ github.run_number }}
-
-      - name: Build migrator Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile-Migrator
-          push: false
-          load: true
-          tags: cinemadle-migrator:${{ github.run_number }}
+      - name: Build migrator
+        shell: pwsh
+        run: |
+          ./devops/build.ps1 -Tag "latest" -e2e -Component 'migrator'
 
       - name: Setup config directory
         run: |
-          mkdir -p ~/.local/share/AppData
-          echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ~/.local/share/AppData/CinemadleConfig.json
-          chmod 644 ~/.local/share/AppData/CinemadleConfig.json
-          chmod 777 ~/.local/share/AppData
+          mkdir -p ./volumes || true
+          echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ./volumes/CinemadleConfig.json
+          chmod 644 ./volumes/CinemadleConfig.json
+          chmod 777 ./volumes
 
-      - name: Run database migrations
+      - name: Set up + start Cinemadle
+        shell: pwsh
         run: |
-          docker run --rm \
-            -v ~/.local/share/AppData:/root/.local/share/AppData \
-            -w /app \
-            cinemadle-migrator:${{ github.run_number }}
-          echo "Migrations completed successfully"
-
-      - name: Start backend container
-        run: |
-          docker run -d \
-            --name cinemadle-backend \
-            -p 5000:5566 \
-            -v ~/.local/share/AppData:/root/.local/share/AppData \
-            -e ASPNETCORE_ENVIRONMENT=Development \
-            -e CINEMADLE_TEST_MODE=true \
-            cinemadle-e2e:${{ github.run_number }}
-          sleep 5
+          ./devops/upgrade.ps1 -e2e
         
       - name: Wait for backend to be ready
         run: |
@@ -149,21 +124,23 @@ jobs:
       - name: Show application log file
         if: always()
         run: |
-          if [ -f ~/.local/share/AppData/cinemadle.log ]; then
+          if [ -f ./volumes/cinemadle.log ]; then
             echo "=== cinemadle.log contents ==="
-            cat ~/.local/share/AppData/cinemadle.log
+            cat ./volumes/cinemadle.log
           else
             echo "cinemadle.log file not found"
           fi
 
       - name: Stop container
         if: always()
-        run: docker stop cinemadle-backend || true
+        run: docker compose -f docker-compose.e2e.yaml down || true
 
       - name: Cleanup
         if: always()
         run: |
           docker rm cinemadle-backend || true
-          docker rmi cinemadle-e2e:${{ github.run_number }} || true
-          docker rmi cinemadle-migrator:${{ github.run_number }} || true
-          rm -rf ~/.local/share/AppData
+          docker rm cinemadle-frontend || true
+          docker rmi cinemadle-e2e:latest || true
+          docker rmi cinemadle-frontend-e2e:latest || true
+          docker rmi cinemadle-migrator:latest || true
+          rm -rf ./volumes

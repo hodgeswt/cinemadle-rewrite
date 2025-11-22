@@ -9,7 +9,7 @@ RUN dotnet tool install --global dotnet-ef --version 8.0.17
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
 COPY backend-dotnet/. .
-COPY migrate-container.sh .
+COPY devops/migrator/migrate-container.sh ./migrate-container.sh
 
 RUN sed -i 's/\r$//' migrate-container.sh
 RUN mkdir -p $HOME/.local/share

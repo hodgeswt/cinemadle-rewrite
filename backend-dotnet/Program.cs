@@ -184,23 +184,12 @@ public class Program
             }
         }
 
-        app.UseStatusCodePages(async context =>
+        if (!app.Environment.IsDevelopment())
         {
-            var response = context.HttpContext.Response;
-
-            if (response.StatusCode == 404)
-            {
-                response.Clear();
-                response.StatusCode = 302;
-                response.Redirect("/index.html");
-            }
-
-            await Task.CompletedTask;
-        });
-        app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
+        }
         app.UseAuthorization();
         app.MapIdentityApi<IdentityUser>();
-        app.UseStaticFiles();
         app.MapControllers();
         app.UseCors("AllowFrontend");
 

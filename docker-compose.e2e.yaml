@@ -1,0 +1,35 @@
+services:
+  cinemadle-backend:
+    container_name: cinemadle
+    image: cinemadle-e2e:latest
+    pull_policy: never
+    ports:
+      - 5000:5566
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CINEMADLE_TEST_MODE=true
+    volumes:
+      - ./volumes:/root/.local/share/AppData
+      - type: bind
+        source: ./backend-dotnet/appsettings.json
+        target: /app/appsettings.json
+      - type: bind
+        source: ./backend-dotnet/appsettings.Development.json
+        target: /app/appsettings.Development.json
+    restart: unless-stopped
+    networks:
+      - cinemadle-network
+
+  cinemadle-frontend:
+    container_name: cinemadle-frontend
+    image: cinemadle-frontend-e2e:latest
+    pull_policy: never
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    networks:
+      - cinemadle-network
+
+networks:
+  cinemadle-network:
+    driver: bridge
