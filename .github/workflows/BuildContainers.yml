@@ -4,6 +4,12 @@ on:
     branches:
       - 'main'
   workflow_dispatch:
+    inputs:
+      rebuild_all:
+        description: 'Rebuild all components (ignores change detection)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: BuildContainers
@@ -14,6 +20,7 @@ jobs:
     outputs:
       matrix: ${{ steps.generate-matrix.outputs.matrix }}
       has_components: ${{ steps.generate-matrix.outputs.has_components }}
+      build_tag: ${{ steps.determine-build-tag.outputs.build_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -55,11 +62,14 @@ jobs:
                   'repository': repository,
               })
 
-          if os.environ.get('BACKEND') == 'true':
+          # Check if rebuild_all is enabled or if specific components changed
+          rebuild_all = os.environ.get('REBUILD_ALL', 'false').lower() == 'true'
+          
+          if rebuild_all or os.environ.get('BACKEND') == 'true':
               add('backend', 'cinemadle', 'hodgeswt/cinemadle')
               add('migrator', 'cinemadle-migrator', 'hodgeswt/cinemadle-migrator')
 
-          if os.environ.get('FRONTEND') == 'true':
+          if rebuild_all or os.environ.get('FRONTEND') == 'true':
               add('frontend', 'cinemadle-frontend', 'hodgeswt/cinemadle-frontend')
 
           matrix = {'include': components}
@@ -72,6 +82,13 @@ jobs:
         env:
           BACKEND: ${{ steps.filter.outputs.backend }}
           FRONTEND: ${{ steps.filter.outputs.frontend }}
+          REBUILD_ALL: ${{ github.event.inputs.rebuild_all }}
+
+      - name: Determine build tag
+        id: determine-build-tag
+        run: |
+          # add 85 because previous builds were done outside of GitHub Actions
+          echo "build_tag=$((GITHUB_RUN_NUMBER + 85))" >> $GITHUB_OUTPUT
 
   Build:
     needs: determine-components
@@ -81,7 +98,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.determine-components.outputs.matrix) }}
     env:
-      BUILD_TAG: ${{ github.run_number }}
+      BUILD_TAG: ${{ needs.determine-components.outputs.build_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
