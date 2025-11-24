@@ -1,16 +1,15 @@
 using Cinemadle.Database;
-using Cinemadle.Datamodel.DTO;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using NLog.Extensions.Logging;
 using Cinemadle.Jobs;
 using Quartz;
+using Microsoft.OpenApi;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle;
 
@@ -32,20 +31,10 @@ public class Program
                 Scheme = "Bearer"
             });
 
-            opts.AddSecurityRequirement(new OpenApiSecurityRequirement
-               {
-                   {
-                       new OpenApiSecurityScheme
-                       {
-                           Reference = new OpenApiReference
-                           {
-                               Type = ReferenceType.SecurityScheme,
-                               Id = "Bearer"
-                           }
-                       },
-                       Array.Empty<string>()
-                   }
-               });
+            opts.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            {
+                [new OpenApiSecuritySchemeReference("bearer", document)] = []
+            });
         });
 
         builder.Services.AddCors(opts =>
@@ -72,7 +61,7 @@ public class Program
         builder.Services.Configure<ForwardedHeadersOptions>(opts =>
         {
             opts.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
-            opts.KnownNetworks.Clear();
+            opts.KnownIPNetworks.Clear();
             opts.KnownProxies.Clear();
         });
 
@@ -139,17 +128,17 @@ public class Program
         logger.LogInformation("Ensuring database is created");
         using var scope = app.Services.CreateScope();
         DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
         logger.LogInformation("Database ensured created");
         logger.LogInformation("Ensuring identity database is created");
         IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
-        identityDb.Database.EnsureCreated();
+        identityDb.Database.Migrate();
         logger.LogInformation("Identity database ensured created");
 
         logger.LogInformation("Ensuring roles are created");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        foreach (CustomRoles customRole in Enum.GetValues(typeof(CustomRoles)))
+        foreach (CustomRoles customRole in Enum.GetValues<CustomRoles>())
         {
             string roleName = customRole.ToString();
             if (!await roleManager.RoleExistsAsync(roleName))

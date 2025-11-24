@@ -65,8 +65,6 @@ jobs:
           echo "Waiting for backend to start..."
           for i in {1..10}; do
             echo "Attempt $i of 10..."
-            echo "Container status:"
-            docker ps -a | grep cinemadle-backend || echo "Container not found"
             if curl -sf http://localhost:5000/api/cinemadle/heartbeat; then
               echo "Backend is ready!"
               exit 0
@@ -74,11 +72,9 @@ jobs:
             sleep 2
           done
           echo "Backend failed to start within 20 seconds"
-          echo "=== Full container logs ==="
-          docker logs cinemadle-backend || true
           echo "=== Application log file ==="
-          if [ -f ~/.local/share/AppData/cinemadle.log ]; then
-            cat ~/.local/share/AppData/cinemadle.log
+          if [ -f ./volumes/cinemadle.log ]; then
+            cat ./volumes/cinemadle.log
           else
             echo "cinemadle.log file not found"
           fi
@@ -87,6 +83,10 @@ jobs:
       - name: Install test dependencies
         working-directory: automation-tests
         run: npm ci
+
+      - name: Prime server (prevent performance failure on first test)
+        run: |
+          curl -X POST http://localhost:5000/api/cinemadle/movielist
 
       - name: Run E2E tests (excluding Stripe tests)
         working-directory: automation-tests
@@ -112,10 +112,6 @@ jobs:
           path: automation-tests/cypress/videos
           if-no-files-found: ignore
 
-      - name: Show container logs
-        if: always()
-        run: docker logs cinemadle-backend
-
       - name: Show application log file
         if: always()
         run: |
@@ -133,8 +129,8 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker rm cinemadle-backend || true
-          docker rm cinemadle-frontend || true
+          docker rm cinemadle-e2e || true
+          docker rm cinemadle-frontend-e2e || true
           docker rmi cinemadle-e2e:latest || true
           docker rmi cinemadle-frontend-e2e:latest || true
           docker rmi cinemadle-migrator:latest || true

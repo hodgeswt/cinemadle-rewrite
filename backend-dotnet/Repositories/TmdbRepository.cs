@@ -50,7 +50,7 @@ public class TmdbRepository : ITmdbRepository
 
         _config = config.GetConfig();
         _cache = cache;
-        _tmdbClient = new TMDbClient(config.GetConfig().TmdbApiKey);
+        _tmdbClient = new TMDbClient(_config.TmdbApiKey);
         _db = dbContext;
         _isDevelopment = env.IsDevelopment();
 

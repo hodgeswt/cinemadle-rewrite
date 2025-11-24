@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS migrator
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS migrator
 
 WORKDIR /app
 
 COPY backend-dotnet/*.csproj ./
 RUN dotnet restore
 RUN dotnet nuget locals all --clear
-RUN dotnet tool install --global dotnet-ef --version 8.0.17
+RUN dotnet tool install --global dotnet-ef
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
 COPY backend-dotnet/. .
