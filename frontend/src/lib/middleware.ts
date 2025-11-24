@@ -8,7 +8,6 @@ import { isoDateNoTime } from "./util";
 
 export const PING_LIMIT = 10;
 
-
 export async function ping(): Promise<boolean> {
     const data = await get("heartbeat", null)
 

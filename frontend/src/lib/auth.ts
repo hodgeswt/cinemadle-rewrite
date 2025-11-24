@@ -8,7 +8,7 @@ import { isLoginDto, isSignUpErrorDto, type LoginDto, type SignUpErrorDto } from
 
 export async function logIn(email: string, password: string): Promise<Result<LoginDto>> {
     const data = await post(
-        "login", true,
+        "login", false,
         JSON.stringify({
             "email": email,
             "password": password
@@ -33,7 +33,7 @@ export async function logIn(email: string, password: string): Promise<Result<Log
 export async function signUp(email: string, password: string): Promise<Result<SignUpErrorDto | null>> {
     const data = await post(
         "register",
-        true,
+        false,
         JSON.stringify({
             "email": email,
             "password": password

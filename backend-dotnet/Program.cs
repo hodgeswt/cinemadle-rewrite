@@ -178,7 +178,8 @@ public class Program
             app.UseHttpsRedirection();
         }
         app.UseAuthorization();
-        app.MapIdentityApi<IdentityUser>();
+        app.MapGroup("/api")
+           .MapIdentityApi<IdentityUser>();
         app.MapControllers();
         app.UseCors("AllowFrontend");
 
