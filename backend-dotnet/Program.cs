@@ -178,7 +178,7 @@ public class Program
             app.UseHttpsRedirection();
         }
         app.UseAuthorization();
-        app.MapGroup("/api")
+        app.MapGroup("/api/cinemadle")
            .MapIdentityApi<IdentityUser>();
         app.MapControllers();
         app.UseCors("AllowFrontend");
