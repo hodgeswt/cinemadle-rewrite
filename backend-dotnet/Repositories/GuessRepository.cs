@@ -520,6 +520,12 @@ public class GuessRepository : IGuessRepository
             return null;
         }
 
+        // Floor the minimum at 0 (no negative values for year or box office)
+        if (minBound.HasValue && minBound.Value < 0)
+        {
+            minBound = 0;
+        }
+
         return new HintsDto
         {
             Min = minBound?.ToString(),
