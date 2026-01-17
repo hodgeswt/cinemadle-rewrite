@@ -2,6 +2,7 @@
     import type { CardDomain } from "../domain";
 
     import { Info } from "@lucide/svelte";
+    import { Check } from "@lucide/svelte";
     import { isDarkMode } from "$lib/stores/theme";
 
     const {props = {
@@ -68,27 +69,38 @@
         return formatter.format(n);
     }
 
-    function getHintText(): string | null {
+    function isKnownValue(datum: string): boolean {
+        return props.hints?.knownValues?.includes(datum) ?? false;
+    }
+
+    const hintLabelMap: { [key: string]: string } = {
+        'boxOffice': 'POSSIBLE BOX OFFICE',
+        'creatives': 'KNOWN CREATIVES',
+        'rating': 'POSSIBLE VALUES',
+        'genre': 'KNOWN GENRES',
+        'cast': 'KNOWN CAST',
+        'year': 'POSSIBLE YEARS'
+    };
+
+    function getHintLabel(): string | null {
+        return hintLabelMap[props.title] ?? null;
+    }
+
+    function getHintValues(): string | null {
         const hints = props.hints;
-        if (!hints) return null;
+        if (!hints) return "Unknown";
 
-        // For known values (genre, cast, creatives)
         if (hints.knownValues && hints.knownValues.length > 0) {
-            return `Known: ${hints.knownValues.join(", ")}`;
+            return hints.knownValues.join(", ");
         }
-
-        // For possible values (rating)
         if (hints.possibleValues && hints.possibleValues.length > 0) {
-            return `Possible: ${hints.possibleValues.join(", ")}`;
+            return hints.possibleValues.join(", ");
         }
-
-        // For range-based hints (year, box office) - only show if at least one bound is set
         if (hints.min || hints.max) {
             const min = hints.min ? formatNumber(hints.min) : "?";
             const max = hints.max ? formatNumber(hints.max) : "?";
-            return `Range: ${min} – ${max}`;
+            return `${min} – ${max}`;
         }
-
         return null;
     }
 </script>
@@ -104,14 +116,20 @@
         </h2>
         <ul class="list-none list-inside flex-grow overflow-y-auto">
             {#each props.data as datum, i}
-                <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} text-xl break-words" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>{formatNumber(datum)}</li>
+                {#if isKnownValue(datum)}
+                    <li class="text-xl break-words flex items-center" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>
+                        <Check class="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span>{formatNumber(datum)}</span>
+                    </li>
+                {:else}
+                    <li class="{$isDarkMode ? 'text-gray-500' : 'text-black'} text-xl break-words" data-testid={`card-${guessIndex}-${index}-tiledata-${i}`}>{formatNumber(datum)}</li>
+                {/if}
             {/each}
         </ul>
-        {#if getHintText()}
-            <div class="mt-2 pt-2 border-t border-white/20 flex items-center gap-1" data-testid={`card-${guessIndex}-${index}-hints`}>
-                <Info class="w-3 h-3 flex-shrink-0 {$isDarkMode ? 'text-gray-600' : 'text-gray-500'}" />
-                <span class="text-xs {$isDarkMode ? 'text-gray-600' : 'text-gray-500'} truncate">{getHintText()}</span>
-            </div>
-        {/if}
+        <hr class="my-2 border-t {$isDarkMode ? 'border-gray-600' : 'border-gray-400'}" />
+        <div data-testid={`card-${guessIndex}-${index}-hints`}>
+            <div class={`${$isDarkMode ? 'text-gray-700' : 'text-gray-500'} text-sm font-bold`}>{getHintLabel()}</div>
+            <div class="text-md {$isDarkMode ? 'text-gray-500' : 'text-gray-600'}">{getHintValues()}</div>
+        </div>
     </div>
 </div>
