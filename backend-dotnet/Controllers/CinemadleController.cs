@@ -599,7 +599,18 @@ public class CinemadleController : CinemadleControllerBase
 
         try
         {
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
+            // Get target movie first to enable fetching previous guesses
+            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}): Target movie not found", date, userId, id);
+                return new NotFoundResult();
+            }
+
+            // Get previous guesses for hints (using anon user guesses table)
+            var previousGuesses = await GetPreviousAnonGuessesAsDto(anonUserId, date, targetMovie);
+
+            GuessDto? guessDto = await GuessMovieInternal(id, date, previousGuesses);
             UserGuess? x = _db.AnonUserGuesses.FirstOrDefault(
                                            x => x.GuessMediaId == id && x.GameId == date && x.UserId == anonUserId
                                       );
@@ -632,7 +643,7 @@ public class CinemadleController : CinemadleControllerBase
         }
     }
 
-    private async Task<GuessDto?> GuessMovieInternal(int id, string date)
+    private async Task<GuessDto?> GuessMovieInternal(int id, string date, IEnumerable<GuessDto>? previousGuesses = null)
     {
         MovieDto? guessMovie = await _tmdbRepo.GetMovieById(id);
 
@@ -650,7 +661,7 @@ public class CinemadleController : CinemadleControllerBase
             return null;
         }
 
-        GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+        GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie, previousGuesses);
 
         if (guessDto is null)
         {
@@ -660,6 +671,64 @@ public class CinemadleController : CinemadleControllerBase
         }
 
         return guessDto;
+    }
+
+    /// <summary>
+    /// Gets previous guesses for a user/game and converts them to GuessDto objects
+    /// </summary>
+    private async Task<List<GuessDto>> GetPreviousGuessesAsDto(string userId, string gameId, MovieDto targetMovie)
+    {
+        var previousGuesses = new List<GuessDto>();
+
+        var userGuesses = _db.Guesses
+            .Where(x => x.UserId == userId && x.GameId == gameId)
+            .OrderBy(x => x.SequenceId)
+            .ToList();
+
+        foreach (var userGuess in userGuesses)
+        {
+            MovieDto? guessMovie = await _tmdbRepo.GetMovieById(userGuess.GuessMediaId);
+            if (guessMovie is not null)
+            {
+                // Get the basic guess without hints (to avoid recursion)
+                var guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+                if (guessDto is not null)
+                {
+                    previousGuesses.Add(guessDto);
+                }
+            }
+        }
+
+        return previousGuesses;
+    }
+
+    /// <summary>
+    /// Gets previous guesses for an anonymous user/game and converts them to GuessDto objects
+    /// </summary>
+    private async Task<List<GuessDto>> GetPreviousAnonGuessesAsDto(string anonUserId, string gameId, MovieDto targetMovie)
+    {
+        var previousGuesses = new List<GuessDto>();
+
+        var userGuesses = _db.AnonUserGuesses
+            .Where(x => x.UserId == anonUserId && x.GameId == gameId)
+            .OrderBy(x => x.SequenceId)
+            .ToList();
+
+        foreach (var userGuess in userGuesses)
+        {
+            MovieDto? guessMovie = await _tmdbRepo.GetMovieById(userGuess.GuessMediaId);
+            if (guessMovie is not null)
+            {
+                // Get the basic guess without hints (to avoid recursion)
+                var guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+                if (guessDto is not null)
+                {
+                    previousGuesses.Add(guessDto);
+                }
+            }
+        }
+
+        return previousGuesses;
     }
 
     [Authorize]
@@ -679,8 +748,18 @@ public class CinemadleController : CinemadleControllerBase
 
         try
         {
+            // Get target movie first to enable fetching previous guesses
+            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            if (targetMovie is null)
+            {
+                _logger.LogDebug("-GuessMovie({date}, {id}): Target movie not found", date, id);
+                return new NotFoundResult();
+            }
 
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
+            // Get previous guesses for hints
+            var previousGuesses = await GetPreviousGuessesAsDto(userId, date, targetMovie);
+
+            GuessDto? guessDto = await GuessMovieInternal(id, date, previousGuesses);
 
             UserGuess? x = _db.Guesses.FirstOrDefault(
                 x => x.GuessMediaId == id && x.GameId == date && x.UserId == userId
@@ -1058,8 +1137,11 @@ public class CinemadleController : CinemadleControllerBase
                 return new NotFoundResult();
             }
 
-            // Create guess DTO
-            GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+            // Get previous guesses for hints
+            var previousGuesses = await GetPreviousGuessesAsDto(userId, customGameId, targetMovie);
+
+            // Create guess DTO with hints
+            GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie, previousGuesses);
             if (guessDto is null)
             {
                 _logger.LogError("GuessMovieCustomGame: unable to create guess DTO");

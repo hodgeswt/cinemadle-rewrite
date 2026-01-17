@@ -4,6 +4,7 @@
     import { ArrowUp } from "@lucide/svelte";
     import { ArrowDown } from "@lucide/svelte";
     import { Sparkles } from "@lucide/svelte";
+    import { Info } from "@lucide/svelte";
     import { isDarkMode } from "$lib/stores/theme";
 
     const {props = {
@@ -81,6 +82,30 @@
 
         return 0;
     }
+
+    function getHintText(): string | null {
+        const hints = props.hints;
+        if (!hints) return null;
+
+        // For range-based hints (year, box office)
+        if (hints.min !== undefined || hints.max !== undefined) {
+            const min = hints.min ? formatNumber(hints.min) : "?";
+            const max = hints.max ? formatNumber(hints.max) : "?";
+            return `Range: ${min} – ${max}`;
+        }
+
+        // For possible values (rating)
+        if (hints.possibleValues && hints.possibleValues.length > 0) {
+            return `Possible: ${hints.possibleValues.join(", ")}`;
+        }
+
+        // For known values (genre, cast, creatives)
+        if (hints.knownValues && hints.knownValues.length > 0) {
+            return `Known: ${hints.knownValues.join(", ")}`;
+        }
+
+        return null;
+    }
 </script>
 
 <div class="p-2 h-full">
@@ -136,5 +161,11 @@
                 {/if}
             {/each}
         </ul>
+        {#if getHintText()}
+            <div class="mt-2 pt-2 border-t border-white/20 flex items-center gap-1" data-testid={`card-${guessIndex}-${index}-hints`}>
+                <Info class="w-3 h-3 flex-shrink-0 {$isDarkMode ? 'text-gray-600' : 'text-gray-500'}" />
+                <span class="text-xs {$isDarkMode ? 'text-gray-600' : 'text-gray-500'} truncate">{getHintText()}</span>
+            </div>
+        {/if}
     </div>
 </div>

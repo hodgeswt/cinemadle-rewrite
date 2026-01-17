@@ -23,11 +23,19 @@ export type GuessDto = {
     fields: { [key: string]: Field };
 };
 
+export type Hints = {
+    min?: string;
+    max?: string;
+    knownValues?: string[];
+    possibleValues?: string[];
+};
+
 export type Field = {
     color: string;
     direction: number;
     values: string[];
     modifiers: { [key: string]: string[] };
+    hints?: Hints;
 };
 
 export type MediaDto = {
@@ -220,7 +228,7 @@ export function isGuessDto(obj: any): obj is GuessDto {
 }
 
 export function isField(obj: any): obj is Field {
-    return (
+    const baseValid = (
         hasValue(obj) &&
         hasValue(obj.color) &&
         typeof obj.color === "string" &&
@@ -229,4 +237,31 @@ export function isField(obj: any): obj is Field {
         isArray(obj.values, "string") &&
         isDictionary(obj.modifiers, "string", "string", true)
     );
+
+    if (!baseValid) {
+        return false;
+    }
+
+    // hints is optional, but if present it should have the right structure
+    if (obj.hints !== undefined && obj.hints !== null) {
+        if (typeof obj.hints !== 'object') {
+            return false;
+        }
+        // Allow null or string for min/max
+        if (obj.hints.min !== undefined && obj.hints.min !== null && typeof obj.hints.min !== 'string') {
+            return false;
+        }
+        if (obj.hints.max !== undefined && obj.hints.max !== null && typeof obj.hints.max !== 'string') {
+            return false;
+        }
+        // Allow null or string array for knownValues/possibleValues
+        if (obj.hints.knownValues !== undefined && obj.hints.knownValues !== null && !isArray(obj.hints.knownValues, 'string')) {
+            return false;
+        }
+        if (obj.hints.possibleValues !== undefined && obj.hints.possibleValues !== null && !isArray(obj.hints.possibleValues, 'string')) {
+            return false;
+        }
+    }
+
+    return true;
 }

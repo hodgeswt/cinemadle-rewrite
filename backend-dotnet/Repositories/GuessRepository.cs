@@ -78,10 +78,11 @@ public class GuessRepository : IGuessRepository
         }
     }
 
-    public GuessDto Guess(MovieDto guess, MovieDto target)
+    public GuessDto Guess(MovieDto guess, MovieDto target, IEnumerable<GuessDto>? previousGuesses = null)
     {
         string cacheKey = string.Format(_guessCacheKeyTemplate, guess.Id, target.Id);
-        if (_cache.TryGet<GuessDto>(cacheKey, out GuessDto? guessDto) && guessDto is not null)
+        // Note: We don't use cache when previousGuesses are provided since hints depend on them
+        if (previousGuesses == null && _cache.TryGet<GuessDto>(cacheKey, out GuessDto? guessDto) && guessDto is not null)
         {
             _logger.LogDebug("Guess: Returning cached guess data");
             return guessDto;
@@ -181,10 +182,29 @@ public class GuessRepository : IGuessRepository
             });
         }
 
-        return new GuessDto
-        {
-            Fields = fields
-        };
+        // Create the current guess DTO (without hints yet)
+        var currentGuess = new GuessDto { Fields = fields };
+
+        // Compute hints including the current guess
+        var allGuesses = previousGuesses?.ToList() ?? new List<GuessDto>();
+        allGuesses.Add(currentGuess);
+        var hints = ComputeHints(allGuesses);
+
+        // Apply hints to the fields
+        if (hints.TryGetValue(IGuessRepository.BoxOfficeKey, out var boxOfficeHints))
+            fields[IGuessRepository.BoxOfficeKey].Hints = boxOfficeHints;
+        if (hints.TryGetValue(IGuessRepository.CreativesKey, out var creativesHints))
+            fields[IGuessRepository.CreativesKey].Hints = creativesHints;
+        if (hints.TryGetValue(IGuessRepository.RatingKey, out var ratingHints))
+            fields[IGuessRepository.RatingKey].Hints = ratingHints;
+        if (hints.TryGetValue(IGuessRepository.GenreKey, out var genreHints))
+            fields[IGuessRepository.GenreKey].Hints = genreHints;
+        if (hints.TryGetValue(IGuessRepository.CastKey, out var castHints))
+            fields[IGuessRepository.CastKey].Hints = castHints;
+        if (hints.TryGetValue(IGuessRepository.YearKey, out var yearHints))
+            fields[IGuessRepository.YearKey].Hints = yearHints;
+
+        return currentGuess;
     }
 
     public bool IsBoxOfficeMismatch(long guessBoxOffice, long targetBoxOffice, out FieldDto? boxOfficeOut)
@@ -345,5 +365,249 @@ public class GuessRepository : IGuessRepository
         };
 
         return true;
+    }
+
+    /// <summary>
+    /// Computes hints based on previous guesses to help narrow down possible values.
+    /// </summary>
+    private Dictionary<string, HintsDto> ComputeHints(IEnumerable<GuessDto>? previousGuesses)
+    {
+        var hints = new Dictionary<string, HintsDto>();
+
+        if (previousGuesses == null || !previousGuesses.Any())
+        {
+            return hints;
+        }
+
+        // Box Office hints: compute known range
+        var boxOfficeHints = ComputeRangeHints(previousGuesses, IGuessRepository.BoxOfficeKey);
+        if (boxOfficeHints != null)
+        {
+            hints[IGuessRepository.BoxOfficeKey] = boxOfficeHints;
+        }
+
+        // Year hints: compute known range
+        var yearHints = ComputeRangeHints(previousGuesses, IGuessRepository.YearKey);
+        if (yearHints != null)
+        {
+            hints[IGuessRepository.YearKey] = yearHints;
+        }
+
+        // Rating hints: compute possible ratings
+        var ratingHints = ComputeRatingHints(previousGuesses);
+        if (ratingHints != null)
+        {
+            hints[IGuessRepository.RatingKey] = ratingHints;
+        }
+
+        // Genre hints: known matching values
+        var genreHints = ComputeListHints(previousGuesses, IGuessRepository.GenreKey);
+        if (genreHints != null)
+        {
+            hints[IGuessRepository.GenreKey] = genreHints;
+        }
+
+        // Cast hints: known matching values
+        var castHints = ComputeListHints(previousGuesses, IGuessRepository.CastKey);
+        if (castHints != null)
+        {
+            hints[IGuessRepository.CastKey] = castHints;
+        }
+
+        // Creatives hints: known matching values
+        var creativesHints = ComputeListHints(previousGuesses, IGuessRepository.CreativesKey);
+        if (creativesHints != null)
+        {
+            hints[IGuessRepository.CreativesKey] = creativesHints;
+        }
+
+        return hints;
+    }
+
+    /// <summary>
+    /// Computes min/max range hints for numeric fields (year, box office)
+    /// based on the direction indicators from previous guesses.
+    /// </summary>
+    private HintsDto? ComputeRangeHints(IEnumerable<GuessDto> previousGuesses, string fieldKey)
+    {
+        long? minBound = null;  // Lower bound (target must be >= this)
+        long? maxBound = null;  // Upper bound (target must be <= this)
+
+        // Get the appropriate threshold based on field type
+        long threshold = fieldKey == IGuessRepository.YearKey
+            ? _config.YearSingleArrowThreshold
+            : _config.BoxOfficeSingleArrowThreshold;
+
+        foreach (var guess in previousGuesses)
+        {
+            if (!guess.Fields.TryGetValue(fieldKey, out var field))
+            {
+                continue;
+            }
+
+            if (field.Color == "green")
+            {
+                // Exact match found, no need for range hints
+                return null;
+            }
+
+            if (!field.Values.Any() || !long.TryParse(field.Values.First(), out long guessValue))
+            {
+                continue;
+            }
+
+            if (field.Direction == 1)
+            {
+                // Target is higher, within threshold: target in [guess+1, guess+threshold]
+                long newMin = guessValue + 1;
+                long newMax = guessValue + threshold;
+                minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+            }
+            else if (field.Direction == 2)
+            {
+                // Target is much higher: target > guess + threshold
+                long newMin = guessValue + threshold + 1;
+                minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+            }
+            else if (field.Direction == -1)
+            {
+                // Target is lower, within threshold: target in [guess-threshold, guess-1]
+                long newMin = guessValue - threshold;
+                long newMax = guessValue - 1;
+                minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+            }
+            else if (field.Direction == -2)
+            {
+                // Target is much lower: target < guess - threshold
+                long newMax = guessValue - threshold - 1;
+                maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+            }
+        }
+
+        if (!minBound.HasValue && !maxBound.HasValue)
+        {
+            return null;
+        }
+
+        return new HintsDto
+        {
+            Min = minBound?.ToString(),
+            Max = maxBound?.ToString()
+        };
+    }
+
+    /// <summary>
+    /// Computes possible rating hints by eliminating ratings that are too far from the target.
+    /// </summary>
+    private HintsDto? ComputeRatingHints(IEnumerable<GuessDto> previousGuesses)
+    {
+        var possibleRatings = new HashSet<string>(IGuessRepository.AllRatings);
+
+        foreach (var guess in previousGuesses)
+        {
+            if (!guess.Fields.TryGetValue(IGuessRepository.RatingKey, out var field))
+            {
+                continue;
+            }
+
+            if (field.Color == "green")
+            {
+                // Exact match found
+                return null;
+            }
+
+            if (!field.Values.Any())
+            {
+                continue;
+            }
+
+            string guessRating = field.Values.First();
+
+            if (field.Color == "grey")
+            {
+                // Grey means the rating is more than 1 step away
+                // Remove ratings that are within 1 step of the guess
+                int guessIndex = IGuessRepository.AllRatings.IndexOf(guessRating);
+                if (guessIndex >= 0)
+                {
+                    // Remove the guessed rating and adjacent ratings (they would be yellow or green)
+                    possibleRatings.Remove(guessRating);
+                    if (guessIndex > 0)
+                    {
+                        possibleRatings.Remove(IGuessRepository.AllRatings[guessIndex - 1]);
+                    }
+                    if (guessIndex < IGuessRepository.AllRatings.Count - 1)
+                    {
+                        possibleRatings.Remove(IGuessRepository.AllRatings[guessIndex + 1]);
+                    }
+                }
+            }
+            else if (field.Color == "yellow")
+            {
+                // Yellow means exactly 1 step away
+                int guessIndex = IGuessRepository.AllRatings.IndexOf(guessRating);
+                if (guessIndex >= 0)
+                {
+                    // Keep only adjacent ratings
+                    var adjacent = new HashSet<string>();
+                    if (guessIndex > 0)
+                    {
+                        adjacent.Add(IGuessRepository.AllRatings[guessIndex - 1]);
+                    }
+                    if (guessIndex < IGuessRepository.AllRatings.Count - 1)
+                    {
+                        adjacent.Add(IGuessRepository.AllRatings[guessIndex + 1]);
+                    }
+                    possibleRatings.IntersectWith(adjacent);
+                }
+            }
+        }
+
+        if (possibleRatings.Count == 0 || possibleRatings.Count == IGuessRepository.AllRatings.Count)
+        {
+            return null;
+        }
+
+        return new HintsDto
+        {
+            PossibleValues = possibleRatings.OrderBy(r => IGuessRepository.AllRatings.IndexOf(r)).ToList()
+        };
+    }
+
+    /// <summary>
+    /// Computes known matching values for list-based fields (genre, cast, creatives).
+    /// </summary>
+    private HintsDto? ComputeListHints(IEnumerable<GuessDto> previousGuesses, string fieldKey)
+    {
+        var knownValues = new HashSet<string>();
+
+        foreach (var guess in previousGuesses)
+        {
+            if (!guess.Fields.TryGetValue(fieldKey, out var field))
+            {
+                continue;
+            }
+
+            // Collect values marked as bold (matching the target)
+            foreach (var modifier in field.Modifiers)
+            {
+                if (modifier.Value.Contains("bold"))
+                {
+                    knownValues.Add(modifier.Key);
+                }
+            }
+        }
+
+        if (knownValues.Count == 0)
+        {
+            return null;
+        }
+
+        return new HintsDto
+        {
+            KnownValues = knownValues.ToList()
+        };
     }
 }

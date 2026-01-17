@@ -22,6 +22,7 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
             direction: v.direction,
             title: k,
             modifiers: v.modifiers,
+            hints: v.hints,
         } as CardDomain;
 
         out.cards.push(card);
