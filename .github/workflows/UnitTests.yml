@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
-        if: failed()
+        if: always()
         with:
           name: test-results
           path: backend-unittest/TestResults/test-results.trx
