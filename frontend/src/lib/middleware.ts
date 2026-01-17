@@ -1,7 +1,7 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "./domain";
-import { isLoginDto, isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "./dto";
+import { isLoginDto, isGameSummaryDto, isImageDto, isHintsResponseDto, type GameSummaryDto, type ImageDto, type HintsResponseDto } from "./dto";
 import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
@@ -265,6 +265,78 @@ export async function getCustomGameVisualClue(customGameId: string, userToken: s
     } catch (e) {
         Logger.log("middleware.getCustomGameVisualClue: failed to parse response {0}", JSON.stringify(e));
         return err("Invalid custom game visual clue data");
+    }
+}
+
+export async function getHints(userToken: string): Promise<Result<HintsResponseDto>> {
+    Logger.log("middleware.getHints");
+
+    const result = await get("hints", { date: isoDateNoTime() }, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getHints: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        if (!isHintsResponseDto(parsed)) {
+            Logger.log("middleware.getHints: invalid payload {0}", parsed);
+            return err("Invalid hints data");
+        }
+
+        return ok(parsed);
+    } catch (e) {
+        Logger.log("middleware.getHints: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid hints data");
+    }
+}
+
+export async function getHintsAnon(anonUserId: string): Promise<Result<HintsResponseDto>> {
+    Logger.log("middleware.getHintsAnon: {0}", anonUserId);
+
+    const result = await get("hints/anon", { date: isoDateNoTime(), userId: anonUserId });
+
+    if (!result.ok) {
+        Logger.log("middleware.getHintsAnon: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        if (!isHintsResponseDto(parsed)) {
+            Logger.log("middleware.getHintsAnon: invalid payload {0}", parsed);
+            return err("Invalid hints data");
+        }
+
+        return ok(parsed);
+    } catch (e) {
+        Logger.log("middleware.getHintsAnon: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid hints data");
+    }
+}
+
+export async function getHintsCustomGame(customGameId: string, userToken: string): Promise<Result<HintsResponseDto>> {
+    Logger.log("middleware.getHintsCustomGame: {0}", customGameId);
+
+    const result = await get(`hints/custom/${customGameId}`, null, { "Authorization": userToken });
+
+    if (!result.ok) {
+        Logger.log("middleware.getHintsCustomGame: request failed {0}", result.error);
+        return err(result.error!);
+    }
+
+    try {
+        const parsed = JSON.parse(result.data!);
+        if (!isHintsResponseDto(parsed)) {
+            Logger.log("middleware.getHintsCustomGame: invalid payload {0}", parsed);
+            return err("Invalid hints data");
+        }
+
+        return ok(parsed);
+    } catch (e) {
+        Logger.log("middleware.getHintsCustomGame: failed to parse response {0}", JSON.stringify(e));
+        return err("Invalid hints data");
     }
 }
 

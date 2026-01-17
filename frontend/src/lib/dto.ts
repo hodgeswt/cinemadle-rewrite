@@ -30,6 +30,10 @@ export type Hints = {
     possibleValues?: string[];
 };
 
+export type HintsResponseDto = {
+    [key: string]: Hints;
+};
+
 export type Field = {
     color: string;
     direction: number;
@@ -260,6 +264,37 @@ export function isField(obj: any): obj is Field {
         }
         if (obj.hints.possibleValues !== undefined && obj.hints.possibleValues !== null && !isArray(obj.hints.possibleValues, 'string')) {
             return false;
+        }
+    }
+
+    return true;
+}
+
+export function isHintsResponseDto(obj: any): obj is HintsResponseDto {
+    if (!hasValue(obj) || typeof obj !== 'object') {
+        return false;
+    }
+
+    for (const key in obj) {
+        if (typeof key !== 'string') {
+            return false;
+        }
+        const hints = obj[key];
+        if (hints !== null && typeof hints === 'object') {
+            // Allow null or string for min/max
+            if (hints.min !== undefined && hints.min !== null && typeof hints.min !== 'string') {
+                return false;
+            }
+            if (hints.max !== undefined && hints.max !== null && typeof hints.max !== 'string') {
+                return false;
+            }
+            // Allow null or string array for knownValues/possibleValues
+            if (hints.knownValues !== undefined && hints.knownValues !== null && !isArray(hints.knownValues, 'string')) {
+                return false;
+            }
+            if (hints.possibleValues !== undefined && hints.possibleValues !== null && !isArray(hints.possibleValues, 'string')) {
+                return false;
+            }
         }
     }
 

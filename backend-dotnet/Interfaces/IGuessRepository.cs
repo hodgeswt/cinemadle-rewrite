@@ -5,7 +5,7 @@ namespace Cinemadle.Interfaces;
 
 public interface IGuessRepository
 {
-    public GuessDto Guess(MovieDto guess, MovieDto target, IEnumerable<GuessDto>? previousGuesses = null);
+    public GuessDto Guess(MovieDto guess, MovieDto target);
 
     public static readonly string RatingKey = "rating";
     public static readonly string CreativesKey = "creatives";

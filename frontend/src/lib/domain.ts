@@ -16,12 +16,6 @@ export type CardDomain = {
     data: string[];
     direction: number;
     modifiers: { [key: string]: string[] };
-    hints?: {
-        min?: string;
-        max?: string;
-        knownValues?: string[];
-        possibleValues?: string[];
-    };
 };
 
 export enum FeatureFlags {

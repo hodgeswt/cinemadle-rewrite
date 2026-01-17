@@ -14,7 +14,7 @@
     import { FeatureFlags } from "$lib/domain";
     import { onMount } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
-    import { guessStore, userStore } from "$lib/stores";
+    import { guessStore, userStore, hintsStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
     import type { LoginDto } from "$lib/dto";
     import { Container, type IGuessService } from "$lib/services";
@@ -107,6 +107,17 @@
                 }
             }
 
+            // Fetch hints asynchronously (non-blocking)
+            if ($userStore.loggedIn) {
+                hintsStore.fetchHints($userStore.jwt);
+            } else {
+                // Anonymous user - get their anon ID from localStorage
+                const anonUserId = localStorage.getItem('anonUserId');
+                if (anonUserId) {
+                    hintsStore.fetchHintsAnon(anonUserId);
+                }
+            }
+
             mainState.loading = false;
         } catch (e) {
             mainState.errorMessage = "Unable to contact server.";
@@ -158,6 +169,17 @@
         if (!result.ok) {
             mainState.errorMessage = result.error!;
             mainState.errorOpen.set(true);
+        } else {
+            // Refresh hints after successful guess (non-blocking)
+            hintsStore.invalidate();
+            if ($userStore.loggedIn) {
+                hintsStore.fetchHints($userStore.jwt);
+            } else {
+                const anonUserId = localStorage.getItem('anonUserId');
+                if (anonUserId) {
+                    hintsStore.fetchHintsAnon(anonUserId);
+                }
+            }
         }
     }
 
