@@ -426,15 +426,18 @@ public class GuessRepository : IGuessRepository
 
     /// <summary>
     /// Computes min/max range hints for numeric fields (year, box office)
-    /// based on the direction indicators from previous guesses.
+    /// based on the direction indicators and color from previous guesses.
     /// </summary>
     private HintsDto? ComputeRangeHints(IEnumerable<GuessDto> previousGuesses, string fieldKey)
     {
         long? minBound = null;  // Lower bound (target must be >= this)
         long? maxBound = null;  // Upper bound (target must be <= this)
 
-        // Get the appropriate threshold based on field type
-        long threshold = fieldKey == IGuessRepository.YearKey
+        // Get the appropriate thresholds based on field type
+        long yellowThreshold = fieldKey == IGuessRepository.YearKey
+            ? _config.YearYellowThreshold
+            : _config.BoxOfficeYellowThreshold;
+        long singleArrowThreshold = fieldKey == IGuessRepository.YearKey
             ? _config.YearSingleArrowThreshold
             : _config.BoxOfficeSingleArrowThreshold;
 
@@ -456,32 +459,58 @@ public class GuessRepository : IGuessRepository
                 continue;
             }
 
+            bool isYellow = field.Color == "yellow";
+
             if (field.Direction == 1)
             {
-                // Target is higher, within threshold: target in [guess+1, guess+threshold]
-                long newMin = guessValue + 1;
-                long newMax = guessValue + threshold;
-                minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
-                maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                // Target is higher (single arrow)
+                if (isYellow)
+                {
+                    // Yellow + up: target in [guess+1, guess+yellowThreshold]
+                    long newMin = guessValue + 1;
+                    long newMax = guessValue + yellowThreshold;
+                    minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                    maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                }
+                else
+                {
+                    // Grey + up single arrow: target in [guess+yellowThreshold+1, guess+singleArrowThreshold]
+                    long newMin = guessValue + yellowThreshold + 1;
+                    long newMax = guessValue + singleArrowThreshold;
+                    minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                    maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                }
             }
             else if (field.Direction == 2)
             {
-                // Target is much higher: target > guess + threshold
-                long newMin = guessValue + threshold + 1;
+                // Target is much higher (double arrow): target > guess + singleArrowThreshold
+                long newMin = guessValue + singleArrowThreshold + 1;
                 minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
             }
             else if (field.Direction == -1)
             {
-                // Target is lower, within threshold: target in [guess-threshold, guess-1]
-                long newMin = guessValue - threshold;
-                long newMax = guessValue - 1;
-                minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
-                maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                // Target is lower (single arrow)
+                if (isYellow)
+                {
+                    // Yellow + down: target in [guess-yellowThreshold, guess-1]
+                    long newMin = guessValue - yellowThreshold;
+                    long newMax = guessValue - 1;
+                    minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                    maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                }
+                else
+                {
+                    // Grey + down single arrow: target in [guess-singleArrowThreshold, guess-yellowThreshold-1]
+                    long newMin = guessValue - singleArrowThreshold;
+                    long newMax = guessValue - yellowThreshold - 1;
+                    minBound = minBound.HasValue ? Math.Max(minBound.Value, newMin) : newMin;
+                    maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
+                }
             }
             else if (field.Direction == -2)
             {
-                // Target is much lower: target < guess - threshold
-                long newMax = guessValue - threshold - 1;
+                // Target is much lower (double arrow): target < guess - singleArrowThreshold
+                long newMax = guessValue - singleArrowThreshold - 1;
                 maxBound = maxBound.HasValue ? Math.Min(maxBound.Value, newMax) : newMax;
             }
         }
