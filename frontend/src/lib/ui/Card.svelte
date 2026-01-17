@@ -100,21 +100,19 @@
 <div class="p-2 h-full">
     <div
         class={`p-4 flex flex-col h-full rounded-lg shadow-md overflow-hidden ${bg} 
-            backdrop-blur-md bg-opacity-70 border border-white/40 relative`
+            backdrop-blur-md bg-opacity-70 border border-white/40`
         }
     >
-        <!-- Info icon button -->
-        <button
-            onclick={openHintModal}
-            class="absolute top-2 right-2 p-1 rounded-full hover:bg-black/10 transition-colors"
-            aria-label="Show hint information"
-            data-testid={`card-${guessIndex}-${index}-info-button`}
-        >
-            <Info class="w-4 h-4 {$isDarkMode ? 'text-gray-600' : 'text-gray-500'}" />
-        </button>
-
-        <h2 class="text-lg font-bold mb-2">
+        <h2 class="text-lg font-bold mb-2 flex items-center justify-between">
             <span data-testid={`card-${guessIndex}-${index}-title-text`} class={`${$isDarkMode ? 'text-gray-700' : 'text-gray-500'} text-sm`}>{mapTitle(props.title)}</span>
+            <button
+                onclick={openHintModal}
+                class="p-1 rounded-full hover:bg-black/10 transition-colors"
+                aria-label="Show hint information"
+                data-testid={`card-${guessIndex}-${index}-info-button`}
+            >
+                <Info class="w-4 h-4 {$isDarkMode ? 'text-gray-600' : 'text-gray-500'}" />
+            </button>
         </h2>
         <ul class="list-none list-inside flex-grow overflow-y-auto">
             {#each props.data as datum, i}

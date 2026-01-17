@@ -3,7 +3,6 @@
     import Card from "./Card.svelte";
     import type { GuessDomain } from "../domain";
     import Logger from "../logger";
-    import Divider from "./Divider.svelte";
 
     export let props: GuessDomain = {
          title: "unknown movie",
