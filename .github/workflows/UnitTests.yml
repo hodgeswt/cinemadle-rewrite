@@ -1,0 +1,44 @@
+name: Unit Tests
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'backend-dotnet/**'
+      - 'backend-unittest/**'
+      - '.github/workflows/UnitTests.yml'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - 'backend-dotnet/**'
+      - 'backend-unittest/**'
+      - '.github/workflows/UnitTests.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run unit tests
+        run: dotnet test backend-unittest/backend-unittest.csproj --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failed()
+        with:
+          name: test-results
+          path: backend-unittest/TestResults/test-results.trx
