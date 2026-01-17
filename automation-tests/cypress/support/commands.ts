@@ -150,7 +150,6 @@ export const getGuessCard = (cardId: number, category: string) => {
                         className: cy.contains(category.toUpperCase())
                             .parent()
                             .parent()
-                            .parent()
                             .invoke('attr', 'class'),
                         name: cy.getByDataTestId(`card-${cardId}-${cardIndex}-title-text`),
                         arrowdown1: cy.maybeGetByDataTestId(`card-${cardId}-${cardIndex}-arrowdown-1`),
