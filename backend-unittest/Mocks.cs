@@ -139,4 +139,11 @@ public class Mocks
 
         return flagRepoMock;
     }
+
+    public static Mock<IHintRepository> GetMockedHintRepository()
+    {
+        Mock<IHintRepository> hintRepoMock = new();
+
+        return hintRepoMock;
+    }
 }
