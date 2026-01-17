@@ -1,5 +1,5 @@
 .vscode/
-**/cypress/downloads/
+**/cypress/
 *.exe
 *.exe~
 *.dll

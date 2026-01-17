@@ -3,7 +3,6 @@
     import Card from "./Card.svelte";
     import type { GuessDomain } from "../domain";
     import Logger from "../logger";
-    import Divider from "./Divider.svelte";
 
     export let props: GuessDomain = {
          title: "unknown movie",
@@ -18,7 +17,7 @@
      })
 </script>
 
-<div class="min-w-3xl w-full">
+<div class="min-w-3xl w-full pb-4">
     <h1 class="m-4 text-3xl font-extrabold leading-none tracking-tight" data-testid={`guess-${index}-title`}>
         {props.title}
     </h1>
@@ -27,5 +26,4 @@
             <Card props={card} index={i} guessIndex={index} />
         {/each}
     </div>
-    <Divider />
 </div>

@@ -117,7 +117,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = target.Creatives.Select(x => CreativeFromPerson(x))
+                Values = target.Creatives.Select(x => CreativeFromPerson(x)),
             });
         }
 
@@ -132,7 +132,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = new List<string> { target.Rating.ToString() }
+                Values = new List<string> { target.Rating.ToString() },
             });
         }
 
@@ -147,7 +147,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = target.Genres
+                Values = target.Genres,
             });
         }
 
@@ -162,7 +162,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = target.Cast.Select(x => x.Name)
+                Values = target.Cast.Select(x => x.Name),
             });
         }
 
@@ -177,14 +177,16 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = new List<string> { target.Year }
+                Values = new List<string> { target.Year },
             });
         }
 
-        return new GuessDto
-        {
-            Fields = fields
-        };
+        var currentGuess = new GuessDto { Fields = fields };
+
+        // Cache the result
+        _cache.Set(cacheKey, currentGuess);
+
+        return currentGuess;
     }
 
     public bool IsBoxOfficeMismatch(long guessBoxOffice, long targetBoxOffice, out FieldDto? boxOfficeOut)

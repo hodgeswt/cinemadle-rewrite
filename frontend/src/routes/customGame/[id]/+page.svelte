@@ -15,7 +15,7 @@
     import { FeatureFlags } from "$lib/domain";
     import { onDestroy, onMount } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
-    import { guessStore, userStore } from "$lib/stores";
+    import { guessStore, userStore, hintsStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
     import type { LoginDto } from "$lib/dto";
     import { Container, type IGuessService } from "$lib/services";
@@ -121,6 +121,9 @@
                 }
             }
 
+            // Fetch hints asynchronously (non-blocking) for custom game
+            hintsStore.fetchHints(get(userStore).jwt, customGameId);
+
             pageState.loading = false;
         } catch (e) {
             Logger.log("customGame/+page.svelte.onMount: caught error {0}", JSON.stringify(e));
@@ -177,6 +180,10 @@
         if (!result.ok) {
             pageState.errorMessage = result.error!;
             pageState.errorOpen.set(true);
+        } else {
+            // Refresh hints after successful guess (non-blocking)
+            hintsStore.invalidate();
+            hintsStore.fetchHints(get(userStore).jwt, customGameId);
         }
     }
 

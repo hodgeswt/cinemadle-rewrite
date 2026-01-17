@@ -37,7 +37,6 @@ jobs:
               - 'backend-dotnet/**'
               - 'backend-unittest/**'
               - 'devops/backend/**'
-              - 'devops/migrator/**'
             frontend:
               - 'frontend/**'
               - 'devops/frontend/**'
@@ -67,7 +66,6 @@ jobs:
           
           if rebuild_all or os.environ.get('BACKEND') == 'true':
               add('backend', 'cinemadle', 'hodgeswt/cinemadle')
-              add('migrator', 'cinemadle-migrator', 'hodgeswt/cinemadle-migrator')
 
           if rebuild_all or os.environ.get('FRONTEND') == 'true':
               add('frontend', 'cinemadle-frontend', 'hodgeswt/cinemadle-frontend')

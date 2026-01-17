@@ -13,7 +13,20 @@ export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain>
         win: Object.values(guess.fields).every((x) => x.color === "green"),
     } as GuessDomain;
 
-    for (const k in guess.fields) {
+    // Define the desired card order (year and rating first)
+    const cardOrder = ['year', 'rating', 'genre', 'boxOffice', 'cast', 'creatives'];
+
+    // Sort the field keys according to the desired order
+    const sortedKeys = Object.keys(guess.fields).sort((a, b) => {
+        const indexA = cardOrder.indexOf(a);
+        const indexB = cardOrder.indexOf(b);
+        // If not in the order list, put at the end
+        const orderA = indexA === -1 ? cardOrder.length : indexA;
+        const orderB = indexB === -1 ? cardOrder.length : indexB;
+        return orderA - orderB;
+    });
+
+    for (const k of sortedKeys) {
         const v = guess.fields[k];
 
         let card = {
@@ -86,7 +99,7 @@ export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDom
     } as CardDomain;
 
 
-    o.cards = [boxOffice, creatives, cast, genre, year, rating] as CardDomain[];
+    o.cards = [year, rating, genre, boxOffice, cast, creatives] as CardDomain[];
 
     return ok(o);
 }

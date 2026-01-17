@@ -43,11 +43,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build migrator
-        shell: pwsh
-        run: |
-          ./devops/build.ps1 -Tag "latest" -e2e -Component 'migrator'
-
       - name: Setup config directory
         run: |
           mkdir -p ./volumes || true
