@@ -34,25 +34,14 @@ describe('home page', () => {
 
             cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
             
-            getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
-                boxOffice.name.should('have.text', 'BOX OFFICE');
-                boxOffice.arrowdown1.should('exist');
-                boxOffice.arrowdown2.should('exist');
-                boxOffice.arrowup1.should('not.exist');
-                boxOffice.arrowup2.should('not.exist');
-                boxOffice.tiledata.should('have.text', '$935M');
-                boxOffice.className.should('contain', 'to-gray-300');
-            })
-            
-
-            getGuessCard(0, 'CREATIVES').then((creatives) => {
-                creatives.name.should('have.text', 'CREATIVES');
-                creatives.arrowdown1.should('not.exist');
-                creatives.arrowdown2.should('not.exist');
-                creatives.arrowup1.should('not.exist');
-                creatives.arrowup2.should('not.exist');
-                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
-                creatives.className.should('contain', 'to-gray-300');
+            getGuessCard(0, 'YEAR').then((year) => {
+                year.name.should('have.text', 'YEAR');
+                year.arrowdown1.should('exist');
+                year.arrowdown2.should('exist');
+                year.arrowup1.should('not.exist');
+                year.arrowup2.should('not.exist');
+                year.tiledata.should('have.text', '2004');
+                year.className.should('contain', 'to-gray-300');
             })
 
             getGuessCard(0, 'RATING').then((rating) => {
@@ -64,7 +53,6 @@ describe('home page', () => {
                 rating.tiledata.should('have.text', 'PG');
                 rating.className.should('contain', 'to-[#00ffcc]');
             })
-            
 
             getGuessCard(0, 'GENRE').then((genre) => {
                 genre.name.should('have.text', 'GENRE');
@@ -81,6 +69,16 @@ describe('home page', () => {
                 genre.className.should('contain', 'to-gray-300');
             })
 
+            getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
+                boxOffice.name.should('have.text', 'BOX OFFICE');
+                boxOffice.arrowdown1.should('exist');
+                boxOffice.arrowdown2.should('exist');
+                boxOffice.arrowup1.should('not.exist');
+                boxOffice.arrowup2.should('not.exist');
+                boxOffice.tiledata.should('have.text', '$935M');
+                boxOffice.className.should('contain', 'to-gray-300');
+            })
+
             getGuessCard(0, 'CAST').then((cast) => {
                 cast.name.should('have.text', 'CAST');
                 cast.arrowdown1.should('not.exist');
@@ -95,16 +93,15 @@ describe('home page', () => {
                 });
                 cast.className.should('contain', 'to-gray-300');
             })
-            
 
-            getGuessCard(0, 'YEAR').then((year) => {
-                year.name.should('have.text', 'YEAR');
-                year.arrowdown1.should('exist');
-                year.arrowdown2.should('exist');
-                year.arrowup1.should('not.exist');
-                year.arrowup2.should('not.exist');
-                year.tiledata.should('have.text', '2004');
-                year.className.should('contain', 'to-gray-300');
+            getGuessCard(0, 'CREATIVES').then((creatives) => {
+                creatives.name.should('have.text', 'CREATIVES');
+                creatives.arrowdown1.should('not.exist');
+                creatives.arrowdown2.should('not.exist');
+                creatives.arrowup1.should('not.exist');
+                creatives.arrowup2.should('not.exist');
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
+                creatives.className.should('contain', 'to-gray-300');
             })
         });
 
@@ -137,25 +134,14 @@ describe('home page', () => {
 
             cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
             
-            getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
-                boxOffice.name.should('have.text', 'BOX OFFICE');
-                boxOffice.arrowdown1.should('exist');
-                boxOffice.arrowdown2.should('exist');
-                boxOffice.arrowup1.should('not.exist');
-                boxOffice.arrowup2.should('not.exist');
-                boxOffice.tiledata.should('have.text', '$935M');
-                boxOffice.className.should('contain', 'to-gray-300');
-            })
-            
-
-            getGuessCard(0, 'CREATIVES').then((creatives) => {
-                creatives.name.should('have.text', 'CREATIVES');
-                creatives.arrowdown1.should('not.exist');
-                creatives.arrowdown2.should('not.exist');
-                creatives.arrowup1.should('not.exist');
-                creatives.arrowup2.should('not.exist');
-                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
-                creatives.className.should('contain', 'to-gray-300');
+            getGuessCard(0, 'YEAR').then((year) => {
+                year.name.should('have.text', 'YEAR');
+                year.arrowdown1.should('exist');
+                year.arrowdown2.should('exist');
+                year.arrowup1.should('not.exist');
+                year.arrowup2.should('not.exist');
+                year.tiledata.should('have.text', '2004');
+                year.className.should('contain', 'to-gray-300');
             })
 
             getGuessCard(0, 'RATING').then((rating) => {
@@ -167,7 +153,6 @@ describe('home page', () => {
                 rating.tiledata.should('have.text', 'PG');
                 rating.className.should('contain', 'to-[#00ffcc]');
             })
-            
 
             getGuessCard(0, 'GENRE').then((genre) => {
                 genre.name.should('have.text', 'GENRE');
@@ -184,6 +169,16 @@ describe('home page', () => {
                 genre.className.should('contain', 'to-gray-300');
             })
 
+            getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
+                boxOffice.name.should('have.text', 'BOX OFFICE');
+                boxOffice.arrowdown1.should('exist');
+                boxOffice.arrowdown2.should('exist');
+                boxOffice.arrowup1.should('not.exist');
+                boxOffice.arrowup2.should('not.exist');
+                boxOffice.tiledata.should('have.text', '$935M');
+                boxOffice.className.should('contain', 'to-gray-300');
+            })
+
             getGuessCard(0, 'CAST').then((cast) => {
                 cast.name.should('have.text', 'CAST');
                 cast.arrowdown1.should('not.exist');
@@ -198,16 +193,15 @@ describe('home page', () => {
                 });
                 cast.className.should('contain', 'to-gray-300');
             })
-            
 
-            getGuessCard(0, 'YEAR').then((year) => {
-                year.name.should('have.text', 'YEAR');
-                year.arrowdown1.should('exist');
-                year.arrowdown2.should('exist');
-                year.arrowup1.should('not.exist');
-                year.arrowup2.should('not.exist');
-                year.tiledata.should('have.text', '2004');
-                year.className.should('contain', 'to-gray-300');
+            getGuessCard(0, 'CREATIVES').then((creatives) => {
+                creatives.name.should('have.text', 'CREATIVES');
+                creatives.arrowdown1.should('not.exist');
+                creatives.arrowdown2.should('not.exist');
+                creatives.arrowup1.should('not.exist');
+                creatives.arrowup2.should('not.exist');
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
+                creatives.className.should('contain', 'to-gray-300');
             })
         });
 
