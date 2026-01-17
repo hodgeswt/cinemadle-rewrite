@@ -4,7 +4,7 @@ param(
 	[string]$Tag,
 
 	[Parameter()]
-	[ValidateSet('backend', 'frontend', 'migrator', 'all')]
+	[ValidateSet('backend', 'frontend', 'all')]
 	[string]$Component = 'all',
 
     [Parameter()]
@@ -24,7 +24,7 @@ function Build-CinemadleContainers {
 		[string]$Tag,
 
 		[Parameter()]
-		[ValidateSet('backend', 'frontend', 'migrator', 'all')]
+		[ValidateSet('backend', 'frontend', 'all')]
 		[string]$Component = 'all',
 
         [Parameter()]
@@ -42,8 +42,7 @@ function Build-CinemadleContainers {
 	$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 	$targetDefinitions = @(
 		@{ Key = 'backend'; Image = 'cinemadle'; Dockerfile = 'devops/backend/Dockerfile' },
-		@{ Key = 'frontend'; Image = 'cinemadle-frontend'; Dockerfile = 'devops/frontend/Dockerfile' },
-		@{ Key = 'migrator'; Image = 'cinemadle-migrator'; Dockerfile = 'devops/migrator/Dockerfile' }
+		@{ Key = 'frontend'; Image = 'cinemadle-frontend'; Dockerfile = 'devops/frontend/Dockerfile' }
 	)
 
 	$targetsToBuild = if ($Component -eq 'all') {
