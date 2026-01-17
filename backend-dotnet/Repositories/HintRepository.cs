@@ -102,8 +102,10 @@ public class HintRepository : IHintRepository
 
         string cacheKey = string.Format(_hintCacheKeyTemplate, userId, gameId);
 
-        // Remove from cache by setting null (cache will handle expiry)
-        // We'll also mark DB record for recomputation by deleting it
+        // Remove from cache
+        _cache.Remove(cacheKey);
+
+        // Remove DB record so it will be recomputed
         var storedHint = _db.UserHints
             .FirstOrDefault(x => x.UserId == userId && x.GameId == gameId);
 

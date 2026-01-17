@@ -63,4 +63,14 @@ public class CacheRepository : ICacheRepository
             throw new CacheException($"Unable to get cache item for key {key}");
         }
     }
+
+    public void Remove(string key)
+    {
+        _logger.LogDebug("+Remove({key})", key);
+        lock (_lock)
+        {
+            _cache.Remove(key);
+        }
+        _logger.LogDebug("-Remove({key})", key);
+    }
 }
