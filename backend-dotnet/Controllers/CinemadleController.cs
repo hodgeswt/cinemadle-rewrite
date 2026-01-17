@@ -11,6 +11,7 @@ using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Microsoft.EntityFrameworkCore;
 using TMDbLib.Objects.Movies;
+using System.Runtime.InteropServices.Swift;
 
 namespace Cinemadle.Controllers;
 
@@ -382,13 +383,6 @@ public class CinemadleController : CinemadleControllerBase
         {
             int userGuesses = _db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
 
-            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
-            {
-                _logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
-                _logger.LogDebug("-GetMovieImage({date})", date);
-                return new UnauthorizedResult();
-            }
-
             MovieDto? target = await _tmdbRepo.GetTargetMovie(date);
 
             if (target is null)
@@ -398,6 +392,13 @@ public class CinemadleController : CinemadleControllerBase
             }
 
             bool win = _db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
+
+            if (!win &&!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+            {
+                _logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
+                _logger.LogDebug("-GetMovieImage({date})", date);
+                return new UnauthorizedResult();
+            }
 
             float blurFactor = (userGuesses >= _config.GameLength || win) ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
 

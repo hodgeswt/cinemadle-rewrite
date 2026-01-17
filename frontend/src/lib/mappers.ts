@@ -99,7 +99,7 @@ export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDom
     } as CardDomain;
 
 
-    o.cards = [boxOffice, creatives, cast, genre, year, rating] as CardDomain[];
+    o.cards = [year, rating, genre, boxOffice, cast, creatives] as CardDomain[];
 
     return ok(o);
 }
