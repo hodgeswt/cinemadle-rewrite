@@ -3,6 +3,13 @@
     import { hintsStore } from "$lib/stores";
     import { isDarkMode } from "$lib/stores/theme";
 
+    interface Props {
+        gameOver?: boolean;
+        movieTitle?: string;
+    }
+
+    let { gameOver = false, movieTitle = '' }: Props = $props();
+
     // Ordered list of hint categories to match the screenshot layout
     const hintCategories = [
         { key: 'year', label: 'YEAR RANGE' },
@@ -71,10 +78,14 @@
     data-testid="hints-display"
 >
     <h3 
-        class="text-lg md:text-xl font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
+        class="{gameOver && movieTitle ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'} font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
         data-testid="hints-display-header"
     >
-        You're looking for a movie like...
+        {#if gameOver && movieTitle}
+            {movieTitle}!
+        {:else}
+            You're looking for a movie like...
+        {/if}
     </h3>
     
     <div class="grid grid-cols-2 gap-3 md:gap-6">

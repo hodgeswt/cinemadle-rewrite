@@ -311,7 +311,10 @@
         {/if}
 
         {#if $guessStore.guesses.length > 0}
-            <HintsDisplay />
+            <HintsDisplay 
+                gameOver={mainState.win || mainState.lose} 
+                movieTitle={mainState.win ? $guessStore.guesses.find(g => g.win)?.title : mainState.answer?.title}
+            />
         {/if}
 
         {#if $userStore.loggedIn}
