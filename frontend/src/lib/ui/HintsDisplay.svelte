@@ -7,10 +7,10 @@
     const hintCategories = [
         { key: 'year', label: 'YEAR RANGE' },
         { key: 'rating', label: 'RATING' },
-        { key: 'boxOffice', label: 'BOX OFFICE RANGE' },
         { key: 'genre', label: 'GENRES' },
         { key: 'cast', label: 'CAST MEMBERS' },
         { key: 'creatives', label: 'CREATIVES' },
+        { key: 'boxOffice', label: 'BOX OFFICE RANGE' },
     ];
 
     function formatNumber(x: string | number): string {

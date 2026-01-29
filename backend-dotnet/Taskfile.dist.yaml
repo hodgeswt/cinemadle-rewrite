@@ -20,6 +20,8 @@ tasks:
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - build
+    env:
+      CINEMADLE_TEST_MODE: "true"
     cmds:
       - dotnet run --no-build
     desc: "Run the backend project"
