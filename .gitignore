@@ -1,3 +1,6 @@
+Taskfile.yaml
+.task/
+
 .vscode/
 **/cypress/
 *.exe

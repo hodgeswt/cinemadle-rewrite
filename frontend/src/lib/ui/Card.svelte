@@ -2,11 +2,9 @@
     import type { CardDomain } from "../domain";
     import type { Hints } from "$lib/dto";
 
-    import { Info, Check } from "@lucide/svelte";
+    import { Check } from "@lucide/svelte";
     import { isDarkMode } from "$lib/stores/theme";
     import { hintsStore } from "$lib/stores";
-    import HintModal from "./HintModal.svelte";
-    import { writable } from "svelte/store";
 
     interface CardProps {
         props: CardDomain;
@@ -39,10 +37,7 @@
         bg = $isDarkMode ? darkModeMap[props.color] : lightModeMap[props.color];
     });
 
-    // Modal state
-    let modalOpen = writable(false);
-
-    // Get hints from store
+    // Get hints from store for known value checking
     let currentHints: Hints | null = $state(null);
     $effect(() => {
         const fieldKey = props.title;
@@ -89,13 +84,7 @@
     function isKnownValue(datum: string): boolean {
         return currentHints?.knownValues?.includes(datum) ?? false;
     }
-
-    function openHintModal() {
-        modalOpen.set(true);
-    }
 </script>
-
-<HintModal open={modalOpen} title={props.title} hints={currentHints} />
 
 <div class="p-2 h-full">
     <div
@@ -103,16 +92,8 @@
             backdrop-blur-md bg-opacity-70 border border-white/40`
         }
     >
-        <h2 class="text-lg font-bold mb-2 flex items-center justify-between">
+        <h2 class="text-lg font-bold mb-2">
             <span data-testid={`card-${guessIndex}-${index}-title-text`} class={`${$isDarkMode ? 'text-gray-700' : 'text-gray-500'} text-sm`}>{mapTitle(props.title)}</span>
-            <button
-                onclick={openHintModal}
-                class="p-1 rounded-full hover:bg-black/10 transition-colors"
-                aria-label="Show hint information"
-                data-testid={`card-${guessIndex}-${index}-info-button`}
-            >
-                <Info class="w-4 h-4 {$isDarkMode ? 'text-gray-600' : 'text-gray-500'}" />
-            </button>
         </h2>
         <ul class="list-none list-inside flex-grow overflow-y-auto">
             {#each props.data as datum, i}

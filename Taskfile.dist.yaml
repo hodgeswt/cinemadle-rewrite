@@ -1,0 +1,30 @@
+version: "3"
+
+includes:
+  backend:
+    taskfile: ./backend-dotnet/Taskfile.dist.yaml
+  frontend:
+    taskfile: ./frontend/Taskfile.dist.yaml
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    
+  build:
+    deps:
+      - backend:build
+      - frontend:dev
+    desc: "Build both backend and frontend projects"
+  setup:
+    deps:
+      - backend:setup
+      - frontend:setup
+    desc: "Set up both backend and frontend development environments"
+
+  dev:
+    deps:
+      - backend:run
+      - frontend:dev
+    desc: "Run the development servers for frontend and backend"
+

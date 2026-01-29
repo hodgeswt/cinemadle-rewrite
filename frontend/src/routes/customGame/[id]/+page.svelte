@@ -1,6 +1,7 @@
 <script lang="ts">
     import Guess from "$lib/ui/Guess.svelte";
     import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
+    import HintsDisplay from "$lib/ui/HintsDisplay.svelte";
     import { Input } from "$lib/components/ui/input";
     import { Info, Search } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button";
@@ -300,6 +301,10 @@
                     </li>
                 {/each}
             </ul>
+        {/if}
+
+        {#if $guessStore.guesses.length > 0}
+            <HintsDisplay />
         {/if}
 
         {#if $userStore.loggedIn}
