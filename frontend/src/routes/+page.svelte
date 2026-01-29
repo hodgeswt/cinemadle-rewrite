@@ -300,10 +300,6 @@
             </ul>
         {/if}
 
-        {#if $guessStore.guesses.length > 0}
-            <HintsDisplay />
-        {/if}
-
         {#if !$userStore.loggedIn}
             <p class="mb-4">
                 cinemadle is better when you <a
@@ -312,6 +308,10 @@
                     data-testid="login-page-link">log in</a
                 >
             </p>
+        {/if}
+
+        {#if $guessStore.guesses.length > 0}
+            <HintsDisplay />
         {/if}
 
         {#if $userStore.loggedIn}
