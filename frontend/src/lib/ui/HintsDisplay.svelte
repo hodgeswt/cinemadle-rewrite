@@ -3,14 +3,14 @@
     import { hintsStore } from "$lib/stores";
     import { isDarkMode } from "$lib/stores/theme";
 
-    // Ordered list of hint categories (most useful first)
+    // Ordered list of hint categories to match the screenshot layout
     const hintCategories = [
-        { key: 'year', label: 'YEAR' },
-        { key: 'genre', label: 'GENRE' },
+        { key: 'year', label: 'YEAR RANGE' },
         { key: 'rating', label: 'RATING' },
-        { key: 'cast', label: 'CAST' },
+        { key: 'boxOffice', label: 'BOX OFFICE RANGE' },
+        { key: 'genre', label: 'GENRES' },
+        { key: 'cast', label: 'CAST MEMBERS' },
         { key: 'creatives', label: 'CREATIVES' },
-        { key: 'boxOffice', label: 'BOX OFFICE' },
     ];
 
     function formatNumber(x: string | number): string {
@@ -64,35 +64,61 @@
     }
 </script>
 
-<div class="mb-4" data-testid="hints-display">
+<div 
+    class="mb-4 p-6 rounded-xl border-2 {$isDarkMode 
+        ? 'bg-slate-800/50 border-green-500/60' 
+        : 'bg-slate-50 border-green-500'}"
+    data-testid="hints-display"
+>
     <h3 
-        class="text-lg font-semibold mb-3 {$isDarkMode ? 'text-gray-300' : 'text-gray-700'}"
+        class="text-xl font-semibold mb-6 flex items-center gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
         data-testid="hints-display-header"
     >
-        You're looking for a movie...
+        <span class="text-green-500 text-2xl">✓</span>
+        You're looking for a movie like...
     </h3>
     
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {#each hintCategories as category, i}
             {@const hints = getHintsForKey(category.key)}
             {@const content = getHintContent(hints)}
             <div 
-                class="p-3 rounded-lg shadow-md {$isDarkMode 
-                    ? 'bg-[rgba(255,255,255,0.08)] border border-white/20' 
-                    : 'bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300'}"
+                class="space-y-2"
                 data-testid={`hints-display-card-${category.key}`}
             >
                 <div 
-                    class="text-xs font-bold mb-1 {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}"
+                    class="text-xs font-bold tracking-wide {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}"
                     data-testid={`hints-display-card-${category.key}-label`}
                 >
                     {category.label}
                 </div>
                 <div 
-                    class="text-sm {$isDarkMode ? 'text-gray-200' : 'text-gray-800'} break-words"
+                    class="text-lg font-semibold {$isDarkMode ? 'text-green-400' : 'text-green-600'}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
-                    {content}
+                    {#if category.key === 'genre' && hints?.knownValues}
+                        <div class="flex flex-wrap gap-2">
+                            {#each hints.knownValues as genre}
+                                <span class="px-3 py-1 rounded-full text-sm {$isDarkMode 
+                                    ? 'bg-green-500/20 border border-green-500/40 text-green-300' 
+                                    : 'bg-green-100 border border-green-300 text-green-700'}">
+                                    {genre}
+                                </span>
+                            {/each}
+                        </div>
+                    {:else if category.key === 'cast' && hints?.knownValues}
+                        <div class="flex flex-wrap gap-2">
+                            {#each hints.knownValues as actor}
+                                <span class="px-3 py-1 rounded-full text-sm {$isDarkMode 
+                                    ? 'bg-green-500/20 border border-green-500/40 text-green-300' 
+                                    : 'bg-green-100 border border-green-300 text-green-700'}">
+                                    {actor}
+                                </span>
+                            {/each}
+                        </div>
+                    {:else}
+                        {content}
+                    {/if}
                 </div>
             </div>
         {/each}
