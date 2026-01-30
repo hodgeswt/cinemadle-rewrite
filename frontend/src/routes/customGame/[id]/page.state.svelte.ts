@@ -68,7 +68,6 @@ export class CustomGameState {
 
                 if (answerResult.ok) {
                     this.answer = answerResult.data!;
-                    this.answerOpen.set(true);
                     return;
                 }
 

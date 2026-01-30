@@ -6,9 +6,10 @@
     interface Props {
         gameOver?: boolean;
         movieTitle?: string;
+        isLoss?: boolean;
     }
 
-    let { gameOver = false, movieTitle = '' }: Props = $props();
+    let { gameOver = false, movieTitle = '', isLoss = false }: Props = $props();
 
     // Ordered list of hint categories to match the screenshot layout
     const hintCategories = [
@@ -73,8 +74,8 @@
 
 <div 
     class="mb-4 p-4 md:p-6 rounded-xl border-2 {$isDarkMode 
-        ? 'bg-slate-800/50 border-green-500/60' 
-        : 'bg-slate-50 border-green-500'}"
+        ? (isLoss ? 'bg-slate-800/50 border-red-500/60' : 'bg-slate-800/50 border-green-500/60')
+        : (isLoss ? 'bg-slate-50 border-red-500' : 'bg-slate-50 border-green-500')}"
     data-testid="hints-display"
 >
     <h3 
@@ -103,15 +104,15 @@
                     {category.label}
                 </div>
                 <div 
-                    class="text-lg md:text-lg font-semibold {$isDarkMode ? 'text-green-400' : 'text-green-600'}"
+                    class="text-lg md:text-lg font-semibold {$isDarkMode ? (isLoss ? 'text-red-400' : 'text-green-400') : (isLoss ? 'text-red-600' : 'text-green-600')}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
                     {#if category.key === 'genre' && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each hints.knownValues as genre}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
-                                    ? 'bg-green-500/20 border border-green-500/40 text-green-300' 
-                                    : 'bg-green-100 border border-green-300 text-green-700'}">
+                                    ? (isLoss ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
+                                    : (isLoss ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
                                     {genre}
                                 </span>
                             {/each}
@@ -120,8 +121,8 @@
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each hints.knownValues as actor}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
-                                    ? 'bg-green-500/20 border border-green-500/40 text-green-300' 
-                                    : 'bg-green-100 border border-green-300 text-green-700'}">
+                                    ? (isLoss ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
+                                    : (isLoss ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
                                     {actor}
                                 </span>
                             {/each}
