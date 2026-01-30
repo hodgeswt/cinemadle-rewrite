@@ -164,7 +164,9 @@ export type GuessCardData = {
 export const getGuessCard = (cardId: number, category: string) => {
     // Start the chain with cy.wrap to ensure we're in Cypress land
     return cy.wrap(null).then(() => {
-        return cy.contains(category.toUpperCase())
+        // Use a more specific selector to avoid matching hints-display elements
+        return cy.get(`[data-testid^="card-${cardId}-"]`)
+            .contains(category.toUpperCase())
             .invoke('attr', 'data-testid')
             .then(x => {
                 const splits = (x as string).split('-');
@@ -175,7 +177,8 @@ export const getGuessCard = (cardId: number, category: string) => {
 
                 return cy.get(`[data-testid^="card-${cardId}-${cardIndex}-tiledata"]`).then($tiledata => {
                     return cy.wrap({
-                        className: cy.contains(category.toUpperCase())
+                        className: cy.get(`[data-testid^="card-${cardId}-"]`)
+                            .contains(category.toUpperCase())
                             .parent()
                             .parent()
                             .invoke('attr', 'class'),
