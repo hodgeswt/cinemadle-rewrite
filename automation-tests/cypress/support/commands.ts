@@ -41,14 +41,10 @@ Cypress.Commands.add('customTask', (task: string) => {
 });
 
 Cypress.Commands.add('init', () => {
-    // Intercept API calls to wait for app initialization
-    cy.intercept('GET', '**/api/cinemadle/heartbeat').as('heartbeat');
-    cy.intercept('GET', '**/api/cinemadle/anonUserId').as('anonUserId');
-    
     cy.visit('/');
     
     // Wait for the app to be fully loaded
-    cy.getByDataTestId('guess-input', {timeout: 15000})
+    cy.getByDataTestId('guess-input', {timeout: 10000})
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled');
@@ -56,7 +52,8 @@ Cypress.Commands.add('init', () => {
 
 // Helper to make a guess and wait for the response
 export const makeGuess = (guess: string, expectedTitle?: string) => {
-    cy.intercept('POST', '**/api/cinemadle/guess/**').as('guessRequest');
+    // Intercept the guess API call (it's a GET request)
+    cy.intercept('GET', '**/api/cinemadle/guess/**').as('guessRequest');
     
     cy.getByDataTestId('guess-input')
         .should('be.visible')
@@ -69,11 +66,11 @@ export const makeGuess = (guess: string, expectedTitle?: string) => {
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest', { timeout: 15000 });
+    cy.wait('@guessRequest');
     
     // Verify the guess appeared
     const title = expectedTitle ?? guess;
-    cy.getByDataTestId('guess-0-title', { timeout: 10000 }).should('have.text', title);
+    cy.getByDataTestId('guess-0-title').should('have.text', title);
 };
 
 export const goToPage = (page: string) => {

@@ -9,11 +9,11 @@ export default defineConfig({
       // implement node event listeners here
     },
     baseUrl: process.env['CYPRESS_HOSTNAME'] || '',
-    defaultCommandTimeout: 15000,
-    requestTimeout: 15000,
-    responseTimeout: 15000,
+    defaultCommandTimeout: 10000,
+    requestTimeout: 10000,
+    responseTimeout: 10000,
     retries: {
-      runMode: 2,
+      runMode: 1,
       openMode: 0,
     },
   },
