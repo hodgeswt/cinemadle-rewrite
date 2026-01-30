@@ -214,7 +214,7 @@
 </script>
 
 <PageWrapper>
-    <Header showDate={true} />
+    <Header showDate={true} lose={mainState.lose} />
     {#if mainState.win}
         <div class="flex items-center mb-4">
             <h2
@@ -235,7 +235,7 @@
     {#if mainState.lose}
         <div class="flex items-center mb-4">
             <h2
-                class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
+                class="flex-1 text-3xl font-semibold text-red-600 leading-none tracking-tight"
                 data-testid="youlose"
             >
                 better luck next time!
@@ -245,13 +245,6 @@
                 onclick={showShareSheet}
                 data-testid="share-button">share</Button
             >
-            <Button
-                class="bg-red-400 ml-2"
-                onclick={showAnswerButton}
-                data-testid="seeanswer-button"
-            >
-                see answer
-            </Button>
         </div>
     {/if}
 
@@ -324,7 +317,7 @@
                             <div class="flex items-center space-x-2">
                                 <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-600' : 'text-indigo-600')} />
                                 <span
-                                    class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-400' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
+                                    class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
                                     data-testid="hint-text"
                                     >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'} {mainState.paymentsEnabled ? `(remaining: ${mainState.visualClueCount})` : ""}</span
                                 >

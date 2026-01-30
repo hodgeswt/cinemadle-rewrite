@@ -215,7 +215,7 @@
 </script>
 
 <PageWrapper>
-    <Header showDate={true} customGameId={customGameId} />
+    <Header showDate={true} customGameId={customGameId} lose={pageState.lose} />
     {#if pageState.win}
         <div class="flex items-center mb-4">
             <h2
@@ -236,7 +236,7 @@
     {#if pageState.lose}
         <div class="flex items-center mb-4">
             <h2
-                class="flex-1 text-3xl font-semibold text-red-400 leading-none tracking-tight"
+                class="flex-1 text-3xl font-semibold text-red-600 leading-none tracking-tight"
                 data-testid="customgame-youlose"
             >
                 better luck next time!
@@ -247,13 +247,6 @@
                 data-testid="customgame-share-button"
             >
                 share
-            </Button>
-            <Button
-                class="bg-red-400 ml-2"
-                onclick={showAnswerButton}
-                data-testid="customgame-seeanswer-button"
-            >
-                see answer
             </Button>
         </div>
     {/if}
@@ -317,7 +310,7 @@
                             <div class="flex items-center space-x-2">
                                 <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : pageState.win ? 'text-green-600' : 'text-indigo-600')} />
                                 <span
-                                    class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : pageState.win ? 'text-green-400' : 'text-indigo-400')}"
+                                    class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : pageState.win ? 'text-green-400' : 'text-indigo-400')}"
                                     data-testid="customgame-hint-text"
                                     >{pageState.lose ? 'needed a hint?' : pageState.win ? 'needed a hint?' : 'need a hint?'} {pageState.paymentsEnabled ? `(remaining: ${pageState.visualClueCount})` : ""}</span
                                 >
