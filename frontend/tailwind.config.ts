@@ -7,8 +7,8 @@ const config: Config = {
     safelist: [
         "dark",
         {
-            pattern: /bg-(green|yellow|gray)-(100|200|300|400|500|700)/,
-            variants: ['lg', 'hover', 'focus', 'lg:hover'],
+            pattern: /bg-(green|yellow|gray|green|red|blue)-(100|200|300|400|500|700)/,
+            variants: ['lg', 'hover', 'focus', 'lg:hover', 'md', 'md:hover', 'sm', 'sm:hover'],
         },
     ],
     theme: {

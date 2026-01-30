@@ -1,4 +1,4 @@
-import { logIn } from "../support/commands";
+import { logIn, makeGuess } from "../support/commands";
 
 describe('home page', () => {
     before(() => {
@@ -27,13 +27,10 @@ describe('home page', () => {
         it('should show payments disabled', () => {
             logIn({initialize: true});
 
-            let titles = ['Shrek', 'Shrek 2', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man']
+            const titles = ['Shrek', 'Shrek 2', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
 
             for (const title of titles) {
-                cy.getByDataTestId('guess-input').type(title);
-                cy.getByDataTestId('submit-button').click();
-
-                cy.getByDataTestId('guess-0-title').should('have.text', title);
+                makeGuess(title);
             }
 
             cy.getByDataTestId('visualclue-button').should('have.text', 'view visual clue');

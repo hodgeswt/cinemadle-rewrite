@@ -1,0 +1,35 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  setup:
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - deno install
+    sources:
+      - package.json
+      - package-lock.json
+      - deno.lock
+    desc: "Set up the development environment"
+
+  dev:
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - setup
+    cmds:
+      - deno task dev --open --host
+    desc: "Run the development servers for frontend and backend"
+
+  build:
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - setup
+    cmds:
+      - deno task build
+    sources:
+      - src/**
+      - static/**
+    desc: "Build the frontend project"

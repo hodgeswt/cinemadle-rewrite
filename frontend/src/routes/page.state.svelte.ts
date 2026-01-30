@@ -56,7 +56,6 @@ export class MainState {
 
                 if (a.ok) {
                     this.answer = a.data!;
-                    this.answerOpen.set(true);
                     return;
                 }
 

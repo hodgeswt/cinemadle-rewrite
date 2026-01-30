@@ -1,4 +1,4 @@
-import { getGuessCard, isoDateNoTime, logIn } from "../support/commands";
+import { getGuessCard, isoDateNoTime, logIn, makeGuess } from "../support/commands";
 
 describe('home page', () => {
     before(() => {
@@ -29,10 +29,7 @@ describe('home page', () => {
         });
 
         it('should render a guess', () => {
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
-
-            cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
+            makeGuess('Shrek 2');
             
             getGuessCard(0, 'YEAR').then((year) => {
                 year.name.should('have.text', 'YEAR');
@@ -83,16 +80,14 @@ describe('home page', () => {
 
         it('should decrement guess count', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
+            
+            makeGuess('Shrek 2');
 
-            cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
         });
 
         it('should remove guess from suggested', () => {
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
+            makeGuess('Shrek 2');
 
             cy.getByDataTestId('guess-input').type('Shrek');
             cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
@@ -105,10 +100,7 @@ describe('home page', () => {
         })
 
         it('should render a guess', () => {
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
-
-            cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
+            makeGuess('Shrek 2');
             
             getGuessCard(0, 'YEAR').then((year) => {
                 year.name.should('have.text', 'YEAR');
@@ -164,16 +156,14 @@ describe('home page', () => {
 
         it('should decrement guess count', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
+            
+            makeGuess('Shrek 2');
 
-            cy.getByDataTestId('guess-0-title').should('have.text', 'Shrek 2');
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
         });
 
         it('should remove guess from suggested', () => {
-            cy.getByDataTestId('guess-input').type('Shrek 2');
-            cy.getByDataTestId('submit-button').click();
+            makeGuess('Shrek 2');
 
             cy.getByDataTestId('guess-input').type('Shrek');
             cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');

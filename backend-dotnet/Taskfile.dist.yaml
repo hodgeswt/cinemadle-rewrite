@@ -1,0 +1,38 @@
+version: "3"
+
+tasks:
+  setup:
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - dotnet restore
+    sources:
+      - backend-dotnet.csproj
+    desc: "Set up the development environment"
+
+  build:
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - setup
+    cmds:
+      - dotnet build --no-restore
+    desc: "Build the backend project"
+  run:
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - build
+    env:
+      CINEMADLE_TEST_MODE: "true"
+    cmds:
+      - dotnet run --no-build
+    desc: "Run the backend project"
+  test:
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - build
+    cmds:
+      - cd ../backend-unittest && dotnet test
+    desc: "Run the backend unit tests"
+
+  default:
+    cmds:
+      - task --list

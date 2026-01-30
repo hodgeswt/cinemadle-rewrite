@@ -42,8 +42,36 @@ Cypress.Commands.add('customTask', (task: string) => {
 
 Cypress.Commands.add('init', () => {
     cy.visit('/');
-    cy.getByDataTestId('guess-input', {timeout: 10000}).should('exist');
+    
+    // Wait for the app to be fully loaded
+    cy.getByDataTestId('guess-input', {timeout: 10000})
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled');
 });
+
+// Helper to make a guess and wait for the response
+export const makeGuess = (guess: string, expectedTitle?: string) => {
+    // Intercept the guess API call (it's a GET request)
+    cy.intercept('GET', '**/api/cinemadle/guess/**').as('guessRequest');
+    
+    cy.getByDataTestId('guess-input')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .clear()
+        .type(guess);
+    
+    cy.getByDataTestId('submit-button')
+        .should('not.be.disabled')
+        .click();
+    
+    // Wait for the guess API to complete
+    cy.wait('@guessRequest');
+    
+    // Verify the guess appeared
+    const title = expectedTitle ?? guess;
+    cy.getByDataTestId('guess-0-title').should('have.text', title);
+};
 
 export const goToPage = (page: string) => {
     // Wait for menu button to be ready
@@ -136,7 +164,9 @@ export type GuessCardData = {
 export const getGuessCard = (cardId: number, category: string) => {
     // Start the chain with cy.wrap to ensure we're in Cypress land
     return cy.wrap(null).then(() => {
-        return cy.contains(category.toUpperCase())
+        // Use a more specific selector to avoid matching hints-display elements
+        return cy.get(`[data-testid^="card-${cardId}-"]`)
+            .contains(category.toUpperCase())
             .invoke('attr', 'data-testid')
             .then(x => {
                 const splits = (x as string).split('-');
@@ -147,7 +177,8 @@ export const getGuessCard = (cardId: number, category: string) => {
 
                 return cy.get(`[data-testid^="card-${cardId}-${cardIndex}-tiledata"]`).then($tiledata => {
                     return cy.wrap({
-                        className: cy.contains(category.toUpperCase())
+                        className: cy.get(`[data-testid^="card-${cardId}-"]`)
+                            .contains(category.toUpperCase())
                             .parent()
                             .parent()
                             .invoke('attr', 'class'),

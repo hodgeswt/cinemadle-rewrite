@@ -7,10 +7,11 @@
     import { Menu, Sun, Moon } from "@lucide/svelte";
     import { onMount } from "svelte";
 
-    const { showEmail = false, showDate = false, customGameId = null } = $props<{
+    const { showEmail = false, showDate = false, customGameId = null, lose = false } = $props<{
         showEmail?: boolean;
         showDate?: boolean;
         customGameId?: string | null;
+        lose?: boolean;
     }>();
 
     let paymentsEnabled = $state(false);
@@ -27,7 +28,7 @@
 
 <div class="w-full flex justify-between items-center">
     <div class="flex-1 flex items-center gap-3">
-        <h1 class="text-4xl font-extrabold leading-none tracking-tight {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc]' : 'bg-gradient-to-r from-green-500 to-green-600'} bg-clip-text text-transparent" data-testid="cinemadle-title">
+        <h1 class="text-4xl font-extrabold leading-none tracking-tight {lose ? ($isDarkMode ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-red-500 to-red-600') : ($isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc]' : 'bg-gradient-to-r from-green-500 to-green-600')} bg-clip-text text-transparent" data-testid="cinemadle-title">
             cinemadle
         </h1>
        
@@ -113,7 +114,7 @@
  {#if showDate}
     <span 
         class="inline-block rounded-full px-3 py-1 text-base font-semibold
-            {$isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc] text-gray-500' : 'bg-gradient-to-r from-green-500 via-green-400 to-green-600'} border-gray-200 dark:border-gray-700 mb-2"
+            {lose ? ($isDarkMode ? 'bg-gradient-to-r from-red-400 to-red-600 text-white' : 'bg-gradient-to-r from-red-500 via-red-400 to-red-600') : ($isDarkMode ? 'bg-gradient-to-r from-[#00ff88] to-[#00ffcc] text-gray-500' : 'bg-gradient-to-r from-green-500 via-green-400 to-green-600')} border-gray-200 dark:border-gray-700 mb-2"
         data-testid="cinemadle-date"
     >
         {customGameId ? `Custom Game: ${customGameId}` : isoDateNoTime()}
