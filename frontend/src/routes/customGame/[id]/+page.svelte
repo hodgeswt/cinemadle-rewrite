@@ -308,25 +308,25 @@
                 {#if pageState.visualClueCount > 0 || !pageState.paymentsEnabled}
                     <div
                         class="mb-4 p-4 {$isDarkMode 
-                            ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                            : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                            ? (pageState.lose ? 'border-red-800' : 'border-indigo-800') 
-                            : (pageState.lose ? 'border-red-200' : 'border-indigo-200')}"
+                            ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : pageState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
+                            : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : pageState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
+                            ? (pageState.lose ? 'border-red-800' : pageState.win ? 'border-green-800' : 'border-indigo-800') 
+                            : (pageState.lose ? 'border-red-200' : pageState.win ? 'border-green-200' : 'border-indigo-200')}"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : 'text-indigo-600')} />
+                                <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : pageState.win ? 'text-green-600' : 'text-indigo-600')} />
                                 <span
-                                    class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : 'text-indigo-400')}"
+                                    class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : pageState.win ? 'text-green-400' : 'text-indigo-400')}"
                                     data-testid="customgame-hint-text"
-                                    >{pageState.lose ? 'needed a hint?' : 'need a hint?'} {pageState.paymentsEnabled ? `(remaining: ${pageState.visualClueCount})` : ""}</span
+                                    >{pageState.lose ? 'needed a hint?' : pageState.win ? 'needed a hint?' : 'need a hint?'} {pageState.paymentsEnabled ? `(remaining: ${pageState.visualClueCount})` : ""}</span
                                 >
                             </div>
                             <Button
                                 onclick={showVisualClue}
                                 variant="secondary"
                                 size="sm"
-                                class="{pageState.lose ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
+                                class="{pageState.lose ? 'bg-red-600 hover:bg-red-700' : pageState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
                                 data-testid="customgame-visualclue-button"
                             >
                                 view visual clue
@@ -336,24 +336,24 @@
                 {:else}
                     <div
                         class="mb-4 p-4 {$isDarkMode 
-                            ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                            : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                            ? (pageState.lose ? 'border-red-800' : 'border-indigo-800') 
-                            : (pageState.lose ? 'border-red-200' : 'border-indigo-200')}"
+                            ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : pageState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
+                            : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : pageState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
+                            ? (pageState.lose ? 'border-red-800' : pageState.win ? 'border-green-800' : 'border-indigo-800') 
+                            : (pageState.lose ? 'border-red-200' : pageState.win ? 'border-green-200' : 'border-indigo-200')}"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : 'text-indigo-400')} />
-                                <span class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : 'text-indigo-400')}"
+                                <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : pageState.win ? 'text-green-400' : 'text-indigo-400')} />
+                                <span class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : pageState.win ? 'text-green-400' : 'text-indigo-400')}"
                                     data-testid="customgame-hint-text"
-                                    >{pageState.lose ? 'needed a hint?' : 'need a hint?'}</span
+                                    >{pageState.lose ? 'needed a hint?' : pageState.win ? 'needed a hint?' : 'need a hint?'}</span
                                 >
                             </div>
                             <Button
                                 onclick={() => goto("/purchase")}
                                 variant="secondary"
                                 size="sm"
-                                class="{pageState.lose ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
+                                class="{pageState.lose ? 'bg-red-600 hover:bg-red-700' : pageState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
                                 data-testid="customgame-purchase-button"
                             >
                                 purchase visual clues
@@ -364,14 +364,14 @@
             {:else if pageState.visualClueCount !== -1}
                 <div
                     class="mb-4 p-4 {$isDarkMode 
-                        ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                        : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                        ? (pageState.lose ? 'border-red-800' : 'border-indigo-800') 
-                        : (pageState.lose ? 'border-red-200' : 'border-indigo-200')}"
+                        ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : pageState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
+                        : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : pageState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
+                        ? (pageState.lose ? 'border-red-800' : pageState.win ? 'border-green-800' : 'border-indigo-800') 
+                        : (pageState.lose ? 'border-red-200' : pageState.win ? 'border-green-200' : 'border-indigo-200')}"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : 'text-indigo-400')} />
+                            <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-400' : pageState.win ? 'text-green-400' : 'text-indigo-400')} />
                             <span class="text-sm {$isDarkMode ? 'text-white' : 'text-gray-700'}" data-testid="customgame-visualcluesremaining-text">
                                 visual clues remaining: {pageState.visualClueCount}
                             </span>
