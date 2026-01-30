@@ -260,10 +260,15 @@ public class CinemadleController : CinemadleControllerBase
         {
             IEnumerable<UserGuess> userGuesses = _db.AnonUserGuesses.Where(x => x.UserId == userId.ToString() && x.GameId == date).OrderBy(x => x.SequenceId);
 
-            if (userGuesses.Count() < _config.GameLength)
+            // Check if user has won
+            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
+
+            // Allow summary if user has completed the game OR won
+            if (userGuesses.Count() < _config.GameLength && !hasWon)
             {
-                _logger.LogDebug("-GetGameSummary({date}, {userId}): User tried summary gen on guess {guess}", date, userId, userGuesses.Count());
-                _logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
+                _logger.LogDebug("-GetGameSummaryAnon({date}, {userId}): User tried summary gen on guess {guess}", date, userId, userGuesses.Count());
+                _logger.LogDebug("-GetGameSummaryAnon({date}, {userId})", date, userId);
                 return new NotFoundResult();
             }
 
