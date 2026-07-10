@@ -1317,7 +1317,6 @@ public class CinemadleController : CinemadleControllerBase
             _db.AnonUsers.RemoveRange(_db.AnonUsers);
             _db.AnonUserGuesses.RemoveRange(_db.AnonUserGuesses);
             _db.UserClues.RemoveRange(_db.UserClues);
-            _db.Purchases.RemoveRange(_db.Purchases);
             _db.UserAccounts.RemoveRange(_db.UserAccounts);
             _db.CustomGames.RemoveRange(_db.CustomGames);
 

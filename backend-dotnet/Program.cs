@@ -82,7 +82,6 @@ public class Program
         builder.Services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();
         builder.Services.AddScoped<IGuessRepository, GuessRepository>();
         builder.Services.AddScoped<IHintRepository, HintRepository>();
-        builder.Services.AddScoped<IPaymentRepository, StripePaymentRepository>();
         builder.Services.AddScoped<CustomGameRemovalJob>();
 
         builder.Services.AddQuartz(qb =>

@@ -15,18 +15,6 @@ public enum CustomRoles
     Admin,
 }
 
-public enum PaymentService
-{
-    Stripe,
-}
-
-public enum PaymentStatus
-{
-    Pending,
-    Approved,
-    Declined,
-}
-
 public enum AddOn
 {
     VisualClue,
@@ -35,5 +23,6 @@ public enum AddOn
 
 public enum FeatureFlags
 {
-    PaymentsEnabled
+    PaymentsEnabled,
+    MigrateUsers
 }
