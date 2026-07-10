@@ -10,8 +10,6 @@ export class MainState {
     errorMessage = $state("");
     shareData = $state([] as string[]);
     searchOpen = $state(false);
-    visualCluesDecremented = $state(false);
-    visualClueCount = $state(0);
     loading = $state(true);
     guessServicePing = $state(0);
     serverDown = $state(false);
