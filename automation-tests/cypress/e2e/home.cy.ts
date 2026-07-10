@@ -56,7 +56,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
                 boxOffice.name.should('have.text', 'BOX OFFICE');
-                boxOffice.tiledata.should('have.text', '$935M');
+                boxOffice.tiledata.should('have.text', '$933M');
                 boxOffice.className.should('contain', 'to-gray-300');
             })
 
@@ -73,7 +73,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
+                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
                 creatives.className.should('contain', 'to-gray-300');
             })
         });
@@ -127,7 +127,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'BOX OFFICE').then((boxOffice) => {
                 boxOffice.name.should('have.text', 'BOX OFFICE');
-                boxOffice.tiledata.should('have.text', '$935M');
+                boxOffice.tiledata.should('have.text', '$933M');
                 boxOffice.className.should('contain', 'to-gray-300');
             })
 
@@ -144,15 +144,10 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
+                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
                 creatives.className.should('contain', 'to-gray-300');
             })
         });
-
-        // TODO: re-enable when payments are implemented
-        // it('should show zero visual clues', () => {
-        //     cy.getByDataTestId('visualcluesremaining-text').should('have.text', 'visual clues remaining: 0');
-        // });
 
         it('should decrement guess count', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')

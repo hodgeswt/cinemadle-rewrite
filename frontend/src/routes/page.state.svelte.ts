@@ -4,20 +4,16 @@ import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
 import { untrack } from "svelte";
 import { writable } from "svelte/store";
-import Logger from "$lib/logger";
 
 export class MainState {
     guessInput = $state("");
     errorMessage = $state("");
     shareData = $state([] as string[]);
     searchOpen = $state(false);
-    visualCluesDecremented = $state(false);
-    visualClueCount = $state(0);
     loading = $state(true);
     guessServicePing = $state(0);
     serverDown = $state(false);
     answer = $state(null as GuessDomain | null);
-    paymentsEnabled = $state(false);
 
     shareOpen = writable(false);
     visualClueOpen = writable(false);

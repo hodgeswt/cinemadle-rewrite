@@ -83,13 +83,13 @@ jobs:
         run: |
           curl -X POST http://localhost:5000/api/cinemadle/movielist
 
-      - name: Run E2E tests (excluding Stripe tests)
+      - name: Run E2E tests
         working-directory: automation-tests
         env:
           CYPRESS_HOSTNAME: http://localhost:8080
           CYPRESS_BACKEND_URL: http://localhost:5000
         run: |
-          npx cypress run --spec "cypress/e2e/about.cy.ts,cypress/e2e/home.cy.ts,cypress/e2e/homeNoPay.cy.ts,cypress/e2e/login.cy.ts,cypress/e2e/signup.cy.ts"
+          npx cypress run
 
       - name: Upload Cypress screenshots on failure
         if: failure()

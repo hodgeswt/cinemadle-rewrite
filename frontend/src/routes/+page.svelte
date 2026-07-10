@@ -23,7 +23,6 @@
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
     import VisualClue from "$lib/ui/VisualClue.svelte";
-    import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
     import { goto } from "$app/navigation";
     import Dialog from "$lib/ui/Dialog.svelte";
     import { MainState } from "./page.state.svelte";
@@ -31,9 +30,6 @@
     const mainState = new MainState();
 
     let guessService = (): IGuessService => Container.it().GuessService;
-    let purchasesService = (): PurchasesService => Container.it().PurchasesService;
-
-    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
 
     onMount(async () => {
         Logger.log("+page.svelte.onMount");
@@ -62,22 +58,6 @@
                         );
                     }
                 }
-
-                if (await paymentsEnabled) {
-                    let quantitiesResult = await purchasesService().getQuantities();
-                    mainState.paymentsEnabled = true;
-                    if (quantitiesResult.ok) {
-                        const q = quantitiesResult.data!.quantities;
-                        if ("VisualClue" in q) {
-                            mainState.visualClueCount = q["VisualClue"];
-                        }
-                    }
-                }
-                else {
-                    mainState.visualClueCount = -1;
-                    mainState.paymentsEnabled = false;
-                }
-                
             }
 
             while (!guessService().isInitialized()) {
@@ -185,10 +165,6 @@
     }
 
     function showVisualClue(_event: Event): void {
-        if (!mainState.visualCluesDecremented) {
-            mainState.visualClueCount -= 1;
-        }
-
         mainState.visualClueOpen.set(true);
     }
 
@@ -305,77 +281,31 @@
 
         {#if $userStore.loggedIn}
             {#if $guessStore.guesses.length >= 6}
-                {#if mainState.visualClueCount > 0 || !mainState.paymentsEnabled}
-                    <div
-                        class="mb-4 p-4 {$isDarkMode 
-                            ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                            : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                            ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800') 
-                            : (mainState.lose ? 'border-red-200' : mainState.win ? 'border-green-200' : 'border-indigo-200')}"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-600' : 'text-indigo-600')} />
-                                <span
-                                    class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
-                                    data-testid="hint-text"
-                                    >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'} {mainState.paymentsEnabled ? `(remaining: ${mainState.visualClueCount})` : ""}</span
-                                >
-                            </div>
-                            <Button
-                                onclick={showVisualClue}
-                                variant="secondary"
-                                size="sm"
-                                class="{mainState.lose ? 'bg-red-600 hover:bg-red-700' : mainState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
-                                data-testid="visualclue-button"
-                            >
-                                view visual clue
-                            </Button>
-                        </div>
-                    </div>
-                {:else}
-                    <div
-                        class="mb-4 p-4 {$isDarkMode 
-                            ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                            : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                            ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800') 
-                            : (mainState.lose ? 'border-red-200' : mainState.win ? 'border-green-200' : 'border-indigo-200')}"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-400' : mainState.win ? 'text-green-400' : 'text-indigo-400')} />
-                                <span class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-400' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
-                                    data-testid="hint-text"
-                                    >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'}</span
-                                >
-                            </div>
-                            <Button
-                                onclick={() => goto("/purchase")}
-                                variant="secondary"
-                                size="sm"
-                                class="{mainState.lose ? 'bg-red-600 hover:bg-red-700' : mainState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
-                                data-testid="purchase-button"
-                            >
-                                purchase visual clues
-                            </Button>
-                        </div>
-                    </div>
-                {/if}
-            {:else if mainState.visualClueCount !== -1}
                 <div
-                    class="mb-4 p-4 {$isDarkMode 
-                        ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
-                        : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode 
-                        ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800') 
+                    class="mb-4 p-4 {$isDarkMode
+                        ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800')
+                        : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode
+                        ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800')
                         : (mainState.lose ? 'border-red-200' : mainState.win ? 'border-green-200' : 'border-indigo-200')}"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-400' : mainState.win ? 'text-green-400' : 'text-indigo-400')} />
-                            <span class="text-sm {$isDarkMode ? 'text-white' : 'text-gray-700'}" data-testid="visualcluesremaining-text">
-                                visual clues remaining: {mainState.visualClueCount}
-                            </span>
+                            <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-600' : 'text-indigo-600')} />
+                            <span
+                                class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
+                                data-testid="hint-text"
+                                >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'}</span
+                            >
                         </div>
+                        <Button
+                            onclick={showVisualClue}
+                            variant="secondary"
+                            size="sm"
+                            class="{mainState.lose ? 'bg-red-600 hover:bg-red-700' : mainState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
+                            data-testid="visualclue-button"
+                        >
+                            view visual clue
+                        </Button>
                     </div>
                 </div>
             {/if}
