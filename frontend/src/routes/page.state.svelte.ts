@@ -4,7 +4,6 @@ import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
 import { untrack } from "svelte";
 import { writable } from "svelte/store";
-import Logger from "$lib/logger";
 
 export class MainState {
     guessInput = $state("");
@@ -17,7 +16,6 @@ export class MainState {
     guessServicePing = $state(0);
     serverDown = $state(false);
     answer = $state(null as GuessDomain | null);
-    paymentsEnabled = $state(false);
 
     shareOpen = writable(false);
     visualClueOpen = writable(false);

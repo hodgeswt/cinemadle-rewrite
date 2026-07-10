@@ -14,12 +14,7 @@
         lose?: boolean;
     }>();
 
-    let paymentsEnabled = $state(false);
     let menuOpen = $state(false);
-
-    onMount(async () => {
-        paymentsEnabled = await Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
-    });
 
     function toggleMenu() {
         menuOpen = !menuOpen;
@@ -72,14 +67,6 @@
                             >sign up</a
                         >
                     {:else}
-                        {#if paymentsEnabled}
-                            <a
-                                href="/purchase"
-                                class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
-                                data-testid="purchase-link"
-                                >purchase</a
-                            >
-                        {/if}
                         <a
                             href="/customCreate"
                             class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"

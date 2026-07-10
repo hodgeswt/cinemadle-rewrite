@@ -23,7 +23,6 @@
     import Header from "$lib/ui/Header.svelte";
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
     import VisualClue from "$lib/ui/VisualClue.svelte";
-    import type { PurchasesService } from "$lib/services/PurchasesService.svelte";
     import { goto } from "$app/navigation";
     import Dialog from "$lib/ui/Dialog.svelte";
     import { MainState } from "./page.state.svelte";
@@ -31,9 +30,6 @@
     const mainState = new MainState();
 
     let guessService = (): IGuessService => Container.it().GuessService;
-    let purchasesService = (): PurchasesService => Container.it().PurchasesService;
-
-    const paymentsEnabled = Container.it().FeatureFlagService.getFeatureFlag(FeatureFlags.PaymentsEnabled);
 
     onMount(async () => {
         Logger.log("+page.svelte.onMount");
@@ -63,21 +59,8 @@
                     }
                 }
 
-                if (await paymentsEnabled) {
-                    let quantitiesResult = await purchasesService().getQuantities();
-                    mainState.paymentsEnabled = true;
-                    if (quantitiesResult.ok) {
-                        const q = quantitiesResult.data!.quantities;
-                        if ("VisualClue" in q) {
-                            mainState.visualClueCount = q["VisualClue"];
-                        }
-                    }
-                }
-                else {
-                    mainState.visualClueCount = -1;
-                    mainState.paymentsEnabled = false;
-                }
                 
+                mainState.visualClueCount = -1;
             }
 
             while (!guessService().isInitialized()) {
@@ -305,7 +288,7 @@
 
         {#if $userStore.loggedIn}
             {#if $guessStore.guesses.length >= 6}
-                {#if mainState.visualClueCount > 0 || !mainState.paymentsEnabled}
+                {#if mainState.visualClueCount > 0}
                     <div
                         class="mb-4 p-4 {$isDarkMode 
                             ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800') 
@@ -319,7 +302,7 @@
                                 <span
                                     class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
                                     data-testid="hint-text"
-                                    >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'} {mainState.paymentsEnabled ? `(remaining: ${mainState.visualClueCount})` : ""}</span
+                                    >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'}</span
                                 >
                             </div>
                             <Button

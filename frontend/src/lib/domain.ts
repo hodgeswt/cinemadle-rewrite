@@ -19,7 +19,6 @@ export type CardDomain = {
 };
 
 export enum FeatureFlags {
-    PaymentsEnabled = "PaymentsEnabled"
 }
 
 export type CustomGameCreateDomain = {
