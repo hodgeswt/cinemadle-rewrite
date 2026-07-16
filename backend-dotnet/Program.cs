@@ -86,14 +86,24 @@ public class Program
 
         builder.Services.AddQuartz(qb =>
         {
-            JobKey jobKey = new(nameof(CustomGameRemovalJob));
-            qb.AddJob<CustomGameRemovalJob>(opts => opts.WithIdentity(jobKey));
+            JobKey customGameRemovalJobKey = new(nameof(CustomGameRemovalJob));
+            JobKey emailAnonymizationJobKey = new(nameof(EmailAnonymizationJob));
+            
+            qb.AddJob<CustomGameRemovalJob>(opts => opts.WithIdentity(customGameRemovalJobKey));
             qb.AddTrigger(opts => opts
-                .ForJob(jobKey)
+                .ForJob(customGameRemovalJobKey)
                 .WithIdentity($"{nameof(CustomGameRemovalJob)}-trigger")
                 .WithSimpleSchedule(x => x
                     .WithInterval(TimeSpan.FromHours(24))
                     .RepeatForever()));
+            
+            qb.AddJob<EmailAnonymizationJob>(opts => opts.WithIdentity(emailAnonymizationJobKey));
+            qb.AddTrigger(opts => opts
+                .ForJob(emailAnonymizationJobKey)
+                .WithIdentity($"{nameof(EmailAnonymizationJob)}-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithRepeatCount(0)
+                ));
         });
 
         builder.Services.AddAuthorizationBuilder()

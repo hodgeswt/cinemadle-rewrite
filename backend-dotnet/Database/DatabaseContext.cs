@@ -13,8 +13,8 @@ public class DatabaseContext : DbContext
     public DbSet<UserAccount> UserAccounts { get; set; }
     public DbSet<CustomGame> CustomGames { get; set; }
     public DbSet<UserHint> UserHints { get; set; }
-
     public DbSet<Statistic> Statistics { get; set; }
+    public DbSet<OneTimeJob> OneTimeJobs { get; set; }
     public string DbPath { get; set; }
 
     public DatabaseContext(DbContextOptions<DatabaseContext> opts) : base(opts)
