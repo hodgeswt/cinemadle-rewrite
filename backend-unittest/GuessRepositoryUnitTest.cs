@@ -27,10 +27,10 @@ public class GuessRepositoryUnitTest
                 new() { Name = "Cameron Diaz", Role = "Cast" }
             ],
             Creatives = [
-                new() { Name = "Andrew Adamson", Role = "Director" },
-                new() { Name = "Andrew Adamson", Role = "Writer" },
+                new() { Name = "Conrad Vernon", Role = "Director" },
+                new() { Name = "Conrad Vernon", Role = "Writer" },
             ],
-            BoxOffice = 935000000,
+            BoxOffice = 933000000,
             Year = "2004",
             Rating = Rating.PG,
         };

@@ -7,13 +7,13 @@ namespace Cinemadle.Jobs;
 public class CustomGameRemovalJob(IServiceProvider serviceProvider) : IJob
 {
     private readonly string _key = "CustomGameRemovalJob";
-    private readonly IServiceProvider _serviceProvider = serviceProvider;
+
     public Task Execute(IJobExecutionContext context)
     {
         ILogger<CustomGameRemovalJob>? logger = null;
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
 
             logger = scope.ServiceProvider.GetRequiredService<ILogger<CustomGameRemovalJob>>();
             DatabaseContext dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
