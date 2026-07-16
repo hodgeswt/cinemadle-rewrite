@@ -7,7 +7,7 @@ namespace Cinemadle.Jobs;
 
 public class EmailAnonymizationJob(IdentityContext identityContext, DatabaseContext dbContext, ILogger<EmailAnonymizationJob> logger) : IJob
 {
-    private const string JobName = nameof(EmailAnonymizationJob);
+    public const string JobName = nameof(EmailAnonymizationJob);
 
     public static string Anonymize(string? email)
     {

@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
+using Quartz;
 
 namespace Cinemadle.UnitTest;
 

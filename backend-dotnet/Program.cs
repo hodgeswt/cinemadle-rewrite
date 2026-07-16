@@ -73,7 +73,9 @@ public class Program
 
         builder.Services.AddMemoryCache();
 
-        builder.Services.AddDbContext<DatabaseContext>();
+        var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
+
+        builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(DatabaseContext.CreateDbConnectionString(dbConnectionString)));
         builder.Services.AddDbContext<IdentityContext>();
 
         builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
@@ -104,6 +106,11 @@ public class Program
                 .WithSimpleSchedule(x => x
                     .WithRepeatCount(0)
                 ));
+        });
+        
+        builder.Services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
         });
 
         builder.Services.AddAuthorizationBuilder()

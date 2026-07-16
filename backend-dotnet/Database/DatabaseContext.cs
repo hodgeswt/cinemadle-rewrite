@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Database;
 
-public class DatabaseContext : DbContext
+public class DatabaseContext(DbContextOptions<DatabaseContext> opts) : DbContext(opts)
 {
     public DbSet<UserGuess> Guesses { get; set; }
     public DbSet<TargetMovie> TargetMovies { get; set; }
@@ -15,24 +15,24 @@ public class DatabaseContext : DbContext
     public DbSet<UserHint> UserHints { get; set; }
     public DbSet<Statistic> Statistics { get; set; }
     public DbSet<OneTimeJob> OneTimeJobs { get; set; }
-    public string DbPath { get; set; }
-
-    public DatabaseContext(DbContextOptions<DatabaseContext> opts) : base(opts)
-    {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        string path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "AppData", "cinemadle.db");
-    }
-
     public DatabaseContext() : this(new DbContextOptions<DatabaseContext>())
     {
     }
 
+    public static string CreateDbConnectionString(string configuration)
+    {
+        if (!string.IsNullOrWhiteSpace(configuration)) return configuration;
+        
+        const Environment.SpecialFolder folder = Environment.SpecialFolder.LocalApplicationData;
+        var path = Environment.GetFolderPath(folder);
+        return $"DataSource={Path.Join(path, "AppData", "cinemadle.db")}";
+    }
+    
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlite($"DataSource={DbPath}");
+            optionsBuilder.UseSqlite(CreateDbConnectionString(string.Empty));
         }
     }
 }
