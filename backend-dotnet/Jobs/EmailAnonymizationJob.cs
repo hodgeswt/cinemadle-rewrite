@@ -42,7 +42,11 @@ public class EmailAnonymizationJob(IdentityContext identityContext, DatabaseCont
                     continue;
                 }
 
-                user.Email = Anonymize(user.Email);
+                var anonymizedEmail = Anonymize(user.Email);
+                user.Email = anonymizedEmail;
+                user.NormalizedEmail = anonymizedEmail;
+                user.UserName = anonymizedEmail;
+                user.NormalizedUserName = anonymizedEmail;
             }
 
             identityContext.SaveChanges();

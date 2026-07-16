@@ -30,7 +30,7 @@ public class EmailAnonymizationUnitTests
         using var db = Mocks.GetDatabaseContext();
         using var identityDb = Mocks.GetIdentityContext();
 
-        var users = emails.Select(email => new IdentityUser { Email = email }).ToList();
+        var users = emails.Select(email => new IdentityUser { Email = email, UserName = email, NormalizedEmail = email, NormalizedUserName = email }).ToList();
         identityDb.Users.AddRange(users);
         identityDb.SaveChanges();
         
@@ -45,6 +45,9 @@ public class EmailAnonymizationUnitTests
         var jobStatus = db.OneTimeJobs.Where(x => x.JobName == EmailAnonymizationJob.JobName).Select(x => x.Completed).FirstOrDefault();
         
         Assert.Equivalent(anonymizedEmails, identityDb.Users.Select(u => u.Email));
+        Assert.Equivalent(anonymizedEmails, identityDb.Users.Select(u => u.NormalizedEmail));
+        Assert.Equivalent(anonymizedEmails, identityDb.Users.Select(u => u.UserName));
+        Assert.Equivalent(anonymizedEmails, identityDb.Users.Select(u => u.NormalizedUserName));
         Assert.True(jobStatus);
     }
     
@@ -56,7 +59,7 @@ public class EmailAnonymizationUnitTests
         
         const string testEmail = "test@test.com";
         
-        identityDb.Users.Add(new IdentityUser { Email = testEmail });
+        identityDb.Users.Add(new IdentityUser { Email = testEmail, UserName = testEmail, NormalizedEmail = testEmail, NormalizedUserName = testEmail });
         identityDb.SaveChanges();
         
         Assert.Single(identityDb.Users);
@@ -73,5 +76,8 @@ public class EmailAnonymizationUnitTests
         job.Execute(Mock.Of<IJobExecutionContext>()).Wait();
         
         Assert.Equal(testEmail, identityDb.Users.Single().Email);
+        Assert.Equal(testEmail, identityDb.Users.Single().NormalizedEmail);
+        Assert.Equal(testEmail, identityDb.Users.Single().UserName);
+        Assert.Equal(testEmail, identityDb.Users.Single().NormalizedUserName);
     }
 }
