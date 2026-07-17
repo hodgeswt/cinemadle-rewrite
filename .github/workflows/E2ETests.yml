@@ -46,8 +46,8 @@ jobs:
       - name: Setup config directory
         run: |
           mkdir -p ./volumes || true
-          echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ./backend-dotnet/appsettings.json
-          chmod 644 ./backend-dotnet/appsettings.json
+          echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ./volumes/appsettings.json
+          chmod 644 ./volumes/appsettings.json
           chmod 777 ./volumes
 
       - name: Set up + start Cinemadle
