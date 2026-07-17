@@ -359,4 +359,18 @@ public class TmdbRepository : ITmdbRepository
     {
         RiggedMovie = null;
     }
+
+    public async Task<bool> ValidateApiKey()
+    {
+        try
+        {
+            var config = await _tmdbClient.GetConfigAsync();
+            return config?.Images is not null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Invalid TMDB configuration");
+            return false;
+        }
+    }
 }

@@ -12,4 +12,5 @@ public interface ITmdbRepository
     public Task<byte[]?> GetMovieImageById(int id);
     public void RigMovie(int id);
     public void UnrigMovie();
+    public Task<bool> ValidateApiKey();
 }

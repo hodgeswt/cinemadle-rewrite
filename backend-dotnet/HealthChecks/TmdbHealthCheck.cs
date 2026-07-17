@@ -9,11 +9,7 @@ public class TmdbHealthCheck(ITmdbRepository tmdbRepository) : IHealthCheck
     {
         try
         {
-            const int movieId = 1924;
-            var movie = await tmdbRepository.GetMovieById(movieId);
-            var healthy = movie?.Id == movieId;
-
-            return healthy
+            return await tmdbRepository.ValidateApiKey()
                 ? HealthCheckResult.Healthy()
                 : HealthCheckResult.Unhealthy();
         }
