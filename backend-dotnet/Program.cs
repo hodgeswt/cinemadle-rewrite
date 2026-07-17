@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using NLog.Extensions.Logging;
 using Cinemadle.Jobs;
+using Cinemadle.ServiceExtensions;
 using Quartz;
 using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
@@ -15,149 +16,29 @@ namespace Cinemadle;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    private static void MigrateDatabases(IServiceScope scope, ILogger<Program> logger)
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(opts =>
-        {
-            opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Description = "Cinemadle JWT",
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            });
-
-            opts.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
-            {
-                [new OpenApiSecuritySchemeReference("bearer", document)] = []
-            });
-        });
-
-        builder.Services.AddCors(opts =>
-        {
-            opts.AddPolicy("AllowFrontend",
-                p =>
-                {
-                    if (builder.Environment.IsDevelopment())
-                    {
-                        p.AllowAnyOrigin()
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
-                    }
-                    else
-                    {
-                        p.WithOrigins("https://cinemadle.com")
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
-                    }
-                    
-                });
-        });
-
-        builder.Services.Configure<ForwardedHeadersOptions>(opts =>
-        {
-            opts.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
-            opts.KnownIPNetworks.Clear();
-            opts.KnownProxies.Clear();
-        });
-
-        builder.Services.AddControllers()
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
-
-        builder.Services.AddMemoryCache();
-
-        var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
-
-        builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(DatabaseContext.CreateDbConnectionString(dbConnectionString)));
-        builder.Services.AddDbContext<IdentityContext>();
-
-        builder.Services.AddSingleton<IConfigRepository, ConfigRepository>();
-        builder.Services.AddSingleton<ICacheRepository, CacheRepository>();
-        builder.Services.AddScoped<ITmdbRepository, TmdbRepository>();
-        builder.Services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();
-        builder.Services.AddScoped<IGuessRepository, GuessRepository>();
-        builder.Services.AddScoped<IHintRepository, HintRepository>();
-        builder.Services.AddScoped<CustomGameRemovalJob>();
-
-        builder.Services.AddQuartz(qb =>
-        {
-            JobKey customGameRemovalJobKey = new(nameof(CustomGameRemovalJob));
-            JobKey emailAnonymizationJobKey = new(nameof(EmailAnonymizationJob));
-            
-            qb.AddJob<CustomGameRemovalJob>(opts => opts.WithIdentity(customGameRemovalJobKey));
-            qb.AddTrigger(opts => opts
-                .ForJob(customGameRemovalJobKey)
-                .WithIdentity($"{nameof(CustomGameRemovalJob)}-trigger")
-                .WithSimpleSchedule(x => x
-                    .WithInterval(TimeSpan.FromHours(24))
-                    .RepeatForever()));
-            
-            qb.AddJob<EmailAnonymizationJob>(opts => opts.WithIdentity(emailAnonymizationJobKey));
-            qb.AddTrigger(opts => opts
-                .ForJob(emailAnonymizationJobKey)
-                .WithIdentity($"{nameof(EmailAnonymizationJob)}-trigger")
-                .WithSimpleSchedule(x => x
-                    .WithRepeatCount(0)
-                ));
-        });
+        logger.LogInformation("Ensuring databases are created");
         
-        builder.Services.AddQuartzHostedService(options =>
-        {
-            options.WaitForJobsToComplete = true;
-        });
-
-        builder.Services.AddAuthorizationBuilder()
-            .AddPolicy("Admin", policy =>
-                policy.RequireClaim(ClaimTypes.Role, nameof(CustomRoles.Admin)));
-
-        builder.Services.AddIdentityApiEndpoints<IdentityUser>()
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<IdentityContext>();
-
-        NLog.LogManager.Configuration = new NLogLoggingConfiguration(builder.Configuration.GetSection("NLog"));
-
-        builder.Services.AddLogging(l =>
-        {
-            l.ClearProviders();
-            l.AddNLog();
-        });
-
-        var app = builder.Build();
-
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("cinemadle started at {Time}", DateTime.UtcNow);
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-            app.UseDeveloperExceptionPage();
-        }
-
-        logger.LogInformation("Ensuring database is created");
-        using var scope = app.Services.CreateScope();
-        DatabaseContext db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
-        logger.LogInformation("Database ensured created");
-        logger.LogInformation("Ensuring identity database is created");
-        IdentityContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
+        logger.LogInformation("DbContext created");
+        
+        var identityDb = scope.ServiceProvider.GetRequiredService<IdentityContext>();
         identityDb.Database.Migrate();
-        logger.LogInformation("Identity database ensured created");
+        
+        logger.LogInformation("IdentityContext created");
+    }
 
+    private static async Task CreateRoles(IServiceScope scope, ILogger<Program> logger)
+    {
         logger.LogInformation("Ensuring roles are created");
+        
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        foreach (CustomRoles customRole in Enum.GetValues<CustomRoles>())
+        foreach (var customRole in Enum.GetValues<CustomRoles>())
         {
-            string roleName = customRole.ToString();
+            var roleName = customRole.ToString();
             if (!await roleManager.RoleExistsAsync(roleName))
             {
                 logger.LogInformation("Creating role {RoleName}", roleName);
@@ -168,17 +49,18 @@ public class Program
                 logger.LogInformation("Role {RoleName} already exists", roleName);
             }
         }
+    }
 
-        logger.LogInformation("Roles ensured created");
-        logger.LogInformation("Checking for admin user assignment");
-        string? adminEmail = Environment.GetEnvironmentVariable("CINEMADLE_ADMIN_EMAIL");
+    private static async Task SetupAdmin(IServiceScope scope, ILogger<Program> logger)
+    {
+        var adminEmail = Environment.GetEnvironmentVariable("CINEMADLE_ADMIN_EMAIL");
 
         if (!string.IsNullOrWhiteSpace(adminEmail))
         {
             logger.LogInformation("Admin email found");
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-            IdentityUser? admin = await userManager.FindByEmailAsync(adminEmail);
+            var admin = await userManager.FindByEmailAsync(adminEmail);
             if (admin is not null && !await userManager.IsInRoleAsync(admin, nameof(CustomRoles.Admin)))
             {
                 logger.LogInformation("Assigning admin role to user with email");
@@ -189,19 +71,64 @@ public class Program
                 logger.LogInformation("Admin user not found or already assigned");
             }
         }
+        else
+        {
+            logger.LogInformation("No admin to configure");
+        }
+    }
+    
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        
+        var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
+        var logConfiguration = builder.Configuration.GetSection("NLog");
+
+        builder.Services
+            .AddCinemadleOpenApi()
+            .AddCinemadleCors(builder.Environment.IsDevelopment())
+            .ForwardHeaders()
+            .AddMemoryCache()
+            .RegisterCinemadleServices(dbConnectionString)
+            .SetupCinemadleQuartz()
+            .SetupCinemadleAuthIdent()
+            .SetupCinemadleLogging(logConfiguration)
+            .AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+
+        var app = builder.Build();
+
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            app.UseDeveloperExceptionPage();
+        }
+
+        using var scope = app.Services.CreateScope();
+
+        MigrateDatabases(scope, logger);
+        await CreateRoles(scope, logger);
+        await SetupAdmin(scope, logger);
 
         if (!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
         }
+        
         app.UseAuthorization();
         app.MapGroup("/api/cinemadle")
            .MapIdentityApi<IdentityUser>();
         app.MapControllers();
         app.UseCors("AllowFrontend");
 
-        logger.LogInformation("Starting application");
-        app.Run();
+        logger.LogInformation("cinemadle started at {Time}", DateTime.UtcNow);
+        await app.RunAsync();
     }
 }
 
