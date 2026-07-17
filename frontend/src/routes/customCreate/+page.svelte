@@ -1,12 +1,9 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
-	import { goto } from "$app/navigation";
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import { createCustomGame, PING_LIMIT } from "$lib/middleware";
 	import { Container, type IGuessService } from "$lib/services";
-	import { userStore } from "$lib/stores";
 	import { isDarkMode } from "$lib/stores/theme";
 	import Header from "$lib/ui/Header.svelte";
 	import PageWrapper from "$lib/ui/PageWrapper.svelte";
@@ -39,13 +36,6 @@
 			.slice(0, suggestionsLimit);
 
 	onMount(async () => {
-		if (!$userStore.loggedIn) {
-			if (browser) {
-				goto("/");
-			}
-			return;
-		}
-
 		while (!guessService().isInitialized()) {
 			if (pingCount === PING_LIMIT) {
 				serverDown = true;
@@ -185,7 +175,8 @@
 
 		creating = true;
 
-		const result = await createCustomGame(id, $userStore.jwt);
+		const anonUserId = localStorage.getItem('anonUserId') ?? crypto.randomUUID();
+		const result = await createCustomGame(id, anonUserId);
 
 		creating = false;
 

@@ -12,6 +12,7 @@ export abstract class GuessServiceShared implements IGuessService {
     static unableToGetPreviousError = "unable to get previous guesses. try again later.";
     static unableToLoadImageError = "unable to load visual clue.";
     static unableToLoadGameSummaryError = "unable to load game summary.";
+    static unableToGetBrowserId = "unable to get uninque browser id.";
 
     private _initialized;
     protected _possibleGuesses: PossibleMediaDomain = {};

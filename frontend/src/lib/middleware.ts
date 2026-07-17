@@ -1,7 +1,7 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "./domain";
-import { isLoginDto, isGameSummaryDto, isImageDto, isHintsResponseDto, type GameSummaryDto, type ImageDto, type HintsResponseDto } from "./dto";
+import { isGameSummaryDto, isImageDto, isHintsResponseDto, type GameSummaryDto, type ImageDto, type HintsResponseDto } from "./dto";
 import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
@@ -74,27 +74,8 @@ export async function getPossibleMovies(): Promise<Result<PossibleMediaDomain>> 
     }
 }
 
-export async function validateAndRefreshToken(userToken: string, refreshToken: string): Promise<Result<string>> {
-    const data = await get("validate", null, { "Authorization": userToken });
-
-    if (data.ok && data.data! === "true") {
-        return ok("");
-    }
-
-    const refresh = await post("refresh", true, { refreshToken: refreshToken });
-
-    if (refresh.ok) {
-        const j = JSON.parse(refresh.data!)
-        if (isLoginDto(j)) {
-            return ok(refresh.data!);
-        }
-    }
-
-    return err("unable to login or refresh");
-}
-
-export async function loadPreviousGuesses(userToken: string): Promise<Result<number[]>> {
-    const data = await get("guesses", { date: isoDateNoTime() }, { "Authorization": userToken })
+export async function loadPreviousGuesses(userId: string): Promise<Result<number[]>> {
+    const data = await get("guesses", { date: isoDateNoTime() }, { "X-Cinemadle-UserId": userId })
 
     if (!data.ok) {
         return err(data.error!)
@@ -104,8 +85,8 @@ export async function loadPreviousGuesses(userToken: string): Promise<Result<num
     return ok(JSON.parse(raw))
 }
 
-export async function loadCustomGamePreviousGuesses(customGameId: string, userToken: string): Promise<Result<number[]>> {
-    const data = await get(`custom/${customGameId}/guesses`, null, { "Authorization": userToken });
+export async function loadCustomGamePreviousGuesses(customGameId: string, userId: string): Promise<Result<number[]>> {
+    const data = await get(`custom/${customGameId}/guesses`, null, { "X-Cinemadle-UserId": userId });
 
     if (!data.ok) {
         return err(data.error!);
@@ -124,7 +105,7 @@ export async function loadCustomGamePreviousGuesses(customGameId: string, userTo
     }
 }
 
-export async function createCustomGame(movieId: number, userToken: string): Promise<Result<CustomGameDomain>> {
+export async function createCustomGame(movieId: number, userId: string): Promise<Result<CustomGameDomain>> {
     Logger.log("middleware.createCustomGame: movieId {0}", movieId);
 
     const customGameCreate: CustomGameCreateDomain = { id: movieId };
@@ -140,8 +121,8 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
         false,
         JSON.stringify(dtoResult.data),
         {
-            "Authorization": userToken,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-Cinemadle-UserId": userId
         }
     );
 
@@ -168,10 +149,10 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
     }
 }
 
-export async function getCustomGame(customGameId: string, userToken: string): Promise<Result<CustomGameDomain>> {
+export async function getCustomGame(customGameId: string, userId: string): Promise<Result<CustomGameDomain>> {
     Logger.log("middleware.getCustomGame: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}`, null, { "Authorization": userToken });
+    const result = await get(`custom/${customGameId}`, null, { "X-Cinemadle-UserId": userId });
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGame: request failed {0}", result.error);
@@ -194,10 +175,10 @@ export async function getCustomGame(customGameId: string, userToken: string): Pr
     }
 }
 
-export async function getCustomGameSummary(customGameId: string, userToken: string): Promise<Result<GameSummaryDto>> {
+export async function getCustomGameSummary(customGameId: string, userId: string): Promise<Result<GameSummaryDto>> {
     Logger.log("middleware.getCustomGameSummary: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/gameSummary`, null, { "Authorization": userToken });
+    const result = await get(`custom/${customGameId}/gameSummary`, null, { "X-Cinemadle-UserId": userId });
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameSummary: request failed {0}", result.error);
@@ -218,10 +199,10 @@ export async function getCustomGameSummary(customGameId: string, userToken: stri
     }
 }
 
-export async function getCustomGameAnswer(customGameId: string, userToken: string): Promise<Result<GuessDomain>> {
+export async function getCustomGameAnswer(customGameId: string, userId: string): Promise<Result<GuessDomain>> {
     Logger.log("middleware.getCustomGameAnswer: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/target`, null, { "Authorization": userToken });
+    const result = await get(`custom/${customGameId}/target`, null, { "X-Cinemadle-UserId": userId });
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameAnswer: request failed {0}", result.error);
@@ -244,10 +225,10 @@ export async function getCustomGameAnswer(customGameId: string, userToken: strin
     }
 }
 
-export async function getCustomGameVisualClue(customGameId: string, userToken: string): Promise<Result<ImageDto>> {
+export async function getCustomGameVisualClue(customGameId: string, userId: string): Promise<Result<ImageDto>> {
     Logger.log("middleware.getCustomGameVisualClue: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/target/image`, null, { "Authorization": userToken });
+    const result = await get(`custom/${customGameId}/target/image`, null, { "X-Cinemadle-UserId": userId });
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameVisualClue: request failed {0}", result.error);
@@ -268,34 +249,10 @@ export async function getCustomGameVisualClue(customGameId: string, userToken: s
     }
 }
 
-export async function getHints(userToken: string): Promise<Result<HintsResponseDto>> {
-    Logger.log("middleware.getHints");
-
-    const result = await get("hints", { date: isoDateNoTime() }, { "Authorization": userToken });
-
-    if (!result.ok) {
-        Logger.log("middleware.getHints: request failed {0}", result.error);
-        return err(result.error!);
-    }
-
-    try {
-        const parsed = JSON.parse(result.data!);
-        if (!isHintsResponseDto(parsed)) {
-            Logger.log("middleware.getHints: invalid payload {0}", parsed);
-            return err("Invalid hints data");
-        }
-
-        return ok(parsed);
-    } catch (e) {
-        Logger.log("middleware.getHints: failed to parse response {0}", JSON.stringify(e));
-        return err("Invalid hints data");
-    }
-}
-
 export async function getHintsAnon(anonUserId: string): Promise<Result<HintsResponseDto>> {
     Logger.log("middleware.getHintsAnon: {0}", anonUserId);
 
-    const result = await get("hints/anon", { date: isoDateNoTime(), userId: anonUserId });
+    const result = await get("hints", { date: isoDateNoTime() }, { "X-Cinemadle-UserId": anonUserId });
 
     if (!result.ok) {
         Logger.log("middleware.getHintsAnon: request failed {0}", result.error);
@@ -316,10 +273,10 @@ export async function getHintsAnon(anonUserId: string): Promise<Result<HintsResp
     }
 }
 
-export async function getHintsCustomGame(customGameId: string, userToken: string): Promise<Result<HintsResponseDto>> {
+export async function getHintsCustomGame(customGameId: string, userId: string): Promise<Result<HintsResponseDto>> {
     Logger.log("middleware.getHintsCustomGame: {0}", customGameId);
 
-    const result = await get(`hints/custom/${customGameId}`, null, { "Authorization": userToken });
+    const result = await get(`hints/custom/${customGameId}`, null, { "X-Cinemadle-UserId": userId });
 
     if (!result.ok) {
         Logger.log("middleware.getHintsCustomGame: request failed {0}", result.error);

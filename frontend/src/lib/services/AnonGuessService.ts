@@ -1,5 +1,5 @@
 import type { GuessDomain } from "$lib/domain";
-import { get } from "$lib/middleware";
+import { get, getCustomGameSummary as fetchCustomGameSummary } from "$lib/middleware";
 import { err, ok, type Result } from "$lib/result";
 import { isoDateNoTime } from "$lib/util";
 import type { IGuessService } from "./IGuessService";
@@ -17,43 +17,42 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
     }
 
     public async getGameSummary(customGameId?: string): Promise<Result<GameSummaryDto>> {
-        if (customGameId) {
-            Logger.log("AnonGuessService.getGameSummary(): custom games unsupported for anon users");
-            return err(GuessServiceShared.unableToLoadGameSummaryError);
+        const anonUserId = await this.getAnonUserId();
+        if (!anonUserId) {
+            return err(AnonGuessService.unableToGetBrowserId);
         }
 
-        const anonUserId = await this.getAnonUserId();
+        if (customGameId) {
+            const result = await fetchCustomGameSummary(customGameId, anonUserId);
 
-        if (anonUserId === undefined) {
-            return err(GuessServiceShared.unableToLoadGameSummaryError);
+            if (!result.ok) {
+                return err(AnonGuessService.unableToLoadGameSummaryError);
+            }
+
+            return ok(result.data!);
         }
 
         let result = await get(
-            '/gameSummary/anon',
-            { date: isoDateNoTime(), userId: anonUserId },
-            null
+            '/gameSummary',
+            { date: isoDateNoTime() },
+            { 'X-Cinemadle-UserId': anonUserId }
         );
 
         if (!result.ok) {
             Logger.log("AnonGuessService.getGameSummary(): got bad response from server")
-            return err(GuessServiceShared.unableToLoadGameSummaryError);
+            return err(AnonGuessService.unableToLoadGameSummaryError);
         }
 
         const data = JSON.parse(result.data!);
         if (!isGameSummaryDto(data)) {
             Logger.log("AnonGuessService.getGameSummary(): got invalid object {0}", data)
-            return err(GuessServiceShared.unableToLoadGameSummaryError);
+            return err(AnonGuessService.unableToLoadGameSummaryError);
         }
 
         return ok(data);
     }
 
     public async getVisualClue(customGameId?: string): Promise<Result<ImageDto>> {
-        if (customGameId) {
-            Logger.log("AnonGuessService.getVisualClue(): custom games unsupported for anon users");
-            return err(AnonGuessService.unableToLoadImageError);
-        }
-
         const anonUserId = await this.getAnonUserId();
 
         if (anonUserId === undefined) {
@@ -61,9 +60,9 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         }
 
         let result = await get(
-            '/target/image/anon',
-            { date: isoDateNoTime(), userId: anonUserId },
-            null,
+            '/target/image',
+            { date: isoDateNoTime() },
+            { "X-Cinemadle-UserId": anonUserId },
             true
         )
 
@@ -123,7 +122,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
             return err(AnonGuessService.unableToGetPreviousError);
         }
 
-        let prev = await get('/guesses/anon', {date: isoDateNoTime(), userId: anonUserId })
+        let prev = await get('/guesses', { date: isoDateNoTime() }, { "X-Cinemadle-UserId": anonUserId })
 
         let o: GuessDomain[] = [] as GuessDomain[];
 
@@ -160,8 +159,9 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         }
 
         let result = await get(
-            `/guess/anon/${id}`,
-            { date: isoDateNoTime(), userId: anonUserId },
+            `/guess/${id}`,
+            { date: isoDateNoTime() },
+            { "X-Cinemadle-UserId": anonUserId },
         );
 
         const title = skipTitleMap !== true ? guess : this.getTitle(guess);

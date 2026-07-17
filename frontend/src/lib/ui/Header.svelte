@@ -1,11 +1,7 @@
 <script lang="ts">
-    import { FeatureFlags } from "$lib/domain";
-    import { Container } from "$lib/services";
-    import { userStore } from "$lib/stores";
     import { isDarkMode } from "$lib/stores/theme";
     import { isoDateNoTime } from "$lib/util";
     import { Menu, Sun, Moon } from "@lucide/svelte";
-    import { onMount } from "svelte";
 
     const { showEmail = false, showDate = false, customGameId = null, lose = false } = $props<{
         showEmail?: boolean;
@@ -53,27 +49,13 @@
                 <div
                     class={`absolute right-0 mt-2 w-48 ${$isDarkMode ? 'bg-[rgb(18,21,31)]' : 'bg-white'} shadow-lg rounded-lg transform transition-transform duration-300 ease-in-out ${menuOpen ? "z-[9999999] max-h-screen" : "max-h-0 overflow-hidden"}`}
                 >
-                    {#if !$userStore.loggedIn}
-                        <a
-                            href="/login"
-                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
-                            data-testid="login-link"
-                            >log in</a
-                        >
-                        <a
-                            href="/signup"
-                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
-                            data-testid="signup-link"
-                            >sign up</a
-                        >
-                    {:else}
-                        <a
-                            href="/customCreate"
-                            class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
-                            data-testid="customcreate-link"
-                            >create custom game</a
-                        >
-                    {/if}
+
+                    <a
+                        href="/customCreate"
+                        class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
+                        data-testid="customcreate-link"
+                        >create custom game</a
+                    >
                     <a
                         href="/about"
                         class="block px-4 py-2 text-sm text-gray-500 hover:{$isDarkMode ? 'bg-gray-300' : 'bg-gray-100'}"
@@ -107,10 +89,3 @@
         {customGameId ? `Custom Game: ${customGameId}` : isoDateNoTime()}
     </span>
 {/if}
-
-{#if $userStore.loggedIn && showEmail}
-    <p class="block text-sm pb-4 {$isDarkMode ? 'text-white-500' : 'text-gray-700'}" data-testid="user-email">
-        User: {$userStore.email}
-    </p>
-{/if}
-

@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 
 public class CinemadleControllerBase : ControllerBase
 {
-    protected string? GetUserId()
+    protected string GetUserId()
     {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Request.Headers.TryGetValue("X-Cinemadle-UserId", out var userId);
+        
+        return userId.FirstOrDefault() is not null ? userId.First() ?? string.Empty : string.Empty;
     }
 
     protected bool UserHasRole(string claim)

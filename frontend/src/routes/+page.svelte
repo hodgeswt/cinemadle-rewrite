@@ -9,7 +9,6 @@
     import { isDarkMode } from "$lib/stores/theme";
     import {
         PING_LIMIT,
-        validateAndRefreshToken,
         healthcheck,
     } from "$lib/middleware";
     import { FeatureFlags } from "$lib/domain";
@@ -17,7 +16,6 @@
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { guessStore, userStore, hintsStore } from "$lib/stores";
     import { toast } from "svelte-sonner";
-    import type { LoginDto } from "$lib/dto";
     import { Container, type IGuessService } from "$lib/services";
     import Logger from "$lib/logger";
     import Header from "$lib/ui/Header.svelte";
@@ -243,36 +241,34 @@
             </ul>
         {/if}
 
-        {#if $userStore.loggedIn}
-            {#if $guessStore.guesses.length >= 6}
-                <div
-                    class="mb-4 p-4 {$isDarkMode
-                        ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800')
-                        : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode
-                        ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800')
-                        : (mainState.lose ? 'border-red-200' : mainState.win ? 'border-green-200' : 'border-indigo-200')}"
-                >
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-600' : 'text-indigo-600')} />
-                            <span
-                                class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
-                                data-testid="hint-text"
-                                >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'}</span
-                            >
-                        </div>
-                        <Button
-                            onclick={showVisualClue}
-                            variant="secondary"
-                            size="sm"
-                            class="{mainState.lose ? 'bg-red-600 hover:bg-red-700' : mainState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
-                            data-testid="visualclue-button"
+        {#if $guessStore.guesses.length >= 6}
+            <div
+                class="mb-4 p-4 {$isDarkMode
+                    ? (mainState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : mainState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800')
+                    : (mainState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : mainState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode
+                    ? (mainState.lose ? 'border-red-800' : mainState.win ? 'border-green-800' : 'border-indigo-800')
+                    : (mainState.lose ? 'border-red-200' : mainState.win ? 'border-green-200' : 'border-indigo-200')}"
+            >
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <Info class={$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-600' : 'text-indigo-600')} />
+                        <span
+                            class="text-sm {$isDarkMode ? 'text-white' : (mainState.lose ? 'text-red-600' : mainState.win ? 'text-green-400' : 'text-indigo-400')}"
+                            data-testid="hint-text"
+                            >{mainState.lose ? 'needed a hint?' : mainState.win ? 'needed a hint?' : 'need a hint?'}</span
                         >
-                            view visual clue
-                        </Button>
                     </div>
+                    <Button
+                        onclick={showVisualClue}
+                        variant="secondary"
+                        size="sm"
+                        class="{mainState.lose ? 'bg-red-600 hover:bg-red-700' : mainState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
+                        data-testid="visualclue-button"
+                    >
+                        view visual clue
+                    </Button>
                 </div>
-            {/if}
+            </div>
         {/if}
 
         {#if $guessStore.guesses.length > 0}

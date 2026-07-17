@@ -8,13 +8,6 @@ export type ImageDto = {
     imageData: string,
 }
 
-export type LoginDto = {
-    tokenType: string,
-    accessToken: string,
-    refreshToken: string,
-    expiresIn: number,
-}
-
 export type PossibleMediaDto = {
     [key: string]: number;
 }
@@ -151,17 +144,6 @@ export function isSignUpErrorDto(obj: any): obj is SignUpErrorDto {
     }
 
     return isDictionary(obj.errors, 'string', 'string', true)
-}
-
-export function isLoginDto(obj: any): obj is LoginDto {
-    if (!hasValue(obj)) {
-        return false;
-    }
-
-    return typeof obj.tokenType === 'string'
-        && typeof obj.accessToken === 'string'
-        && typeof obj.refreshToken === 'string'
-        && typeof obj.expiresIn === 'number'
 }
 
 export function isMediaDto(obj: any): obj is MediaDto {
