@@ -32,7 +32,7 @@ export class FeatureFlagService {
 
         this.lastRead = Date.now();
 
-        const result = await get("featureFlags", null, null);
+        const result = await get("flags/all", null, null, undefined, true);
 
         if (!result.ok) {
             Logger.log("FeatureFlagService.initialize: bad response");

@@ -14,7 +14,7 @@ describe('home page', () => {
         cy.init();
         cy.request({
             method: 'GET',
-            url: `${Cypress.env().backendUrl}/api/cinemadle/featureFlags`,
+            url: `${Cypress.env().backendUrl}/api/flags/all`,
             failOnStatusCode: true
         }).then(r => expect(r.body.featureFlags.PaymentsEnabled).to.eq(false));
     })

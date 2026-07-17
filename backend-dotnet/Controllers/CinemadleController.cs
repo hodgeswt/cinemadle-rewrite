@@ -83,27 +83,6 @@ public class CinemadleController : CinemadleControllerBase
         return true;
     }
 
-    [HttpGet("featureFlags")]
-    public async Task<ActionResult> GetFeatureFlags()
-    {
-        _logger.LogDebug("+GetFeatureFlags()");
-
-        try
-        {
-            return new OkObjectResult(new FeatureFlagsDto
-            {
-                FeatureFlags = await _flagRepo.GetAll()
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetFeatureFlags Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetFeatureFlags()");
-
-            return new StatusCodeResult(500);
-        }
-    }
-
     [HttpGet("anonUserId")]
     public async Task<ActionResult> GetAnonUserId()
     {
