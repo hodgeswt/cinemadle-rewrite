@@ -47,7 +47,9 @@ jobs:
         run: |
           mkdir -p ./volumes || true
           echo "${{ secrets.CINEMADLE_CONFIG_E2E }}" | base64 -d > ./volumes/appsettings.json
+          cp ./volumes/appsettings.json ./volumes/appsettings.Development.json
           chmod 644 ./volumes/appsettings.json
+          chmod 644 ./volumes/appsettings.Development.json
           chmod 777 ./volumes
 
       - name: Set up + start Cinemadle
