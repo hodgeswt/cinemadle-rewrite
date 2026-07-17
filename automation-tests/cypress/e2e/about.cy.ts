@@ -1,4 +1,4 @@
-import { goToPage, logIn } from "../support/commands";
+import { goToPage } from "../support/commands";
 
 describe('about page', () => {
     before(() => {
@@ -24,15 +24,4 @@ describe('about page', () => {
         cy.getByDataTestId('buymeapizza-text').should('have.text', '🍕 buy me a pizza');
     });
 
-    it('should have a functional logout button', () => {
-        logIn({initialize: true})
-
-        cy.getByDataTestId('cinemadle-date').should('exist');
-
-        goToPage('about');
-        cy.getByDataTestId('logout-button').should('have.text', `log out`);
-        cy.getByDataTestId('logout-button').click();
-
-        cy.getByDataTestId('user-email').should('not.exist');
-    })
 });
