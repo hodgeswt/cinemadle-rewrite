@@ -11,7 +11,7 @@ public class CacheRepository : ICacheRepository
 {
     private ILogger<CacheRepository> _logger;
     private readonly int _ttl;
-    private object _lock = new();
+    private readonly Lock _lock = new();
     private IMemoryCache _cache;
 
     public CacheRepository(ILogger<CacheRepository> logger, IOptions<CinemadleConfig> configRepository, IMemoryCache memoryCache)

@@ -93,7 +93,8 @@ public class Program
             .RegisterCinemadleServices(dbConnectionString)
             .SetupCinemadleQuartz()
             .SetupCinemadleAuthIdent()
-            .SetupCinemadleLogging(logConfiguration);
+            .SetupCinemadleLogging(logConfiguration)
+            .Configure<CinemadleConfig>(builder.Configuration.GetSection("CinemadleConfig"));
 
         builder.Services
             .AddHealthChecks()

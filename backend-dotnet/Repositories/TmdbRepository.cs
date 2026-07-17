@@ -23,16 +23,16 @@ public class TmdbRepository : ITmdbRepository
     private readonly ICacheRepository _cache;
     private readonly DatabaseContext _db;
 
-    private bool _initialized { get; set; }
+    private bool Initialized { get; set; }
 
-    private readonly string _iso3166USA = "US";
+    private readonly string _iso3166Usa = "US";
     private readonly string _getMovieCacheKeyTemplate = "TmdbRepository.GetMovie.{0}";
     private readonly string _getMovieByIdCacheKeyTemplate = "TmdbRepository.GetMovieById.{0}";
     private readonly string _getTargetMovieCacheKeyTemplate = "TmdbRepository.GetTargetMovie.{0}";
     private readonly string _getMovieListCacheKey = "TmdbRepository.GetMovieList";
     private readonly string _getMovieImageByIdCacheKeyTemplate = "TmdbRepository.GetMovieImageById.{0}";
 
-    private static readonly HttpClient _httpClient = new();
+    private static readonly HttpClient HttpClient = new();
 
     private readonly bool _isDevelopment;
 
@@ -47,7 +47,7 @@ public class TmdbRepository : ITmdbRepository
     )
     {
         _logger = logger;
-        string type = this.GetType().AssemblyQualifiedName ?? "TmdbRepository";
+        var type = this.GetType().AssemblyQualifiedName ?? "TmdbRepository";
         _logger.LogDebug("+ctor({type})", type);
 
         _config = config.Value;
@@ -59,14 +59,23 @@ public class TmdbRepository : ITmdbRepository
         _logger.LogDebug("-ctor({type})", type);
     }
 
-    public async Task Initialize()
+    private async Task Initialize()
     {
-        if (_initialized)
+        if (Initialized)
         {
             return;
         }
 
-        _ = await _tmdbClient.GetConfigAsync();
+        try
+        {
+            _ = await _tmdbClient.GetConfigAsync();
+            Initialized = true;
+        }
+        catch (Exception _)
+        {
+            Initialized = false;
+        }
+        
     }
 
     public async Task<Dictionary<string, int>> GetMovieList()
@@ -76,8 +85,10 @@ public class TmdbRepository : ITmdbRepository
             _logger.LogDebug("GetMovieList: using cached movie list");
             return movieList;
         }
+        
+        await Initialize();
 
-        DiscoverMovie discover = _tmdbClient.DiscoverMoviesAsync()
+        var discover = _tmdbClient.DiscoverMoviesAsync()
                 .OrderBy(DiscoverMovieSortBy.ReleaseDateDesc)
                 .WhereCertificationIsAtMost("US", nameof(Rating.R))
                 .WhereCertificationIsAtLeast("US", nameof(Rating.G))
@@ -90,19 +101,20 @@ public class TmdbRepository : ITmdbRepository
 
         Dictionary<string, int> movies = [];
 
-        int page = 0;
+        var page = 0;
         CancellationTokenSource c = new(TimeSpan.FromSeconds(90));
         while (movies.Count < 2000 && !c.Token.IsCancellationRequested)
         {
-            SearchContainer<SearchMovie> results = await discover.Query(page, c.Token);
-            foreach (SearchMovie movie in results.Results)
+            var results = await discover.Query(page, c.Token);
+            foreach (var movie in results?.Results ?? [])
             {
                 try
                 {
-                    movies.Add(movie.Title, movie.Id);
+                    movies.Add(movie.Title!, movie.Id);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error getting movie list");
                 }
             }
             page++;
@@ -115,45 +127,46 @@ public class TmdbRepository : ITmdbRepository
 
     public async Task<MovieDto?> GetTargetMovie(string date)
     {
-        if (RiggedMovie is int riggedId)
+        if (RiggedMovie is { } riggedId)
         {
             return await GetMovieByIdInternal(riggedId);
         }
         
-        string cacheKey = string.Format(_getTargetMovieCacheKeyTemplate, date);
+        var cacheKey = string.Format(_getTargetMovieCacheKeyTemplate, date);
 
-        if (_cache.TryGet<MovieDto>(cacheKey, out MovieDto? movieDto) && movieDto is not null)
+        if (_cache.TryGet(cacheKey, out MovieDto? movieDto) && movieDto is not null)
         {
             _logger.LogDebug("GetTargetMovie: Returning cached movie");
             return movieDto;
         }
+        
+        await Initialize();
 
-        TargetMovie? dbTargetMovie = _db.TargetMovies
-            .Where(x => x.GameId == date)
-            .FirstOrDefault();
+        var dbTargetMovie = _db.TargetMovies
+            .FirstOrDefault(x => x.GameId == date);
 
         if (dbTargetMovie is not null)
         {
             return await GetMovieByIdInternal(dbTargetMovie.TargetMovieId);
         }
 
-        int seed = _isDevelopment ? 2025 : 0;
+        var seed = _isDevelopment ? 2025 : 0;
         _logger.LogDebug("GetTargetMovie({date}): Seed, {seed}", date, seed);
 
-        string dateStripped = date.Replace("-", string.Empty);
+        var dateStripped = date.Replace("-", string.Empty);
         seed += int.Parse(dateStripped);
 
         Random r = new(seed);
-        int movieIndex = r.Next(0, 1999);
+        var movieIndex = r.Next(0, 1999);
 
-        Dictionary<string, int> movies = await GetMovieList();
+        var movies = await GetMovieList();
 
         if (movieIndex > movies.Count - 1)
         {
             movieIndex = r.Next(0, movies.Count - 1);
         }
 
-        int movieId = movies.Values.ElementAt(movieIndex);
+        var movieId = movies.Values.ElementAt(movieIndex);
         _db.TargetMovies
             .Add(new TargetMovie
             {
@@ -161,23 +174,25 @@ public class TmdbRepository : ITmdbRepository
                 TargetMovieId = movieId,
                 Inserted = DateTime.Now,
             });
-        _db.SaveChanges();
+        await _db.SaveChangesAsync();
 
         return await GetMovieByIdInternal(movieId);
     }
 
     private async Task<MovieDto?> GetMovieByIdInternal(int id)
     {
-        string cacheKey = string.Format(_getMovieByIdCacheKeyTemplate, id);
+        var cacheKey = string.Format(_getMovieByIdCacheKeyTemplate, id);
 
-        if (_cache.TryGet<MovieDto>(cacheKey, out MovieDto? movieDto) && movieDto is not null)
+        if (_cache.TryGet<MovieDto>(cacheKey, out var movieDto) && movieDto is not null)
         {
             _logger.LogDebug("GetMovieByIdInternal: returning cached movie");
             return movieDto;
         }
+        
+        await Initialize();
 
-        MovieMethods extraMethods = MovieMethods.Credits | MovieMethods.ReleaseDates;
-        Movie movie = await _tmdbClient.GetMovieAsync(id, extraMethods);
+        const MovieMethods extraMethods = MovieMethods.Credits | MovieMethods.ReleaseDates;
+        var movie = await _tmdbClient.GetMovieAsync(id, extraMethods);
 
         if (movie is null)
         {
@@ -187,31 +202,31 @@ public class TmdbRepository : ITmdbRepository
 
         _logger.LogDebug("GetMovie: Movie JSON, {json}", JsonSerializer.Serialize(movie));
 
-        ReleaseDateItem? release = movie
+        var release = movie
                 .ReleaseDates
                 ?.Results
-                ?.FirstOrDefault(x => string.Equals(x.Iso_3166_1, _iso3166USA, StringComparison.OrdinalIgnoreCase))
+                ?.FirstOrDefault(x => string.Equals(x.Iso_3166_1, _iso3166Usa, StringComparison.OrdinalIgnoreCase))
                 ?.ReleaseDates
                 ?.FirstOrDefault(x => x.Type == ReleaseDateType.Theatrical);
 
-        PersonDto? director = movie
+        var director = movie
             .Credits
             ?.Crew
             ?.Where(x => string.Equals(x.Job, "director", StringComparison.OrdinalIgnoreCase))
             ?.Select(x => new PersonDto
             {
-                Name = x.Name,
+                Name = x.Name ?? string.Empty,
                 Role = "Director"
             })
             ?.FirstOrDefault();
 
-        PersonDto? writer = movie
+        var writer = movie
             .Credits
             ?.Crew
             ?.Where(x => string.Equals(x.Job, "writer", StringComparison.OrdinalIgnoreCase))
             ?.Select(x => new PersonDto
             {
-                Name = x.Name,
+                Name = x.Name ?? string.Empty,
                 Role = "Writer"
             })
             ?.FirstOrDefault();
@@ -235,7 +250,7 @@ public class TmdbRepository : ITmdbRepository
             Cast = movie.Credits
                 ?.Cast
                 ?.Take(_config.CastCount)
-                ?.Select(x => new PersonDto { Name = x.Name, Role = "Cast" }) ?? new List<PersonDto>(),
+                ?.Select(x => new PersonDto { Name = x.Name ?? string.Empty, Role = "Cast" }) ?? new List<PersonDto>(),
             Genres = movie.Genres
                 ?.Take(_config.GenresCount)
                 ?.Select(x => x.Name) ?? new List<string>(),
@@ -258,18 +273,18 @@ public class TmdbRepository : ITmdbRepository
     {
         _logger.LogDebug("+GetMovie({title})", title);
 
-        string cacheKey = string.Format(_getMovieCacheKeyTemplate, title);
+        var cacheKey = string.Format(_getMovieCacheKeyTemplate, title);
         SearchMovie? searchMovie;
-        if (_cache.TryGet<SearchMovie>(cacheKey, out SearchMovie? cachedSearchMovie) && cachedSearchMovie is not null)
+        if (_cache.TryGet(cacheKey, out SearchMovie? cachedSearchMovie) && cachedSearchMovie is not null)
         {
             _logger.LogDebug("GetMovie: using cached search movie");
             searchMovie = cachedSearchMovie;
         }
         else
         {
-            searchMovie = (await _tmdbClient.SearchMovieAsync(title))
-                       .Results
-                       .FirstOrDefault();
+            await Initialize();
+            var searchMovies = (await _tmdbClient.SearchMovieAsync(title))?.Results;
+            searchMovie = searchMovies?.FirstOrDefault();
         }
 
         if (searchMovie is null)
@@ -289,20 +304,15 @@ public class TmdbRepository : ITmdbRepository
             return Rating.UNKNOWN;
         }
 
-        string preprocessed = certification.Replace("-", "").ToUpperInvariant();
-        if (Enum.TryParse(preprocessed, out Rating rating))
-        {
-            return rating;
-        }
-
-        return Rating.UNKNOWN;
+        var preprocessed = certification.Replace("-", "").ToUpperInvariant();
+        return Enum.TryParse(preprocessed, out Rating rating) ? rating : Rating.UNKNOWN;
     }
 
     public async Task<byte[]?> GetMovieImageById(int id)
     {
         _logger.LogDebug("+GetMovieImageById({id})", id);
 
-        string cacheKey = string.Format(_getMovieImageByIdCacheKeyTemplate, id);
+        var cacheKey = string.Format(_getMovieImageByIdCacheKeyTemplate, id);
 
         if (_cache.TryGet(cacheKey, out byte[]? cachedImage) && cachedImage is not null)
         {
@@ -311,14 +321,10 @@ public class TmdbRepository : ITmdbRepository
             return cachedImage;
         }
 
-        ImagesWithId? imagesWithId = await _tmdbClient.GetMovieImagesAsync(id);
+        await Initialize();
+        var imagesWithId = await _tmdbClient.GetMovieImagesAsync(id);
 
-        if (imagesWithId is null)
-        {
-            return null;
-        }
-
-        ImageData? imageData = imagesWithId.Backdrops.FirstOrDefault();
+        var imageData = imagesWithId?.Backdrops?.FirstOrDefault();
 
         if (imageData is null)
         {
@@ -328,8 +334,8 @@ public class TmdbRepository : ITmdbRepository
         try
         {
             _logger.LogDebug("GetMovieImageById({id}: path {path}", id, imageData.FilePath);
-            string fullUri = $"https://image.tmdb.org/t/p/w500/{imageData.FilePath}";
-            byte[] bytes = await _httpClient.GetByteArrayAsync(fullUri);
+            var fullUri = $"https://image.tmdb.org/t/p/w500/{imageData.FilePath}";
+            var bytes = await HttpClient.GetByteArrayAsync(fullUri);
 
             _cache.Set(cacheKey, bytes);
 

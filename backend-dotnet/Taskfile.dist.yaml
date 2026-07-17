@@ -22,6 +22,7 @@ tasks:
       - build
     env:
       CINEMADLE_TEST_MODE: "true"
+      ASPNETCORE_ENVIRONMENT: "Development"
     cmds:
       - dotnet run --no-build
     desc: "Run the backend project"
