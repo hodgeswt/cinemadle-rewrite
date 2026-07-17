@@ -7,14 +7,19 @@ using Microsoft.Extensions.Hosting;
 
 namespace Cinemadle.UnitTest;
 
-public class ApplicationStartupTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class ApplicationStartupTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    private readonly WebApplicationFactory<Program> _factory;
+    public ApplicationStartupTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+        _ = factory.Server;
+    }
+    
     [Fact]
     public void ApplicationStartupShouldRunSetupDbContext()
     {
-        _ = factory.Server;
-
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var services = scope.ServiceProvider;
         
         var dbContext = services.GetRequiredService<DatabaseContext>();
@@ -27,9 +32,7 @@ public class ApplicationStartupTests(WebApplicationFactory<Program> factory) : I
     [Fact]
     public void ApplicationStartupShouldRunSetupIdentityContext()
     {
-        _ = factory.Server;
-        
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var services = scope.ServiceProvider;
         
         var identityContext = services.GetRequiredService<IdentityContext>();
