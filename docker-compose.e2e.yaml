@@ -11,7 +11,7 @@ services:
     volumes:
       - ./volumes:/root/.local/share/AppData
       - type: bind
-        source: ./backend-dotnet/appsettings.json
+        source: ./volumes/appsettings.json
         target: /app/appsettings.json
     restart: no
     networks:
