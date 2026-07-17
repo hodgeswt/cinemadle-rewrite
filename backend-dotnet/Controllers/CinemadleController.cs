@@ -12,6 +12,7 @@ using SixLabors.ImageSharp.Formats.Png;
 using Microsoft.EntityFrameworkCore;
 using TMDbLib.Objects.Movies;
 using System.Runtime.InteropServices.Swift;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Controllers;
 
@@ -32,7 +33,7 @@ public class CinemadleController : CinemadleControllerBase
 
     public CinemadleController(
             ILogger<CinemadleController> logger,
-            IConfigRepository configRepository,
+            IOptions<CinemadleConfig> configRepository,
             ITmdbRepository tmdbRepository,
             IWebHostEnvironment env,
             IGuessRepository guessRepository,
@@ -48,7 +49,7 @@ public class CinemadleController : CinemadleControllerBase
 
         _db = db;
         _identity = identity;
-        _config = configRepository.GetConfig();
+        _config = configRepository.Value;
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _hintRepo = hintRepository;

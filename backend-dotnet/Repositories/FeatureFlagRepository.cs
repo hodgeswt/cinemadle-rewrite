@@ -1,5 +1,6 @@
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Repositories;
 
@@ -8,12 +9,12 @@ public class FeatureFlagRepository : IFeatureFlagRepository
     private readonly ILogger<FeatureFlagRepository> _logger;
     private readonly CinemadleConfig _config;
 
-    public FeatureFlagRepository(ILogger<FeatureFlagRepository> logger, IConfigRepository config)
+    public FeatureFlagRepository(ILogger<FeatureFlagRepository> logger, IOptions<CinemadleConfig> config)
     {
         _logger = logger;
         _logger.LogDebug("+FeatureFlagRepository.ctor");
 
-        _config = config.GetConfig();
+        _config = config.Value;
         _logger.LogDebug("FeatureFlagRepository.ctor: feature flags {flags}", _config.FeatureFlags);
 
         _logger.LogDebug("-FeatureFlagRepository.ctor");

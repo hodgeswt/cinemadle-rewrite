@@ -3,6 +3,7 @@ using Cinemadle.Datamodel.DTO;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using System.Reflection;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Repositories;
 
@@ -15,14 +16,14 @@ public class GuessRepository : IGuessRepository
 
     private readonly string _guessCacheKeyTemplate = "GuessRepository.Guess.{0}.{1}";
 
-    public GuessRepository(ILogger<GuessRepository> logger, ICacheRepository cacheRepository, IConfigRepository configRepository, DatabaseContext db)
+    public GuessRepository(ILogger<GuessRepository> logger, ICacheRepository cacheRepository, IOptions<CinemadleConfig> configRepository, DatabaseContext db)
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "GuessRepository";
         _logger.LogDebug("+ctor({type})", type);
 
         _cache = cacheRepository;
-        _config = configRepository.GetConfig();
+        _config = configRepository.Value;
         _db = db;
 
         _logger.LogDebug("-ctor({type})", type);
@@ -291,7 +292,7 @@ public class GuessRepository : IGuessRepository
         return true;
     }
 
-    public bool IsListMismatch(IEnumerable<string> guessList, IEnumerable<string> targetList, out FieldDto? fieldOut)
+    private static bool IsListMismatch(IEnumerable<string> guessList, IEnumerable<string> targetList, out FieldDto? fieldOut)
     {
         fieldOut = null;
 

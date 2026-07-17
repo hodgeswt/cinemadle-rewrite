@@ -38,7 +38,7 @@ public class GuessRepositoryUnitTest
 
     private static CinemadleConfig GetConfig()
     {
-        return Mocks.GetMockedConfigRepository().Object.GetConfig();
+        return Mocks.GetMockedConfigRepository().Value;
     }
 
     [Fact]

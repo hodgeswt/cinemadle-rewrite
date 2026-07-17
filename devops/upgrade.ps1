@@ -14,7 +14,6 @@ function Update-Cinemadle {
 
     docker compose down
 
-
     if ($e2e) {
         ./devops/build.ps1 -Tag "latest" -Component "all" -e2e
     } else {

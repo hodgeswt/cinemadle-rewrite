@@ -4,6 +4,7 @@ using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Repositories;
 
@@ -21,7 +22,7 @@ public class HintRepository : IHintRepository
     public HintRepository(
         ILogger<HintRepository> logger,
         ICacheRepository cacheRepository,
-        IConfigRepository configRepository,
+        IOptions<CinemadleConfig> configRepository,
         DatabaseContext db,
         ITmdbRepository tmdbRepo,
         IGuessRepository guessRepo)
@@ -31,7 +32,7 @@ public class HintRepository : IHintRepository
         _logger.LogDebug("+ctor({type})", type);
 
         _cache = cacheRepository;
-        _config = configRepository.GetConfig();
+        _config = configRepository.Value;
         _db = db;
         _tmdbRepo = tmdbRepo;
         _guessRepo = guessRepo;

@@ -1,7 +1,9 @@
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Exceptions;
 using Cinemadle.Interfaces;
 
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Repositories;
 
@@ -9,17 +11,17 @@ public class CacheRepository : ICacheRepository
 {
     private ILogger<CacheRepository> _logger;
     private readonly int _ttl;
-    private object _lock = new();
+    private readonly Lock _lock = new();
     private IMemoryCache _cache;
 
-    public CacheRepository(ILogger<CacheRepository> logger, IConfigRepository configRepository, IMemoryCache memoryCache)
+    public CacheRepository(ILogger<CacheRepository> logger, IOptions<CinemadleConfig> configRepository, IMemoryCache memoryCache)
     {
         _logger = logger;
         string type = this.GetType().AssemblyQualifiedName ?? "CacheRepository";
 
         _logger.LogDebug("+ctor({type})", type);
 
-        _ttl = configRepository.GetConfig().CacheTTL;
+        _ttl = configRepository.Value.CacheTTL;
         _cache = memoryCache;
 
         _logger.LogDebug("-ctor({type})", type);

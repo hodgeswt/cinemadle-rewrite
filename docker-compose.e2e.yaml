@@ -8,13 +8,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - CINEMADLE_TEST_MODE=true
+      - ASPNETCORE_HTTP_PORTS=5566
     volumes:
       - ./volumes:/root/.local/share/AppData
       - type: bind
-        source: ./backend-dotnet/appsettings.json
+        source: ./volumes/appsettings.json
         target: /app/appsettings.json
       - type: bind
-        source: ./backend-dotnet/appsettings.Development.json
+        source: ./volumes/appsettings.Development.json
         target: /app/appsettings.Development.json
     restart: no
     networks:

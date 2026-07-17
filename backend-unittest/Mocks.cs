@@ -7,16 +7,15 @@ using Moq;
 using Cinemadle.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.UnitTest;
 
 public class Mocks
 {
-    private static readonly CinemadleConfig _defaultConfig = new()
+    private static readonly CinemadleConfig DefaultConfig = new()
     {
         TmdbApiKey = string.Empty,
-        PaymentsApiKey = "asdf",
-        WebhookSecret = "asdf",
         CastCount = 3,
         GenresCount = 3,
         CacheTTL = 10,
@@ -24,7 +23,6 @@ public class Mocks
         BoxOfficeYellowThreshold = 100000000,
         BoxOfficeSingleArrowThreshold = 300000000,
         YearSingleArrowThreshold = 10,
-        YearDoubleArrowThreshold = 15,
         OldestMoviePossible = "1960-01-01",
         MinimumVotesPossible = 2000,
         MinimumScorePossible = 5,
@@ -37,9 +35,6 @@ public class Mocks
             { "9", 6.0F }
         },
         GameLength = 10,
-        PaymentSuccessUrl = "http://localhost:5173/paymentSuccess",
-        PaymentFailureUrl = "http://localhost:5173/paymentFailure",
-        AddOnMapping = [],
         FeatureFlags = []
     };
 
@@ -84,24 +79,16 @@ public class Mocks
         return cacheRepo;
     }
 
-    public static Mock<IConfigRepository> GetMockedConfigRepository(CinemadleConfig? config = null)
+    public static IOptions<CinemadleConfig> GetMockedConfigRepository(CinemadleConfig? config = null)
     {
-        CinemadleConfig usableConfig = config ?? _defaultConfig;
-        Mock<IConfigRepository> configRepo = new();
-
-        configRepo.Setup(x => x.GetConfig())
-            .Returns(usableConfig);
-        configRepo.Setup(x => x.IsLoaded())
-            .Returns(true);
-
-        return configRepo;
+        CinemadleConfig usableConfig = config ?? DefaultConfig;
+        return Options.Create(usableConfig);
     }
 
     public static IGuessRepository GetGuessRepository(CinemadleConfig? config = null)
     {
         ILogger<GuessRepository> logger = UnitTestAssist.GetLogger<GuessRepository>();
-        Mock<IConfigRepository> configRepoMock = GetMockedConfigRepository();
-        IConfigRepository configRepo = configRepoMock.Object;
+        var configRepo = GetMockedConfigRepository();
 
         Mock<ICacheRepository> cacheRepoMock = GetMockedCacheRepository();
         ICacheRepository cacheRepo = cacheRepoMock.Object;
