@@ -72,6 +72,30 @@
 
     <Divider />
 
+    <p class="mb-4">
+        cinemadle is free to play, but if you enjoy it, please consider donating to support the project. it costs ~$12USD/month to run, and your support helps keep the game running and ad-free. thank you for playing!
+    </p>
+
+    <Divider />
+
+    <p class="mb-4">
+        privacy information: cinemadle collects information provided during the sign-up process. cinemadle is transitioning to a model that will not require a model, and will remove the only required identifying information (email address) from the system and replace it with a sha256 hash of the email address.
+    </p>
+
+    <p class="mb-4">
+        cinemadle may collect information about your device and browser for analytics purposes. this information is used for curiosity and may be made public in aggregate form, but will never be used to identify you personally. cinemadle does not sell or share your information with third parties.
+    </p>
+
+    <p class="mb-4">
+        your game statistics (win rate, average guesses to completion, etc.) may be made available to you in a future update. accessing this information is limited to your specific browser information; your anonymous user id is randomly generated and stored in cookies. if you clear your cookies, you will lose access to this information, though it will persist on the server. there is no way to connect the server data to your specific browser; from our end, it is entirely anonymous. game information associated with your anonymous user id will, in a future update, be deleted after 30 days of inactivity.
+    </p>
+
+    <p class="mb-4">
+        cinemadle reserves the right to change this privacy policy at any time. any and all user data is subject to deletion at any time. it is possible that your data may be deleted without notice, and cinemadle is not responsible for any loss of data. this may be the result of a bug, a server crash, the shutdown of the service, or any other reason. by using this site you agree to these terms.
+    </p>
+
+    <Divider />
+
     <p class="mb-4">code: will hodges</p>
 
     <p class="mb-4">design: will hodges and myke yunis</p>

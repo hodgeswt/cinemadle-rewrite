@@ -35,33 +35,16 @@
         Logger.log("+page.svelte.onMount");
         try {
             if (!(await healthcheck())) {
+                Logger.log("page.svelte.onMount: healthcheck failed")
                 mainState.serverDown = true;
                 return;
-            }
-
-            if ($userStore.loggedIn) {
-                const refreshed = await validateAndRefreshToken(
-                    $userStore.jwt,
-                    $userStore.refreshToken,
-                );
-
-                if (!refreshed.ok) {
-                    userStore.setLoggedOut();
-                } else {
-                    const j = refreshed.data!;
-                    if (j !== "") {
-                        const loginDto = JSON.parse(j) as LoginDto;
-                        userStore.setLoggedIn(
-                            $userStore.email,
-                            loginDto.accessToken,
-                            loginDto.refreshToken,
-                        );
-                    }
-                }
+            } else {
+                mainState.serverDown = false;
             }
 
             while (!guessService().isInitialized()) {
                 if (mainState.guessServicePing === PING_LIMIT) {
+                    Logger.log("page.svelte.onMount: guess service ping failed")
                     mainState.serverDown = true;
                     return;
                 }
@@ -88,15 +71,10 @@
                 }
             }
 
-            // Fetch hints asynchronously (non-blocking)
-            if ($userStore.loggedIn) {
-                hintsStore.fetchHints($userStore.jwt);
-            } else {
-                // Anonymous user - get their anon ID from localStorage
-                const anonUserId = localStorage.getItem('anonUserId');
-                if (anonUserId) {
-                    hintsStore.fetchHintsAnon(anonUserId);
-                }
+            // Anonymous user - get their anon ID from localStorage
+            const anonUserId = localStorage.getItem('anonUserId');
+            if (anonUserId) {
+                hintsStore.fetchHintsAnon(anonUserId);
             }
 
             mainState.loading = false;
@@ -153,13 +131,9 @@
         } else {
             // Refresh hints after successful guess (non-blocking)
             hintsStore.invalidate();
-            if ($userStore.loggedIn) {
-                hintsStore.fetchHints($userStore.jwt);
-            } else {
-                const anonUserId = localStorage.getItem('anonUserId');
-                if (anonUserId) {
-                    hintsStore.fetchHintsAnon(anonUserId);
-                }
+            const anonUserId = localStorage.getItem('anonUserId');
+            if (anonUserId) {
+                hintsStore.fetchHintsAnon(anonUserId);
             }
         }
     }
@@ -267,16 +241,6 @@
                     </li>
                 {/each}
             </ul>
-        {/if}
-
-        {#if !$userStore.loggedIn}
-            <p class="mb-4">
-                cinemadle is better when you <a
-                    href="/login"
-                    class="underline"
-                    data-testid="login-page-link">log in</a
-                >
-            </p>
         {/if}
 
         {#if $userStore.loggedIn}

@@ -19,6 +19,8 @@ tasks:
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - setup
+    env:
+      VITE_API_ENDPOINT: http://localhost:5000
     cmds:
       - deno task dev --open --host
     desc: "Run the development servers for frontend and backend"

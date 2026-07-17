@@ -76,13 +76,6 @@ public class CinemadleController : CinemadleControllerBase
         return true;
     }
 
-    [HttpGet("heartbeat")]
-    public ActionResult<bool> Heartbeat()
-    {
-        _logger.LogDebug("Heartbeat");
-        return true;
-    }
-
     [HttpGet("featureFlags")]
     public async Task<ActionResult> GetFeatureFlags()
     {
