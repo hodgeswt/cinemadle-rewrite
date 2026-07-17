@@ -13,7 +13,6 @@ public static class RegisterCinemadleServicesExtension
         services.AddDbContext<DatabaseContext>(options => options.UseSqlite(DatabaseContext.CreateDbConnectionString(dbConnectionString)));
         services.AddDbContext<IdentityContext>(options => options.UseSqlite(DatabaseContext.CreateDbConnectionString(dbConnectionString)));
 
-        services.AddSingleton<IConfigRepository, ConfigRepository>();
         services.AddSingleton<ICacheRepository, CacheRepository>();
         services.AddScoped<ITmdbRepository, TmdbRepository>();
         services.AddScoped<IFeatureFlagRepository, FeatureFlagRepository>();

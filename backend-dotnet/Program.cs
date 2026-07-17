@@ -5,6 +5,7 @@ using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
+using Cinemadle.HealthChecks;
 using NLog.Extensions.Logging;
 using Cinemadle.Jobs;
 using Cinemadle.ServiceExtensions;
@@ -92,8 +93,15 @@ public class Program
             .RegisterCinemadleServices(dbConnectionString)
             .SetupCinemadleQuartz()
             .SetupCinemadleAuthIdent()
-            .SetupCinemadleLogging(logConfiguration)
-            .AddControllers()
+            .SetupCinemadleLogging(logConfiguration);
+
+        builder.Services
+            .AddHealthChecks()
+            .AddCheck<TmdbHealthCheck>("tmdb")
+                .AddDbContextCheck<DatabaseContext>()
+                .AddDbContextCheck<IdentityContext>();
+        
+        builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -124,6 +132,7 @@ public class Program
         app.UseAuthorization();
         app.MapGroup("/api/cinemadle")
            .MapIdentityApi<IdentityUser>();
+        app.MapHealthChecks("/healthz");
         app.MapControllers();
         app.UseCors("AllowFrontend");
 

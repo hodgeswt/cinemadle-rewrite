@@ -24,6 +24,7 @@ go.work.sum
 config.json
 config-release.json
 CinemadleConfig.json
+appsettings.Development.json
 volumes/
 **/credentials.yaml
 

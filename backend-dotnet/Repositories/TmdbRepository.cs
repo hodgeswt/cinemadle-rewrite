@@ -10,6 +10,8 @@ using TMDbLib.Objects.General;
 
 using System.Globalization;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+
 namespace Cinemadle.Repositories;
 
 public class TmdbRepository : ITmdbRepository
@@ -38,7 +40,7 @@ public class TmdbRepository : ITmdbRepository
 
     public TmdbRepository(
         ILogger<TmdbRepository> logger,
-        IConfigRepository config,
+        IOptions<CinemadleConfig> config,
         ICacheRepository cache,
         DatabaseContext dbContext,
         IWebHostEnvironment env
@@ -48,7 +50,7 @@ public class TmdbRepository : ITmdbRepository
         string type = this.GetType().AssemblyQualifiedName ?? "TmdbRepository";
         _logger.LogDebug("+ctor({type})", type);
 
-        _config = config.GetConfig();
+        _config = config.Value;
         _cache = cache;
         _tmdbClient = new TMDbClient(_config.TmdbApiKey);
         _db = dbContext;

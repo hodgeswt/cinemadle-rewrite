@@ -12,6 +12,6 @@ public class CinemadleControllerBase : ControllerBase
 
     protected bool UserHasRole(string claim)
     {
-        return User.Claims.Where(x => x.Type == ClaimTypes.Role && x.Value == claim).Any();
+        return User.Claims.Any(x => x.Type == ClaimTypes.Role && x.Value == claim);
     }
 }

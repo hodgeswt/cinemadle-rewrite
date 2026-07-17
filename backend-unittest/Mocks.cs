@@ -7,6 +7,7 @@ using Moq;
 using Cinemadle.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Cinemadle.UnitTest;
 
@@ -84,24 +85,16 @@ public class Mocks
         return cacheRepo;
     }
 
-    public static Mock<IConfigRepository> GetMockedConfigRepository(CinemadleConfig? config = null)
+    public static IOptions<CinemadleConfig> GetMockedConfigRepository(CinemadleConfig? config = null)
     {
         CinemadleConfig usableConfig = config ?? _defaultConfig;
-        Mock<IConfigRepository> configRepo = new();
-
-        configRepo.Setup(x => x.GetConfig())
-            .Returns(usableConfig);
-        configRepo.Setup(x => x.IsLoaded())
-            .Returns(true);
-
-        return configRepo;
+        return Options.Create(usableConfig);
     }
 
     public static IGuessRepository GetGuessRepository(CinemadleConfig? config = null)
     {
         ILogger<GuessRepository> logger = UnitTestAssist.GetLogger<GuessRepository>();
-        Mock<IConfigRepository> configRepoMock = GetMockedConfigRepository();
-        IConfigRepository configRepo = configRepoMock.Object;
+        var configRepo = GetMockedConfigRepository();
 
         Mock<ICacheRepository> cacheRepoMock = GetMockedCacheRepository();
         ICacheRepository cacheRepo = cacheRepoMock.Object;
