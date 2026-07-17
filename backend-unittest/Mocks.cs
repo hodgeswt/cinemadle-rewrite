@@ -13,11 +13,9 @@ namespace Cinemadle.UnitTest;
 
 public class Mocks
 {
-    private static readonly CinemadleConfig _defaultConfig = new()
+    private static readonly CinemadleConfig DefaultConfig = new()
     {
         TmdbApiKey = string.Empty,
-        PaymentsApiKey = "asdf",
-        WebhookSecret = "asdf",
         CastCount = 3,
         GenresCount = 3,
         CacheTTL = 10,
@@ -25,7 +23,6 @@ public class Mocks
         BoxOfficeYellowThreshold = 100000000,
         BoxOfficeSingleArrowThreshold = 300000000,
         YearSingleArrowThreshold = 10,
-        YearDoubleArrowThreshold = 15,
         OldestMoviePossible = "1960-01-01",
         MinimumVotesPossible = 2000,
         MinimumScorePossible = 5,
@@ -38,9 +35,6 @@ public class Mocks
             { "9", 6.0F }
         },
         GameLength = 10,
-        PaymentSuccessUrl = "http://localhost:5173/paymentSuccess",
-        PaymentFailureUrl = "http://localhost:5173/paymentFailure",
-        AddOnMapping = [],
         FeatureFlags = []
     };
 
@@ -87,7 +81,7 @@ public class Mocks
 
     public static IOptions<CinemadleConfig> GetMockedConfigRepository(CinemadleConfig? config = null)
     {
-        CinemadleConfig usableConfig = config ?? _defaultConfig;
+        CinemadleConfig usableConfig = config ?? DefaultConfig;
         return Options.Create(usableConfig);
     }
 
