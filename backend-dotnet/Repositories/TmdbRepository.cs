@@ -68,10 +68,10 @@ public class TmdbRepository : ITmdbRepository
 
         try
         {
-            _ = await _tmdbClient.GetConfigAsync();
+            await _tmdbClient.GetConfigAsync();
             Initialized = true;
         }
-        catch (Exception _)
+        catch (Exception)
         {
             Initialized = false;
         }

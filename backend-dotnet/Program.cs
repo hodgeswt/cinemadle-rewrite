@@ -85,6 +85,28 @@ public class Program
         var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
         var logConfiguration = builder.Configuration.GetSection("NLog");
 
+        foreach (var provider in (builder.Configuration as IConfigurationRoot).Providers)
+        {
+            if (provider is not Microsoft.Extensions.Configuration.Json.JsonConfigurationProvider jsonProvider)
+            {
+                continue;
+            }
+            
+            var fileProvider = jsonProvider.Source.FileProvider;
+            var path = jsonProvider.Source.Path;
+
+            if (fileProvider is Microsoft.Extensions.FileProviders.PhysicalFileProvider physicalProvider)
+            {
+                if (path == null) continue;
+                var fullPath = Path.Combine(physicalProvider.Root, path);
+                var exists = File.Exists(fullPath);
+                Console.WriteLine($"{fullPath} (Exists: {exists})");
+            }
+            else
+            {
+                Console.WriteLine($"{path} (FileProvider: {fileProvider?.GetType().Name})");
+            }
+        }
         builder.Services
             .AddCinemadleOpenApi()
             .AddCinemadleCors(builder.Environment.IsDevelopment())

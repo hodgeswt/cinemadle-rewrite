@@ -13,7 +13,7 @@ public class TmdbHealthCheck(ITmdbRepository tmdbRepository) : IHealthCheck
                 ? HealthCheckResult.Healthy()
                 : HealthCheckResult.Unhealthy();
         }
-        catch (Exception _)
+        catch (Exception)
         {
             return HealthCheckResult.Unhealthy();
         }

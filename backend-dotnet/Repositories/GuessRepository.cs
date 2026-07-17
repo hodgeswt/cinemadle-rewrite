@@ -292,7 +292,7 @@ public class GuessRepository : IGuessRepository
         return true;
     }
 
-    public bool IsListMismatch(IEnumerable<string> guessList, IEnumerable<string> targetList, out FieldDto? fieldOut)
+    private static bool IsListMismatch(IEnumerable<string> guessList, IEnumerable<string> targetList, out FieldDto? fieldOut)
     {
         fieldOut = null;
 
