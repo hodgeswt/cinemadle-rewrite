@@ -13,9 +13,6 @@ services:
       - type: bind
         source: ./backend-dotnet/appsettings.json
         target: /app/appsettings.json
-      - type: bind
-        source: ./backend-dotnet/appsettings.Development.json
-        target: /app/appsettings.Development.json
     restart: no
     networks:
       - cinemadle-network
