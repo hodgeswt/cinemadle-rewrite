@@ -13,8 +13,6 @@ namespace Cinemadle.UnitTest;
 
 public class CustomGamesControllerUnitTests
 {
-     #region Custom Game Tests
-
     [Fact]
     public async Task CreateCustomGame_Success_ReturnsOkWithCustomGameDto()
     {
@@ -83,11 +81,12 @@ public class CustomGamesControllerUnitTests
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
             Mocks.GetDatabaseContext()
-        );
-
-        controller.ControllerContext = new ControllerContext
+        )
         {
-            HttpContext = new DefaultHttpContext()
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
         };
 
         var result = await controller.CreateCustomGame(customGameCreate);
@@ -782,6 +781,4 @@ public class CustomGamesControllerUnitTests
         Assert.NotNull(summaryDto.Summary);
         Assert.True(summaryDto.Summary.Count > 0);
     }
-    #endregion
-
 }

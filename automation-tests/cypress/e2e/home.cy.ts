@@ -73,9 +73,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                // I got sick of non-deterministic TMDb data, so we're doing this for now
-                // TODO fix this on our backend, see other instance of this regex as well
-                creatives.tiledata.should('match', /Director: (Conrad Vernon|Andrew Adamson)/);
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
                 creatives.className.should('contain', 'to-gray-300');
             })
         });
@@ -146,7 +144,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('match', /Director: (Conrad Vernon|Andrew Adamson)/);
+                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
                 creatives.className.should('contain', 'to-gray-300');
             })
         });
