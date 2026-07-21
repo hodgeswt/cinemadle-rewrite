@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Controllers;
 
-[Route("custom")]
+[Route("api/custom")]
 public class CustomGamesController(
     ILogger<CustomGamesController> logger,
     IOptions<CinemadleConfig> options,
