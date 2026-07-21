@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
+using Cinemadle.Utilities;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
@@ -16,42 +17,19 @@ namespace Cinemadle.Controllers;
 
 [Route("api/cinemadle")]
 [ApiController]
-public class CinemadleController : CinemadleControllerBase
+public class CinemadleController(
+    ILogger<CinemadleController> logger,
+    IOptions<CinemadleConfig> configRepository,
+    ITmdbRepository tmdbRepository,
+    IWebHostEnvironment env,
+    IGuessRepository guessRepository,
+    IHintRepository hintRepository,
+    IFeatureFlagRepository flagRepo,
+    DatabaseContext db)
+    : CinemadleControllerBase
 {
-    private readonly CinemadleConfig _config;
-    private readonly ITmdbRepository _tmdbRepo;
-    private readonly IGuessRepository _guessRepo;
-    private readonly IHintRepository _hintRepo;
-    private readonly IFeatureFlagRepository _flagRepo;
-    private readonly ILogger<CinemadleController> _logger;
-    private readonly DatabaseContext _db;
-    private readonly bool _isDevelopment;
-
-    public CinemadleController(
-            ILogger<CinemadleController> logger,
-            IOptions<CinemadleConfig> configRepository,
-            ITmdbRepository tmdbRepository,
-            IWebHostEnvironment env,
-            IGuessRepository guessRepository,
-            IHintRepository hintRepository,
-            IFeatureFlagRepository flagRepo,
-            DatabaseContext db
-    )
-    {
-        _logger = logger;
-        string type = GetType().AssemblyQualifiedName ?? "CinemadleController";
-        _logger.LogDebug("+ctor({type})", type);
-
-        _db = db;
-        _config = configRepository.Value;
-        _tmdbRepo = tmdbRepository;
-        _guessRepo = guessRepository;
-        _hintRepo = hintRepository;
-        _isDevelopment = env.IsDevelopment();
-        _flagRepo = flagRepo;
-
-        _logger.LogDebug("-ctor({type})", type);
-    }
+    private readonly CinemadleConfig _config = configRepository.Value;
+    private readonly bool _isDevelopment = env.IsDevelopment();
 
     [Authorize]
     [HttpGet("validate")]
@@ -63,7 +41,7 @@ public class CinemadleController : CinemadleControllerBase
     [HttpGet("anonUserId")]
     public async Task<ActionResult> GetAnonUserId()
     {
-        _logger.LogDebug("+GetAnonUserId");
+        logger.LogDebug("+GetAnonUserId");
 
         IEnumerable<AnonUser>? users = null;
         int count = 0;
@@ -73,7 +51,7 @@ public class CinemadleController : CinemadleControllerBase
         {
             userId = Guid.NewGuid().ToString();
 
-            users = _db.AnonUsers
+            users = db.AnonUsers
                 .Where(x => x.UserId == userId);
 
             count++;
@@ -81,93 +59,19 @@ public class CinemadleController : CinemadleControllerBase
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetAnonUserId");
+            logger.LogDebug("-GetAnonUserId");
             return new StatusCodeResult(500);
         }
 
-        _db.AnonUsers.Add(new()
+        db.AnonUsers.Add(new()
         {
             UserId = userId
         });
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
-        _logger.LogDebug("-GetAnonUserId");
+        logger.LogDebug("-GetAnonUserId");
         return new OkObjectResult(userId);
-    }
-
-    private async Task<ImageDto?> GetBlurredImage(string date, float blurFactor)
-    {
-        _logger.LogDebug("+GetBlurredImage({date}, {blurFactor})", date, blurFactor);
-        MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
-        if (targetMovie is null)
-        {
-            _logger.LogDebug("GetBlurredImage({date}, {blurFactor}): Unable to find target movie", date, blurFactor);
-            _logger.LogDebug("-GetBlurredImage({date}, {blurFactor})", date, blurFactor);
-            return null;
-        }
-
-        byte[]? imageBytes = await _tmdbRepo.GetMovieImageById(targetMovie.Id);
-
-        if (imageBytes is null)
-        {
-            _logger.LogDebug("GetBlurredImage({date}, {blurFactor}): Unable to find target movie image", date, blurFactor);
-            _logger.LogDebug("-GetBlurredImage({date}, {blurFactor})", date, blurFactor);
-            return null;
-        }
-
-        using Image image = Image.Load(imageBytes);
-
-        if (blurFactor > 0)
-        {
-            image.Mutate(x => x.GaussianBlur(blurFactor));
-        }
-
-        string base64 = image.ToBase64String(PngFormat.Instance);
-
-        return new ImageDto
-        {
-            ImageData = base64
-        };
-    }
-
-    private async Task<ImageDto?> GetBlurredImageForMovie(int movieId, float blurFactor)
-    {
-        _logger.LogDebug("+GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
-
-        byte[]? imageBytes = await _tmdbRepo.GetMovieImageById(movieId);
-
-        if (imageBytes is null)
-        {
-            _logger.LogDebug("GetBlurredImageForMovie({movieId}, {blurFactor}): Unable to find target movie image", movieId, blurFactor);
-            _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
-            return null;
-        }
-
-        using Image image = Image.Load(imageBytes);
-
-        if (blurFactor > 0)
-        {
-            image.Mutate(x => x.GaussianBlur(blurFactor));
-        }
-
-        string base64 = image.ToBase64String(PngFormat.Instance);
-
-        _logger.LogDebug("-GetBlurredImageForMovie({movieId}, {blurFactor})", movieId, blurFactor);
-        return new ImageDto
-        {
-            ImageData = base64
-        };
-    }
-
-    private static string MapColorToEmoji(string color)
-    {
-        return color switch
-        {
-            "green" => "🟩",
-            "yellow" => "🟨",
-            _ => "⬛",
-        };
     }
 
     private async Task<List<string>?> GetGameSummaryInternal(IEnumerable<int> userGuesses, string date)
@@ -201,31 +105,31 @@ public class CinemadleController : CinemadleControllerBase
         [FromQuery, Required] Guid userId
     )
     {
-        _logger.LogDebug("+GetGameSummaryAnon({date}, {userId})", date, userId);
+        logger.LogDebug("+GetGameSummaryAnon({date}, {userId})", date, userId);
 
         string anonUserId = userId.ToString();
-        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
 
         if (user is null)
         {
-            _logger.LogWarning("GetGameSummaryAnon: attempted access by invalid user: {userId}", anonUserId);
-            _logger.LogDebug("-GetGameSummaryAnon({date}, {userId}", date, userId);
+            logger.LogWarning("GetGameSummaryAnon: attempted access by invalid user: {userId}", anonUserId);
+            logger.LogDebug("-GetGameSummaryAnon({date}, {userId}", date, userId);
             return new UnauthorizedResult();
         }
 
         try
         {
-            IEnumerable<UserGuess> userGuesses = _db.AnonUserGuesses.Where(x => x.UserId == userId.ToString() && x.GameId == date).OrderBy(x => x.SequenceId);
+            IEnumerable<UserGuess> userGuesses = db.AnonUserGuesses.Where(x => x.UserId == userId.ToString() && x.GameId == date).OrderBy(x => x.SequenceId);
 
             // Check if user has won
-            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
             bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
 
             // Allow summary if user has completed the game OR won
             if (userGuesses.Count() < _config.GameLength && !hasWon)
             {
-                _logger.LogDebug("-GetGameSummaryAnon({date}, {userId}): User tried summary gen on guess {guess}", date, userId, userGuesses.Count());
-                _logger.LogDebug("-GetGameSummaryAnon({date}, {userId})", date, userId);
+                logger.LogDebug("-GetGameSummaryAnon({date}, {userId}): User tried summary gen on guess {guess}", date, userId, userGuesses.Count());
+                logger.LogDebug("-GetGameSummaryAnon({date}, {userId})", date, userId);
                 return new NotFoundResult();
             }
 
@@ -233,8 +137,8 @@ public class CinemadleController : CinemadleControllerBase
 
             if (gameSummary is null || gameSummary.Count == 0)
             {
-                _logger.LogDebug("-GetGameSummary({date}, {userId}): Unable to make guess data", date, userId);
-                _logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
+                logger.LogDebug("-GetGameSummary({date}, {userId}): Unable to make guess data", date, userId);
+                logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
                 return new NotFoundResult();
             }
 
@@ -245,8 +149,8 @@ public class CinemadleController : CinemadleControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
+            logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
 
             return new StatusCodeResult(500);
         }
@@ -259,27 +163,27 @@ public class CinemadleController : CinemadleControllerBase
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        _logger.LogDebug("+GetGameSummary({date})", date);
+        logger.LogDebug("+GetGameSummary({date})", date);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetGameSummary({date})", date);
+            logger.LogDebug("-GetGameSummary({date})", date);
             return new UnauthorizedResult();
         }
 
         try
         {
-            IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(x => x.UserId == userId && x.GameId == date).OrderBy(x => x.SequenceId);
+            IEnumerable<UserGuess> userGuesses = db.Guesses.Where(x => x.UserId == userId && x.GameId == date).OrderBy(x => x.SequenceId);
 
             // Check if user has won
-            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
             bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
 
             // Allow summary if user has completed the game OR won
             if (userGuesses.Count() < _config.GameLength && !hasWon)
             {
-                _logger.LogDebug("-GetGameSummary({date}): User tried summary gen on guess {guess}", date, userGuesses.Count());
-                _logger.LogDebug("-GetGameSummary({date})", date);
+                logger.LogDebug("-GetGameSummary({date}): User tried summary gen on guess {guess}", date, userGuesses.Count());
+                logger.LogDebug("-GetGameSummary({date})", date);
                 return new NotFoundResult();
             }
 
@@ -287,8 +191,8 @@ public class CinemadleController : CinemadleControllerBase
 
             if (gameSummary is null || gameSummary.Count == 0)
             {
-                _logger.LogDebug("-GetGameSummary({date}): Unable to make guess data", date);
-                _logger.LogDebug("-GetGameSummary({date})", date);
+                logger.LogDebug("-GetGameSummary({date}): Unable to make guess data", date);
+                logger.LogDebug("-GetGameSummary({date})", date);
                 return new NotFoundResult();
             }
 
@@ -299,8 +203,8 @@ public class CinemadleController : CinemadleControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetGameSummary({date})", date);
+            logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetGameSummary({date})", date);
 
             return new StatusCodeResult(500);
         }
@@ -312,73 +216,73 @@ public class CinemadleController : CinemadleControllerBase
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        _logger.LogDebug("+GetMovieImage({date})", date);
+        logger.LogDebug("+GetMovieImage({date})", date);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetMovieImage({date})", date);
+            logger.LogDebug("-GetMovieImage({date})", date);
             return new UnauthorizedResult();
         }
 
-        bool paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
+        bool paymentsEnabled = await flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
 
         if (paymentsEnabled)
         {
-            UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
+            UserAccount? userAccount = db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
             if (userAccount is null)
             {
-                _logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
-                _logger.LogDebug("-GetMovieImage({date})", date);
+                logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
+                logger.LogDebug("-GetMovieImage({date})", date);
                 return new NotFoundResult();
             }
 
             AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
             if ((addOn?.Count ?? 0) <= 0)
             {
-                _logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
-                _logger.LogDebug("-GetMovieImage({date})", date);
+                logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
+                logger.LogDebug("-GetMovieImage({date})", date);
                 return new UnauthorizedResult();
             }
         }
 
         try
         {
-            int userGuesses = _db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
+            int userGuesses = db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
 
-            MovieDto? target = await _tmdbRepo.GetTargetMovie(date);
+            MovieDto? target = await tmdbRepository.GetTargetMovie(date);
 
             if (target is null)
             {
-                _logger.LogDebug("-GetMovieImage({date})", date);
+                logger.LogDebug("-GetMovieImage({date})", date);
                 return new StatusCodeResult(500);
             }
 
-            bool win = _db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
+            bool win = db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
 
             if (!win &&!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
             {
-                _logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
-                _logger.LogDebug("-GetMovieImage({date})", date);
+                logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
+                logger.LogDebug("-GetMovieImage({date})", date);
                 return new UnauthorizedResult();
             }
 
             float blurFactor = (userGuesses >= _config.GameLength || win) ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
 
-            ImageDto? image = await GetBlurredImage(date, blurFactor);
+            ImageDto? image = await GetBlurredImage(date, blurFactor, tmdbRepository);
 
             if (image is null)
             {
-                _logger.LogDebug("GetMovieImage({date}): No image found", date);
-                _logger.LogDebug("-GetMovieImage({date})", date);
+                logger.LogDebug("GetMovieImage({date}): No image found", date);
+                logger.LogDebug("-GetMovieImage({date})", date);
                 return new NotFoundResult();
             }
 
-            Clue? clue = _db.UserClues.Where(x => x.GameId == date && x.UserId == userId && x.ClueType == ClueType.Visual).FirstOrDefault();
+            Clue? clue = db.UserClues.Where(x => x.GameId == date && x.UserId == userId && x.ClueType == ClueType.Visual).FirstOrDefault();
             if (clue is null)
             {
                 try
                 {
-                    _db.UserClues.Add(new Clue
+                    db.UserClues.Add(new Clue
                     {
                         UserId = userId,
                         GameId = date,
@@ -388,8 +292,8 @@ public class CinemadleController : CinemadleControllerBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-                    _logger.LogDebug("-GetMovieImage({date})", date);
+                    logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+                    logger.LogDebug("-GetMovieImage({date})", date);
 
                     return new StatusCodeResult(500);
                 }
@@ -398,7 +302,7 @@ public class CinemadleController : CinemadleControllerBase
 
             if (paymentsEnabled)
             {
-                AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
+                AddOnRecord? record = db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
 
                 if (record is null)
                 {
@@ -411,15 +315,15 @@ public class CinemadleController : CinemadleControllerBase
                 }
             }
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
-            _logger.LogDebug("-GetMovieImage({date})", date);
+            logger.LogDebug("-GetMovieImage({date})", date);
             return new OkObjectResult(image);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetMovieImage({date})", date);
+            logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetMovieImage({date})", date);
 
             return new StatusCodeResult(500);
         }
@@ -430,23 +334,23 @@ public class CinemadleController : CinemadleControllerBase
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        _logger.LogDebug("+GetTargetMovie({date})", date);
+        logger.LogDebug("+GetTargetMovie({date})", date);
         try
         {
-            MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
 
             if (targetMovie is null)
             {
                 return new NotFoundResult();
             }
 
-            _logger.LogDebug("-GetTargetMovie({date})", date);
+            logger.LogDebug("-GetTargetMovie({date})", date);
             return new OkObjectResult(targetMovie);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetTargetMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            _logger.LogDebug("-GetTargetMovie({date}", date);
+            logger.LogError("GetTargetMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            logger.LogDebug("-GetTargetMovie({date}", date);
 
             return new StatusCodeResult(500);
 
@@ -456,18 +360,18 @@ public class CinemadleController : CinemadleControllerBase
     [HttpGet("movielist")]
     public async Task<ActionResult> GetMovieList()
     {
-        _logger.LogDebug("+GetMovieList");
+        logger.LogDebug("+GetMovieList");
 
         try
         {
-            Dictionary<string, int> movies = await _tmdbRepo.GetMovieList();
+            Dictionary<string, int> movies = await tmdbRepository.GetMovieList();
             return new OkObjectResult(movies);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetMovieList Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            logger.LogError("GetMovieList Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
 
-            _logger.LogDebug("-GetMovieList");
+            logger.LogDebug("-GetMovieList");
             return new StatusCodeResult(500);
         }
     }
@@ -478,32 +382,32 @@ public class CinemadleController : CinemadleControllerBase
         [FromQuery, Required] Guid userId
     )
     {
-        _logger.LogDebug("+GetPastGuessesAnon({date}, {userId})", date, userId);
+        logger.LogDebug("+GetPastGuessesAnon({date}, {userId})", date, userId);
 
         string anonUserId = userId.ToString();
-        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
 
         if (user is null)
         {
-            _logger.LogWarning("GetPastGuessesAnon: attempted access by invalid user: {userId}", anonUserId);
-            _logger.LogDebug("-GetPastGuessesAnon({date}, {userId}", date, userId);
+            logger.LogWarning("GetPastGuessesAnon: attempted access by invalid user: {userId}", anonUserId);
+            logger.LogDebug("-GetPastGuessesAnon({date}, {userId}", date, userId);
             return new UnauthorizedResult();
         }
 
         try
         {
-            IEnumerable<UserGuess> guesses = _db.AnonUserGuesses.Where(
+            IEnumerable<UserGuess> guesses = db.AnonUserGuesses.Where(
                 x => x.GameId == date && x.UserId == userId.ToString()
             )
             .OrderBy(x => x.SequenceId);
 
-            _logger.LogDebug("-GetPastGuessesAnon({date}, {userId})", date, userId);
+            logger.LogDebug("-GetPastGuessesAnon({date}, {userId})", date, userId);
             return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            _logger.LogDebug("-GetPastGuesses({date}, {userId})", date, userId);
+            logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            logger.LogDebug("-GetPastGuesses({date}, {userId})", date, userId);
 
             return new StatusCodeResult(500);
         }
@@ -515,30 +419,30 @@ public class CinemadleController : CinemadleControllerBase
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        _logger.LogDebug("+GetPastGuesses({date})", date);
+        logger.LogDebug("+GetPastGuesses({date})", date);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetPastGuesses({date})", date);
+            logger.LogDebug("-GetPastGuesses({date})", date);
             return new UnauthorizedResult();
         }
 
         try
         {
-            IEnumerable<UserGuess> guesses = _db.Guesses.Where(
+            IEnumerable<UserGuess> guesses = db.Guesses.Where(
                 x => x.GameId == date && x.UserId == userId
             )
             .OrderBy(x => x.SequenceId);
 
-            _logger.LogDebug("GetPastGuesses({date}): {data}", date, guesses.Count());
+            logger.LogDebug("GetPastGuesses({date}): {data}", date, guesses.Count());
 
-            _logger.LogDebug("-GetPastGuesses({date})", date);
+            logger.LogDebug("-GetPastGuesses({date})", date);
             return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            _logger.LogDebug("-GetPastGuesses({date})", date);
+            logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+            logger.LogDebug("-GetPastGuesses({date})", date);
 
             return new StatusCodeResult(500);
         }
@@ -551,29 +455,29 @@ public class CinemadleController : CinemadleControllerBase
             int id
     )
     {
-        _logger.LogDebug("+GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+        logger.LogDebug("+GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
 
         string anonUserId = userId.ToString();
-        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
 
         if (user is null)
         {
-            _logger.LogWarning("GuessMovieAnon: attempted access by invalid user: {userId}", anonUserId);
-            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+            logger.LogWarning("GuessMovieAnon: attempted access by invalid user: {userId}", anonUserId);
+            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
             return new UnauthorizedResult();
         }
 
         try
         {
             GuessDto? guessDto = await GuessMovieInternal(id, date);
-            UserGuess? x = _db.AnonUserGuesses.FirstOrDefault(
+            UserGuess? x = db.AnonUserGuesses.FirstOrDefault(
                                            x => x.GuessMediaId == id && x.GameId == date && x.UserId == anonUserId
                                       );
 
             if (x is null)
             {
-                int seqNo = (_db.AnonUserGuesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
-                _db.AnonUserGuesses.Add(new UserGuess
+                int seqNo = (db.AnonUserGuesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
+                db.AnonUserGuesses.Add(new UserGuess
                 {
                     GameId = date,
                     UserId = anonUserId,
@@ -582,20 +486,20 @@ public class CinemadleController : CinemadleControllerBase
                     Inserted = DateTime.Now,
                 });
 
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
 
                 // Invalidate hints cache after new guess
-                _hintRepo.InvalidateHints(anonUserId, date);
+                hintRepository.InvalidateHints(anonUserId, date);
             }
 
-            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
+            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
             return new OkObjectResult(guessDto);
 
         }
         catch (Exception ex)
         {
-            _logger.LogError("GuessMovieAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
+            logger.LogError("GuessMovieAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
 
             return new StatusCodeResult(500);
         }
@@ -603,28 +507,28 @@ public class CinemadleController : CinemadleControllerBase
 
     private async Task<GuessDto?> GuessMovieInternal(int id, string date)
     {
-        MovieDto? guessMovie = await _tmdbRepo.GetMovieById(id);
+        MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
 
         if (guessMovie is null)
         {
-            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
             return null;
         }
 
-        MovieDto? targetMovie = await _tmdbRepo.GetTargetMovie(date);
+        MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
 
         if (targetMovie is null)
         {
-            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
             return null;
         }
 
-        GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
+        GuessDto? guessDto = guessRepository.Guess(guessMovie, targetMovie);
 
         if (guessDto is null)
         {
-            _logger.LogError("GuessMovieInternal: unable to create guess DTO");
-            _logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
+            logger.LogError("GuessMovieInternal: unable to create guess DTO");
+            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
             return null;
         }
 
@@ -638,11 +542,11 @@ public class CinemadleController : CinemadleControllerBase
             int id
     )
     {
-        _logger.LogDebug("+GuessMovie({date}, {id})", date, id);
+        logger.LogDebug("+GuessMovie({date}, {id})", date, id);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
+            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
             return new UnauthorizedResult();
         }
 
@@ -650,19 +554,19 @@ public class CinemadleController : CinemadleControllerBase
         {
             GuessDto? guessDto = await GuessMovieInternal(id, date);
 
-            UserGuess? x = _db.Guesses.FirstOrDefault(
+            UserGuess? x = db.Guesses.FirstOrDefault(
                 x => x.GuessMediaId == id && x.GameId == date && x.UserId == userId
             );
 
             if (x is null)
             {
-                int seqNo = (_db.Guesses.Where(
+                int seqNo = (db.Guesses.Where(
                     x => x.GameId == date && x.UserId == userId
                 )
                 .OrderByDescending(x => x.SequenceId)
                 .FirstOrDefault()?.SequenceId ?? 0) + 1;
 
-                _db.Guesses.Add(new UserGuess
+                db.Guesses.Add(new UserGuess
                 {
                     GameId = date,
                     UserId = userId,
@@ -671,20 +575,20 @@ public class CinemadleController : CinemadleControllerBase
                     Inserted = DateTime.Now,
                 });
 
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
 
                 // Invalidate hints cache after new guess
-                _hintRepo.InvalidateHints(userId, date);
+                hintRepository.InvalidateHints(userId, date);
             }
 
-            _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
+            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
             return new OkObjectResult(guessDto);
 
         }
         catch (Exception ex)
         {
-            _logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GuessMovie({date}, {id})", date, id);
+            logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
 
             return new StatusCodeResult(500);
         }
@@ -696,24 +600,24 @@ public class CinemadleController : CinemadleControllerBase
             [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        _logger.LogDebug("+GetHints({date})", date);
+        logger.LogDebug("+GetHints({date})", date);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetHints({date})", date);
+            logger.LogDebug("-GetHints({date})", date);
             return new UnauthorizedResult();
         }
 
         try
         {
-            var hints = await _hintRepo.GetHints(userId, date, isAnonymous: false, isCustomGame: false);
-            _logger.LogDebug("-GetHints({date})", date);
+            var hints = await hintRepository.GetHints(userId, date, isAnonymous: false, isCustomGame: false);
+            logger.LogDebug("-GetHints({date})", date);
             return new OkObjectResult(hints);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetHints Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetHints({date})", date);
+            logger.LogError("GetHints Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetHints({date})", date);
             return new StatusCodeResult(500);
         }
     }
@@ -724,28 +628,28 @@ public class CinemadleController : CinemadleControllerBase
             [FromQuery, Required] Guid userId
     )
     {
-        _logger.LogDebug("+GetHintsAnon({date}, {userId})", date, userId);
+        logger.LogDebug("+GetHintsAnon({date}, {userId})", date, userId);
 
         string anonUserId = userId.ToString();
-        AnonUser? user = _db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
 
         if (user is null)
         {
-            _logger.LogWarning("GetHintsAnon: attempted access by invalid user: {userId}", anonUserId);
-            _logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
+            logger.LogWarning("GetHintsAnon: attempted access by invalid user: {userId}", anonUserId);
+            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
             return new UnauthorizedResult();
         }
 
         try
         {
-            var hints = await _hintRepo.GetHints(anonUserId, date, isAnonymous: true, isCustomGame: false);
-            _logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
+            var hints = await hintRepository.GetHints(anonUserId, date, isAnonymous: true, isCustomGame: false);
+            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
             return new OkObjectResult(hints);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetHintsAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
+            logger.LogError("GetHintsAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
             return new StatusCodeResult(500);
         }
     }
@@ -756,24 +660,24 @@ public class CinemadleController : CinemadleControllerBase
             string customGameId
     )
     {
-        _logger.LogDebug("+GetHintsCustomGame({customGameId})", customGameId);
+        logger.LogDebug("+GetHintsCustomGame({customGameId})", customGameId);
         string? userId = GetUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
-            _logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
+            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
             return new UnauthorizedResult();
         }
 
         try
         {
-            var hints = await _hintRepo.GetHints(userId, customGameId, isAnonymous: false, isCustomGame: true);
-            _logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
+            var hints = await hintRepository.GetHints(userId, customGameId, isAnonymous: false, isCustomGame: true);
+            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
             return new OkObjectResult(hints);
         }
         catch (Exception ex)
         {
-            _logger.LogError("GetHintsCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
+            logger.LogError("GetHintsCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
             return new StatusCodeResult(500);
         }
     }
@@ -786,7 +690,7 @@ public class CinemadleController : CinemadleControllerBase
             return new NotFoundResult();
         }
 
-        MovieDto? movie = await _tmdbRepo.GetMovie(movieName);
+        MovieDto? movie = await tmdbRepository.GetMovie(movieName);
         if (movie is null)
         {
             return new NotFoundResult();
@@ -795,462 +699,5 @@ public class CinemadleController : CinemadleControllerBase
         return new OkObjectResult(movie!);
     }
 
-    [Authorize]
-    [HttpPost("custom/create")]
-    public async Task<ActionResult> CreateCustomGame([FromBody] CustomGameCreateDto customGame)
-    {
-        _logger.LogDebug("+CreateCustomGame({customGame})", customGame);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            MovieDto? movie = await _tmdbRepo.GetMovieById(customGame.Id);
-            if (movie is null)
-            {
-                _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-                return new NotFoundResult();
-            }
-
-            CustomGame newCustomGame = new()
-            {
-                Id = Guid.NewGuid().ToString(),
-                TargetMovieId = customGame.Id,
-                CreatorUserId = userId,
-                Inserted = DateTime.UtcNow
-            };
-
-            _db.CustomGames.Add(newCustomGame);
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogDebug("-CreateCustomGame()");
-            return new OkObjectResult(new CustomGameDto
-            {
-                Id = newCustomGame.Id,
-                TargetMovieId = newCustomGame.TargetMovieId
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("CreateCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{id}")]
-    public async Task<ActionResult> GetCustomGame(string id)
-    {
-        _logger.LogDebug("+GetCustomGame({id})", id);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GetCustomGame({id})", id);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == id);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GetCustomGame({id})", id);
-                return new NotFoundResult();
-            }
-
-            _logger.LogDebug("-GetCustomGame({id})", id);
-            return new OkObjectResult(new CustomGameDto
-            {
-                Id = customGame.Id,
-                TargetMovieId = customGame.TargetMovieId
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetCustomGame({id})", id);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{customGameId}/target")]
-    public async Task<ActionResult> GetCustomGameTarget(string customGameId)
-    {
-        _logger.LogDebug("+GetCustomGameTarget({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                _logger.LogDebug("-GetCustomGameTarget({customGameId}): Target movie not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-            return new OkObjectResult(targetMovie);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetCustomGameTarget Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{customGameId}/target/image")]
-    public async Task<ActionResult> GetCustomGameImage(string customGameId)
-    {
-        _logger.LogDebug("+GetCustomGameImage({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        bool paymentsEnabled = await _flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
-
-        if (paymentsEnabled)
-        {
-            UserAccount? userAccount = _db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
-            if (userAccount is null)
-            {
-                _logger.LogDebug("GetCustomGameImage({customGameId}): user account does not exist", customGameId);
-                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-            if ((addOn?.Count ?? 0) <= 0)
-            {
-                _logger.LogDebug("GetCustomGameImage({customGameId}): user had no visual clues", customGameId);
-                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new UnauthorizedResult();
-            }
-        }
-
-        try
-        {
-            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GetCustomGameImage({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            int userGuesses = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId).Count();
-
-            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
-            {
-                _logger.LogDebug("GetCustomGameImage({customGameId}): User attempted to access image on guess {number}", customGameId, userGuesses);
-                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new UnauthorizedResult();
-            }
-
-            bool win = _db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId && x.GuessMediaId == customGame.TargetMovieId).Any();
-
-            float blurFactor = (userGuesses >= _config.GameLength || win)
-                ? 0.0F
-                : _config.MovieImageBlurFactors[userGuesses.ToString()];
-
-            ImageDto? image = await GetBlurredImageForMovie(customGame.TargetMovieId, blurFactor);
-
-            if (image is null)
-            {
-                _logger.LogDebug("GetCustomGameImage({customGameId}): No image found", customGameId);
-                _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            Clue? clue = _db.UserClues.FirstOrDefault(x => x.GameId == customGameId && x.UserId == userId && x.ClueType == ClueType.Visual);
-            if (clue is null)
-            {
-                try
-                {
-                    _db.UserClues.Add(new Clue
-                    {
-                        UserId = userId,
-                        GameId = customGameId,
-                        ClueType = ClueType.Visual,
-                        Inserted = DateTime.Now
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("GetCustomGameImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-                    _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-
-                    return new StatusCodeResult(500);
-                }
-            }
-
-            if (paymentsEnabled)
-            {
-                AddOnRecord? record = _db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-
-                if (record is null)
-                {
-                    return new StatusCodeResult(500);
-                }
-
-                if (clue is null)
-                {
-                    record.Count -= 1;
-                }
-            }
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-            return new OkObjectResult(image);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetCustomGameImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{customGameId}/guesses")]
-    public ActionResult GetPastGuessesCustomGame(string customGameId)
-    {
-        _logger.LogDebug("+GetPastGuessesCustomGame({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            // Verify custom game exists
-            CustomGame? customGame = _db.CustomGames.FirstOrDefault(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GetPastGuessesCustomGame({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            IEnumerable<UserGuess> guesses = _db.Guesses.Where(
-                x => x.GameId == customGameId && x.UserId == userId
-            )
-            .OrderBy(x => x.SequenceId);
-
-            _logger.LogDebug("GetPastGuessesCustomGame({customGameId}): {data}", customGameId, guesses.Count());
-
-            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetPastGuessesCustomGame Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            _logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{customGameId}/guess/{movieId}")]
-    public async Task<ActionResult> GuessMovieCustomGame(string customGameId, int movieId)
-    {
-        _logger.LogDebug("+GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            // Verify custom game exists and get target movie
-            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Custom game not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Get the guess movie
-            MovieDto? guessMovie = await _tmdbRepo.GetMovieById(movieId);
-            if (guessMovie is null)
-            {
-                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Guess movie not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Get the target movie
-            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Target movie not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Create guess DTO
-            GuessDto? guessDto = _guessRepo.Guess(guessMovie, targetMovie);
-            if (guessDto is null)
-            {
-                _logger.LogError("GuessMovieCustomGame: unable to create guess DTO");
-                _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-                return new StatusCodeResult(500);
-            }
-
-            // Check if this guess already exists
-            UserGuess? existingGuess = _db.Guesses.FirstOrDefault(
-                x => x.GuessMediaId == movieId && x.GameId == customGameId && x.UserId == userId
-            );
-
-            // If not, save the guess
-            if (existingGuess is null)
-            {
-                int seqNo = (_db.Guesses.Where(
-                    x => x.GameId == customGameId && x.UserId == userId
-                )
-                .OrderByDescending(x => x.SequenceId)
-                .FirstOrDefault()?.SequenceId ?? 0) + 1;
-
-                _db.Guesses.Add(new UserGuess
-                {
-                    GameId = customGameId,
-                    UserId = userId,
-                    GuessMediaId = movieId,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
-                });
-
-                await _db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                _hintRepo.InvalidateHints(userId, customGameId);
-            }
-
-            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-            return new OkObjectResult(guessDto);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GuessMovieCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [Authorize]
-    [HttpGet("custom/{customGameId}/gameSummary")]
-    public async Task<ActionResult> GetGameSummaryCustomGame(string customGameId)
-    {
-        _logger.LogDebug("+GetGameSummaryCustomGame({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            // Verify custom game exists
-            CustomGame? customGame = await _db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            IEnumerable<UserGuess> userGuesses = _db.Guesses.Where(
-                x => x.UserId == userId && x.GameId == customGameId
-            ).OrderBy(x => x.SequenceId);
-
-            // Get target movie for the custom game
-            MovieDto? targetMovie = await _tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Target movie not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            // Check if user has won
-            bool hasWon = userGuesses.Any(x => x.GuessMediaId == customGame.TargetMovieId);
-
-            // Allow summary if user has completed the game OR won
-            if (userGuesses.Count() < _config.GameLength && !hasWon)
-            {
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): User tried summary gen on guess {guess}", customGameId, userGuesses.Count());
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            // Generate summary using the existing logic
-            var guessDtos = await Task.WhenAll(userGuesses.Select(async x => 
-            {
-                MovieDto? guessMovie = await _tmdbRepo.GetMovieById(x.GuessMediaId);
-                if (guessMovie is null) return null;
-                return _guessRepo.Guess(guessMovie, targetMovie);
-            }));
-
-            if (guessDtos is null || !guessDtos.All(x => x is not null))
-            {
-                _logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Unable to make guess data", customGameId);
-                return new NotFoundResult();
-            }
-
-            List<string> gameSummary = [];
-            foreach (GuessDto? guessDto in guessDtos)
-            {
-                if (guessDto is null)
-                {
-                    return new NotFoundResult();
-                }
-
-                gameSummary.Add(string.Join("", guessDto.Fields.Select(x => MapColorToEmoji(x.Value.Color))));
-            }
-
-            gameSummary.Add($"play at https://cinemadle.com/customGame/{customGameId}");
-
-            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-            return new OkObjectResult(new GameSummaryDto
-            {
-                Summary = gameSummary
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("GetGameSummaryCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            _logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
-    }
+    
 }
