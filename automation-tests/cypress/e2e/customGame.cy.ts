@@ -17,8 +17,7 @@ describe('custom game', () => {
 
             const linkId = 'customcreate-link';
 
-            cy.getByDataTestId(linkId)
-                .should('not.be.visible')
+            cy.getByDataTestId(linkId).should('not.exist')
         });
 
         it('should redirect to home page', () => {
@@ -34,8 +33,8 @@ describe('custom game', () => {
             logIn({initialize: true});
 
             cy.createCustomGame('Shrek 2').then((copiedUrl) => {
-              let trimmed = copiedUrl.replace('https://cinemadle.com', '');
-              cy.visit(trimmed)
+              const path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
+              cy.visit(path);
             });
         })
 

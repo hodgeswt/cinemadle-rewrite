@@ -51,7 +51,9 @@ Cypress.Commands.add('init', () => {
 });
 
 Cypress.Commands.add('getClipboard', () => {
-  return cy.window().its('navigator.clipboard').invoke('readText');
+  return cy.window().then((win) => {
+    return win.navigator.clipboard.readText();
+  });
 });
 
 Cypress.Commands.add('createCustomGame', (movieName: string) => {
