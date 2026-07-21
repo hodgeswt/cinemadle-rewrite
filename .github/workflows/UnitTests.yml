@@ -36,6 +36,7 @@ jobs:
       - name: Run unit tests
         env:
           CinemadleTestMode: true
+          DisableQuartz: true
         run: dotnet test backend-unittest/backend-unittest.csproj --verbosity normal --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
