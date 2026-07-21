@@ -25,7 +25,6 @@ public class CinemadleController : CinemadleControllerBase
     private readonly IFeatureFlagRepository _flagRepo;
     private readonly ILogger<CinemadleController> _logger;
     private readonly DatabaseContext _db;
-    private readonly IdentityContext _identity;
     private readonly bool _isDevelopment;
 
     public CinemadleController(
@@ -36,8 +35,7 @@ public class CinemadleController : CinemadleControllerBase
             IGuessRepository guessRepository,
             IHintRepository hintRepository,
             IFeatureFlagRepository flagRepo,
-            DatabaseContext db,
-            IdentityContext identity
+            DatabaseContext db
     )
     {
         _logger = logger;
@@ -45,15 +43,12 @@ public class CinemadleController : CinemadleControllerBase
         _logger.LogDebug("+ctor({type})", type);
 
         _db = db;
-        _identity = identity;
         _config = configRepository.Value;
         _tmdbRepo = tmdbRepository;
         _guessRepo = guessRepository;
         _hintRepo = hintRepository;
         _isDevelopment = env.IsDevelopment();
         _flagRepo = flagRepo;
-
-        
 
         _logger.LogDebug("-ctor({type})", type);
     }
