@@ -50,10 +50,71 @@ Cypress.Commands.add('init', () => {
         .should('not.be.disabled');
 });
 
+Cypress.Commands.add('getClipboard', () => {
+  return cy.window().its('navigator.clipboard').invoke('readText');
+});
+
+Cypress.Commands.add('createCustomGame', (movieName: string) => {
+    cy.visit('/customCreate');
+
+    // Wait for the app to be fully loaded
+    let movieInput = cy.getByDataTestId('customcreate-search-input', {timeout: 10000});
+
+    movieInput
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .type(movieName);
+
+    let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
+
+    dropdownItem
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click();
+
+    let customCreateTitle = cy.getByDataTestId('customcreate-selection', {timeout: 10000});
+
+    customCreateTitle
+        .should('exist')
+        .should('be.visible');
+
+    let customCreateSubmit = cy.getByDataTestId('customcreate-submit', {timeout: 10000});
+
+    customCreateSubmit
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click();
+
+    let popupMessage = cy.getByDataTestId('success-body-text', {timeout: 10000});
+    popupMessage
+        .should('exist')
+        .should('be.visible')
+        .should('have.text', 'share this link with your friends to let them play your custom game');
+
+    let positiveButton = cy.getByDataTestId('success-copy-button');
+    let negativeButton = cy.getByDataTestId('success-close-button');
+
+    negativeButton
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled');
+
+    positiveButton
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click();
+
+    return cy.getClipboard();
+});
+
 // Helper to make a guess and wait for the response
 export const makeGuess = (guess: string, expectedTitle?: string) => {
     // Intercept the guess API call (it's a GET request)
-    cy.intercept('GET', '**/api/cinemadle/guess/**').as('guessRequest');
+    cy.intercept('GET', '**/api/**/guess/**').as('guessRequest');
     
     cy.getByDataTestId('guess-input')
         .should('be.visible')
@@ -99,6 +160,12 @@ export type LogInParams = {
     username?: string,
     password?: string,
     initialize?: boolean,
+}
+
+export const logOut = (): void => {
+    goToPage('about');
+    cy.getByDataTestId('logout-button').click();
+    goToPage('home');
 }
 
 export const logIn = (params: LogInParams): LogInParams => {
