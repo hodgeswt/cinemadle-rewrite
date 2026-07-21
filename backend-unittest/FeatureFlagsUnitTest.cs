@@ -15,6 +15,7 @@ public class FeatureFlagWebApplicationFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["DisableQuartz"] = "true",
                 ["CinemadleConfig:FeatureFlags:TestTrue"] = "true",
                 ["CinemadleConfig:FeatureFlags:TestFalse"] = "false",
             });

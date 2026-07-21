@@ -10,8 +10,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Microsoft.EntityFrameworkCore;
-using TMDbLib.Objects.Movies;
-using System.Runtime.InteropServices.Swift;
 using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Controllers;
@@ -29,7 +27,6 @@ public class CinemadleController : CinemadleControllerBase
     private readonly DatabaseContext _db;
     private readonly IdentityContext _identity;
     private readonly bool _isDevelopment;
-    private readonly bool _inTestMode;
 
     public CinemadleController(
             ILogger<CinemadleController> logger,
@@ -56,15 +53,7 @@ public class CinemadleController : CinemadleControllerBase
         _isDevelopment = env.IsDevelopment();
         _flagRepo = flagRepo;
 
-        string? sTestMode = Environment.GetEnvironmentVariable("CINEMADLE_TEST_MODE");
-        if (bool.TryParse(sTestMode ?? string.Empty, out bool testMode) && testMode)
-        {
-            _inTestMode = true;
-        }
-        else
-        {
-            _inTestMode = false;
-        }
+        
 
         _logger.LogDebug("-ctor({type})", type);
     }
@@ -1278,77 +1267,7 @@ public class CinemadleController : CinemadleControllerBase
     }
 
     #region test endpoints
-    [HttpDelete("destroy")]
-    public async Task<ActionResult> DestroyAllData()
-    {
-        _logger.LogDebug("+DestroyAllData()");
-        if (!_inTestMode)
-        {
-            _logger.LogWarning("-DestroyAllData(): Unauthorized access");
-            _logger.LogDebug("-DestroyAllData()");
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            _db.Guesses.RemoveRange(_db.Guesses);
-            _db.TargetMovies.RemoveRange(_db.TargetMovies);
-            _db.DataOverrides.RemoveRange(_db.DataOverrides);
-            _db.AnonUsers.RemoveRange(_db.AnonUsers);
-            _db.AnonUserGuesses.RemoveRange(_db.AnonUserGuesses);
-            _db.UserClues.RemoveRange(_db.UserClues);
-            _db.UserAccounts.RemoveRange(_db.UserAccounts);
-            _db.CustomGames.RemoveRange(_db.CustomGames);
-
-            await _db.SaveChangesAsync();
-
-            _identity.UserLogins.RemoveRange(_identity.UserLogins);
-            _identity.Users.RemoveRange(_identity.Users);
-            _identity.UserClaims.RemoveRange(_identity.UserClaims);
-            _identity.UserTokens.RemoveRange(_identity.UserTokens);
-            _identity.UserRoles.RemoveRange(_identity.UserRoles);
-
-            await _identity.SaveChangesAsync();
-
-            _logger.LogWarning("-DestroyAllData()");
-            return new OkResult();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("DestroyAllData Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            return new StatusCodeResult(500);
-        }
-    }
-
-    [HttpGet("rig/{id}")]
-    public ActionResult RigMovie(int id)
-    {
-        if (!_inTestMode)
-        {
-            _logger.LogWarning("-RigMovie(): Unauthorized access");
-            _logger.LogDebug("-RigMovie()");
-            return new UnauthorizedResult();
-        }
-        _logger.LogDebug("+RigMovie()");
-        _tmdbRepo.RigMovie(id);
-        _logger.LogDebug("+RigMovie()");
-        return new OkResult();
-    }
-
-    [HttpGet("rig/undo")]
-    public ActionResult UnrigMovie()
-    {
-        if (!_inTestMode)
-        {
-            _logger.LogWarning("-UnrigMovie(): Unauthorized access");
-            _logger.LogDebug("-UnrigMovie()");
-            return new UnauthorizedResult();
-        }
-        _logger.LogDebug("+UnrigMovie()");
-        _tmdbRepo.UnrigMovie();
-        _logger.LogDebug("+UnrigMovie()");
-        return new OkResult();
-    }
+    
 
     #endregion
 }

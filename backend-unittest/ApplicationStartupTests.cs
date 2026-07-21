@@ -1,25 +1,21 @@
-﻿using Cinemadle.Database;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Cinemadle.Controllers;
+using Cinemadle.Database;
+using Cinemadle.ServiceExtensions;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Cinemadle.UnitTest;
 
-public class ApplicationStartupTests : IClassFixture<WebApplicationFactory<Program>>
+public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)
+    : IClassFixture<CinemadleWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-    public ApplicationStartupTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _ = factory.Server;
-    }
-    
     [Fact]
+    [Trait("Category", "ApplicationStartup")]
     public void ApplicationStartupShouldRunSetupDbContext()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var services = scope.ServiceProvider;
         
         var dbContext = services.GetRequiredService<DatabaseContext>();
@@ -30,9 +26,10 @@ public class ApplicationStartupTests : IClassFixture<WebApplicationFactory<Progr
     }
     
     [Fact]
+    [Trait("Category", "ApplicationStartup")]
     public void ApplicationStartupShouldRunSetupIdentityContext()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var services = scope.ServiceProvider;
         
         var identityContext = services.GetRequiredService<IdentityContext>();
@@ -40,5 +37,28 @@ public class ApplicationStartupTests : IClassFixture<WebApplicationFactory<Progr
         Assert.NotNull(identityContext);
         Assert.NotNull(identityContext.Database);
         Assert.Empty(identityContext.Database.GetPendingMigrations());
+    }
+    
+    [Fact]
+    [Trait("Category", "ApplicationStartup")]
+    public void CinemadleWebApplicationFactoryDisablesQuartz()
+    {
+        using var scope = factory.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        var config = services.GetService<IConfiguration>();
+        
+        Assert.NotNull(config);
+        Assert.True(config.GetValue<bool>("DisableQuartz"));
+    }
+    
+    [Fact]
+    [Trait("Category", "ApplicationStartup")]
+    public void QuartzDisabledInTestMode()
+    {
+        // this is a hack to make sure the extension is called
+        using var scope = factory.Services.CreateScope();
+        
+        Assert.False(SetupCinemadleQuartzExtension.WasQuartzEnabled);
+        Assert.True(SetupCinemadleQuartzExtension.WasExtensionCalled);
     }
 }

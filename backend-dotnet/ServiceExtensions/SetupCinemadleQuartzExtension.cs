@@ -5,8 +5,17 @@ namespace Cinemadle.ServiceExtensions;
 
 public static class SetupCinemadleQuartzExtension
 {
-    public static IServiceCollection SetupCinemadleQuartz(this IServiceCollection services)
+    public static bool WasQuartzEnabled { get; private set; }
+    public static bool WasExtensionCalled { get ; private set; }
+
+    public static IServiceCollection SetupCinemadleQuartz(this IServiceCollection services, bool disableQuartz)
     {
+        WasExtensionCalled = true;
+        
+        if (disableQuartz) return services;
+        
+        WasQuartzEnabled = disableQuartz;
+        
         services.AddQuartz(qb =>
         {
             JobKey customGameRemovalJobKey = new(nameof(CustomGameRemovalJob));

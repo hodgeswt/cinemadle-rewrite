@@ -7,7 +7,7 @@ services:
       - 5000:5566
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - CINEMADLE_TEST_MODE=true
+      - CinemadleTestMode=true
       - ASPNETCORE_HTTP_PORTS=5566
     volumes:
       - ./volumes:/root/.local/share/AppData

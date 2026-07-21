@@ -81,39 +81,19 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
-        var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
+
+        var dbConnectionString = builder.Configuration.GetValue<string>("DatabaseConnectionString") ?? string.Empty;
         var logConfiguration = builder.Configuration.GetSection("NLog");
+        var isTestMode = builder.Configuration.GetValue<bool>("CinemadleTestMode");
+        var disableQuartz = builder.Configuration.GetValue<bool>("DisableQuartz");
 
-        foreach (var provider in (builder.Configuration as IConfigurationRoot).Providers)
-        {
-            if (provider is not Microsoft.Extensions.Configuration.Json.JsonConfigurationProvider jsonProvider)
-            {
-                continue;
-            }
-            
-            var fileProvider = jsonProvider.Source.FileProvider;
-            var path = jsonProvider.Source.Path;
-
-            if (fileProvider is Microsoft.Extensions.FileProviders.PhysicalFileProvider physicalProvider)
-            {
-                if (path == null) continue;
-                var fullPath = Path.Combine(physicalProvider.Root, path);
-                var exists = File.Exists(fullPath);
-                Console.WriteLine($"{fullPath} (Exists: {exists})");
-            }
-            else
-            {
-                Console.WriteLine($"{path} (FileProvider: {fileProvider?.GetType().Name})");
-            }
-        }
         builder.Services
             .AddCinemadleOpenApi()
             .AddCinemadleCors(builder.Environment.IsDevelopment())
             .ForwardHeaders()
             .AddMemoryCache()
             .RegisterCinemadleServices(dbConnectionString)
-            .SetupCinemadleQuartz()
+            .SetupCinemadleQuartz(disableQuartz)
             .SetupCinemadleAuthIdent()
             .SetupCinemadleLogging(logConfiguration)
             .Configure<CinemadleConfig>(builder.Configuration.GetSection("CinemadleConfig"));
@@ -124,7 +104,11 @@ public class Program
                 .AddDbContextCheck<DatabaseContext>()
                 .AddDbContextCheck<IdentityContext>();
         
-        builder.Services.AddControllers()
+        
+        builder.Services.AddControllers(opts =>
+            {
+                opts.Conventions.Add(new TestModeInclusionConvention(isTestMode));
+            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

@@ -21,7 +21,7 @@ tasks:
     deps:
       - build
     env:
-      CINEMADLE_TEST_MODE: "true"
+      CinemadleTestMode: "true"
       ASPNETCORE_ENVIRONMENT: "Development"
     cmds:
       - dotnet run --no-build
