@@ -1,12 +1,13 @@
-import { getGuessCard, isoDateNoTime, logIn, logOut, makeGuess } from "../support/commands";
+import { getGuessCard, logIn, makeGuess } from "../support/commands";
 
-describe('home page', () => {
+describe('custom game', () => {
     before(() => {
         cy.customTask('destroyDatabase');
     });
 
     beforeEach(() => {
         cy.init();
+        cy.customTask('destroyDatabase');
     })
 
     describe('logged out', () => {
@@ -14,7 +15,7 @@ describe('home page', () => {
             cy.getByDataTestId('menu-button').should('be.visible').should('be.enabled');
             cy.getByDataTestId('menu-button').click();
 
-            const linkId = `${'create custom game'.replaceAll(' ', '')}-link`;
+            const linkId = 'customcreate-link';
 
             cy.getByDataTestId(linkId)
                 .should('not.be.visible')
@@ -28,7 +29,10 @@ describe('home page', () => {
 
     describe('logged in', () => {
         beforeEach(() => {
+            cy.customTask('destroyDatabase');
+
             logIn({initialize: true});
+
             cy.createCustomGame('Shrek 2').then((copiedUrl) => {
               let trimmed = copiedUrl.replace('https://cinemadle.com', '');
               cy.visit(trimmed)
