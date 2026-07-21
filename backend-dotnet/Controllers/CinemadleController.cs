@@ -1253,9 +1253,4 @@ public class CinemadleController : CinemadleControllerBase
             return new StatusCodeResult(500);
         }
     }
-
-    #region test endpoints
-    
-
-    #endregion
 }

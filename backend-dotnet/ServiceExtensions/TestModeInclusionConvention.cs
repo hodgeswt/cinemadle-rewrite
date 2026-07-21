@@ -7,7 +7,10 @@ public class TestModeInclusionAttribute : Attribute;
 
 public class TestModeInclusionConvention(bool isTestMode) : IApplicationModelConvention
 {
-    
+    private static List<string> Removed { get; } = [];
+
+    public static IReadOnlyCollection<string> ExcludedControllers => Removed.AsReadOnly();
+
     public void Apply(ApplicationModel application)
     {
         if (isTestMode) return;
@@ -19,6 +22,7 @@ public class TestModeInclusionConvention(bool isTestMode) : IApplicationModelCon
         foreach (var controller in controllersToRemove)
         {
             application.Controllers.Remove(controller);
+            Removed.Add(controller.GetType().Name);
         }
     }
 }

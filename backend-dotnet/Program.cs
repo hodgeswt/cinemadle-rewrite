@@ -103,7 +103,7 @@ public class Program
             .AddCheck<TmdbHealthCheck>("tmdb")
                 .AddDbContextCheck<DatabaseContext>()
                 .AddDbContextCheck<IdentityContext>();
-        
+
         
         builder.Services.AddControllers(opts =>
             {
@@ -117,6 +117,8 @@ public class Program
         var app = builder.Build();
 
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        
+        logger.LogInformation("~~~ Excluded controllers: {controllers}", string.Join(',', TestModeInclusionConvention.ExcludedControllers));
 
         if (app.Environment.IsDevelopment())
         {
