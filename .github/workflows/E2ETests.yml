@@ -54,6 +54,8 @@ jobs:
 
       - name: Set up + start Cinemadle
         shell: pwsh
+        env:
+          CinemadleTestMode: true
         run: |
           ./devops/upgrade.ps1 -e2e
         

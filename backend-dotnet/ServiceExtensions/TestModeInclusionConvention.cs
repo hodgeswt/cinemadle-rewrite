@@ -16,7 +16,6 @@ public class TestModeInclusionConvention(bool isTestMode) : IApplicationModelCon
             .Where(c => c.ControllerType.IsDefined(typeof(TestModeInclusionAttribute), false))
             .ToList();
 
-        Console.WriteLine("~~~ STARTUP: EXCLUDING TEST CONTROLLERS ~~~");
         foreach (var controller in controllersToRemove)
         {
             application.Controllers.Remove(controller);

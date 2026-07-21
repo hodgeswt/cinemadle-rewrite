@@ -36,7 +36,7 @@ public class CinemadleControllerUnitTest
         Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
         IGuessRepository guessRepo = guessRepoMock.Object;
 
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object,  db, Mocks.GetIdentityContext());
+        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object, db);
 
         Assert.True(controller.Validate().Value);
     }
@@ -62,7 +62,7 @@ public class CinemadleControllerUnitTest
         Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
         IGuessRepository guessRepo = guessRepoMock.Object;
 
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object,  db, Mocks.GetIdentityContext());
+        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object, db);
 
         var anonUserIdResult = await controller.GetAnonUserId();
 
@@ -108,8 +108,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -138,8 +137,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -165,8 +163,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -275,8 +272,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -385,8 +381,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var result = await controller.GuessMovieAnon(date, userId, movieId);
@@ -419,8 +414,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var result = await controller.GuessMovieAnon(date, invalidUserId, movieId);
@@ -442,8 +436,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         controller.ControllerContext = new ControllerContext
@@ -490,8 +483,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -528,8 +520,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         controller.ControllerContext = new ControllerContext
@@ -560,8 +551,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -602,8 +592,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -636,8 +625,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -692,8 +680,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -726,8 +713,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -787,8 +773,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -823,8 +808,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -906,8 +890,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -947,8 +930,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext(),
-            Mocks.GetIdentityContext()
+            Mocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -1048,8 +1030,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -1123,8 +1104,7 @@ public class CinemadleControllerUnitTest
             Mocks.GetMockedGuessRepository().Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -1234,8 +1214,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -1332,8 +1311,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -1436,8 +1414,7 @@ public class CinemadleControllerUnitTest
             guessRepoMock.Object,
             Mocks.GetMockedHintRepository().Object,
             Mocks.GetMockedFeatureFlagRepository().Object,
-            db,
-            Mocks.GetIdentityContext()
+            db
         );
 
         var result = await controller.GetGameSummaryAnon(date, anonUserId);
