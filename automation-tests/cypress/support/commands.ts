@@ -22,19 +22,19 @@ Cypress.Commands.add('customTask', (task: string) => {
         case 'destroyDatabase':
             return cy.request({
                 method: 'DELETE',
-                url: `${backendUrl}/api/cinemadle/destroy`,
+                url: `${backendUrl}/api/test/destroy`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'rigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${backendUrl}/api/cinemadle/rig/85`,
+                url: `${backendUrl}/api/test/rig/85`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'unrigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${backendUrl}/api/cinemadle/rig/undo`,
+                url: `${backendUrl}/api/test/rig/undo`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
     }
