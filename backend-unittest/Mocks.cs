@@ -35,7 +35,11 @@ public class Mocks
             { "9", 6.0F }
         },
         GameLength = 10,
-        FeatureFlags = []
+        FeatureFlags = new Dictionary<string, bool>
+        {
+            { "TestTrue", true },
+            { "TestFalse", false }
+        }
     };
 
     public static IMemoryCache GetMemoryCache()
@@ -123,6 +127,14 @@ public class Mocks
     public static Mock<IFeatureFlagRepository> GetMockedFeatureFlagRepository()
     {
         Mock<IFeatureFlagRepository> flagRepoMock = new();
+
+        var flags = new Dictionary<string, bool>()
+        {
+            { "TestTrue", true },
+            { "TestFalse", false }
+        };
+        
+        flagRepoMock.Setup(x => x.GetAll()).Returns(Task.FromResult(flags));
 
         return flagRepoMock;
     }

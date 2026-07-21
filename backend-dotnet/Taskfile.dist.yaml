@@ -21,7 +21,7 @@ tasks:
     deps:
       - build
     env:
-      CINEMADLE_TEST_MODE: "true"
+      CinemadleTestMode: "true"
       ASPNETCORE_ENVIRONMENT: "Development"
     cmds:
       - dotnet run --no-build
@@ -32,7 +32,13 @@ tasks:
       - build
     cmds:
       - cd ../backend-unittest && dotnet test
-    desc: "Run the backend unit tests"
+    desc: "Run unit tests"
+  generate-e2e-config:
+      dir: "{{.TASKFILE_DIR}}"
+      cmds:
+        # we presume you have keys in here, not the committed appsettings.json
+        - base64 appsettings.Development.json
+      desc: "Generate base64 encoded appsettings.Development.json"
 
   default:
     cmds:

@@ -269,7 +269,7 @@
 									type="button"
 									class="w-full text-left hover:{$isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded"
 									onclick={() => selectMovie(title)}
-									data-testid={`customcreate-suggestion-${title.replaceAll(" ", "-")}`}
+									data-testid={`customcreate-suggestion-${title.replaceAll(" ", "-")}`.toLowerCase()}
 								>
 									{title}
 								</button>
