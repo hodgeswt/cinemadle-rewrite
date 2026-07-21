@@ -42,32 +42,6 @@ public class CinemadleControllerUnitTest
     }
 
     [Fact]
-    public void CinemadleControllerHeartbeatEndpointTest()
-    {
-        ILogger<CinemadleController> logger = UnitTestAssist.GetLogger<CinemadleController>();
-        var configRepo = Mocks.GetMockedConfigRepository();
-
-        Mock<ICacheRepository> cacheRepoMock = Mocks.GetMockedCacheRepository();
-        ICacheRepository cacheRepo = cacheRepoMock.Object;
-
-        Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
-        ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
-
-        Mock<IWebHostEnvironment> webHostEnvMock = new();
-        webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
-        IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
-
-        DatabaseContext db = Mocks.GetDatabaseContext();
-
-        Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
-        IGuessRepository guessRepo = guessRepoMock.Object;
-
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object,  db, Mocks.GetIdentityContext());
-
-        Assert.True(controller.Heartbeat().Value);
-    }
-
-    [Fact]
     public async Task CinemadleControllerAnonUserIdEndpointSuccessTest()
     {
         ILogger<CinemadleController> logger = UnitTestAssist.GetLogger<CinemadleController>();

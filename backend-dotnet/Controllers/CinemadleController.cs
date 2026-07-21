@@ -60,13 +60,6 @@ public class CinemadleController : CinemadleControllerBase
         return true;
     }
 
-    [HttpGet("heartbeat")]
-    public ActionResult<bool> Heartbeat()
-    {
-        _logger.LogDebug("Heartbeat");
-        return true;
-    }
-
     [HttpGet("anonUserId")]
     public async Task<ActionResult> GetAnonUserId()
     {
