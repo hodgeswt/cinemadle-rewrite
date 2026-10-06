@@ -132,7 +132,7 @@ export const makeGuess = (guess: string, expectedTitle?: string) => makeGuessBas
 
 const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: string) => {
     // Intercept the guess API call (it's a GET request)
-    cy.intercept('GET', '**/api/**/guess/**').as('guessRequest');
+    cy.intercept('GET', '**/api/**/guess/**').ch as('guessRequest');
     
     const inputTestId = customGuess ? 'customgame-guess-input' : 'guess-input';
     cy.getByDataTestId(inputTestId)
@@ -147,7 +147,12 @@ const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: stri
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest');
+    cy.wait('@guessRequest').should(({ request, response }) => {
+      cy.log("Guess Response Body: ", response?.body);
+      cy.log("Guess Response Headers: ", response?.headers);
+      cy.log("Guess Response Status Code: ", response?.statusCode);
+      cy.log("Guess Response Status Message: ", response?.statusMessage);
+    });
     
     // Verify the guess appeared
     if (expectedTitle) {
@@ -283,3 +288,15 @@ export const getGuessCard = (cardId: number, category: string) => {
             });
     });
 };
+
+// https://stackoverflow.com/a/73827995
+Cypress.Commands.overwrite("log", function(log, ...args) {
+  if (Cypress.browser.isHeadless) {
+    return cy.task("log", args, { log: false }).then(() => {
+      return log(...args);
+    });
+  } else {
+    console.log(...args);
+    return log(...args);
+  }
+});

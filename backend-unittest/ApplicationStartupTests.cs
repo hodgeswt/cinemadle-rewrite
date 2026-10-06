@@ -11,12 +11,13 @@ namespace Cinemadle.UnitTest;
 public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)
     : IClassFixture<CinemadleWebApplicationFactory>, IDisposable
 {
+    private readonly HttpClient _client = factory.CreateClient();
+
     [Fact]
     [Trait("Category", "ApplicationStartup")]
     public async Task ApplicationStartupShouldRunSetupDbContext()
     {
-        HttpClient client = factory.CreateClient();
-        HttpResponseMessage versionMessage = await client.GetAsync("/api/information/version");
+        HttpResponseMessage versionMessage = await _client.GetAsync("/api/information/version");
         DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
         var migration = typeof(InitialCreate)
@@ -35,8 +36,7 @@ public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)
     [Trait("Category", "ApplicationStartup")]
     public async Task ApplicationStartupShouldRunSetupIdentityDbContext()
     {
-        HttpClient client = factory.CreateClient();
-        HttpResponseMessage versionMessage = await client.GetAsync("/api/information/version");
+        HttpResponseMessage versionMessage = await _client.GetAsync("/api/information/version");
         DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
         var migration = typeof(InitialCreate)
