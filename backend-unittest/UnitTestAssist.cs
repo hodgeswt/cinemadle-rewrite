@@ -44,3 +44,11 @@ public class CinemadleWebApplicationFactoryBase(Dictionary<string, string>? conf
 public class CinemadleWebApplicationFactory() : CinemadleWebApplicationFactoryBase();
 
 public class CinemadleWebApplicationFactoryTestModeDisabled(): CinemadleWebApplicationFactoryBase(new() { { "CinemadleTestMode", "false" } });
+
+public class FeatureFlagWebApplicationFactory() : CinemadleWebApplicationFactoryBase(
+    new()
+    {
+        ["CinemadleConfig:FeatureFlags:TestTrue"] = "true",
+        ["CinemadleConfig:FeatureFlags:TestFalse"] = "false",
+    }
+);

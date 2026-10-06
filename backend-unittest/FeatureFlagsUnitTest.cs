@@ -1,30 +1,13 @@
 ﻿using System.Net.Http.Json;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Repositories;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinemadle.UnitTest;
 
-public class FeatureFlagWebApplicationFactory : WebApplicationFactory<Program>
-{
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["DisableQuartz"] = "true",
-                ["CinemadleConfig:FeatureFlags:TestTrue"] = "true",
-                ["CinemadleConfig:FeatureFlags:TestFalse"] = "false",
-            });
-        });
-    }
-}
-
 public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IClassFixture<FeatureFlagWebApplicationFactory>
 {
+    private readonly HttpClient _client = factory.CreateClient();
+
     [Fact]
     public async Task GetAllReturnsFlags()
     {
@@ -57,8 +40,7 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     [Fact]
     public void ControllerShouldReturnAllFlags()
     {
-        var client = factory.CreateClient();
-        var response = client.GetAsync("/api/flags/all").Result;
+        var response = _client.GetAsync("/api/flags/all").Result;
         
         response.EnsureSuccessStatusCode();
         
@@ -74,8 +56,7 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     [InlineData("TestFalse", false)]
     public void ControllerShouldReturnProperFlagValue(string flagName, bool expectedValue)
     {
-        var client = factory.CreateClient();
-        var response = client.GetAsync($"/api/flags/{flagName}").Result;
+        var response = _client.GetAsync($"/api/flags/{flagName}").Result;
         
         response.EnsureSuccessStatusCode();
         

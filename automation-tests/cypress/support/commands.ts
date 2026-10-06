@@ -132,7 +132,7 @@ export const makeGuess = (guess: string, expectedTitle?: string) => makeGuessBas
 
 const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: string) => {
     // Intercept the guess API call (it's a GET request)
-    cy.intercept('GET', '**/api/**/guess/**').ch as('guessRequest');
+    cy.intercept('GET', '**/api/**/guess/**').as('guessRequest');
     
     const inputTestId = customGuess ? 'customgame-guess-input' : 'guess-input';
     cy.getByDataTestId(inputTestId)
