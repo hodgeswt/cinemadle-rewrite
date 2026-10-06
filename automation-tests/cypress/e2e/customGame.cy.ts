@@ -61,7 +61,7 @@ describe('custom game', () => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
                     expect(texts).to.include('Animation');
                     expect(texts).to.include('Comedy');
-                    expect(texts).to.include('Family');
+                    expect(texts).to.include('Fantasy');
                 });
                 genre.className.should('contain', 'bg-gradient-to-br from-[#ffeb3b] to-[#ffd700]');
             })
