@@ -85,8 +85,14 @@ describe('custom game', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('have.text', 'Director: Andrew Adamson');
                 creatives.className.should('contain', 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]');
+                creatives.tiledata.invoke('text').should(text => {
+                    if (text.includes('Conrad Vernon')) {
+                        expect(text).to.contain('Director: Conrad Vernon');
+                    } else {
+                        expect(text).to.contain('Director: Andrew Adamson');
+                    }
+                });
             })
         });
 

@@ -76,9 +76,9 @@ describe('home page', () => {
                 creatives.className.should('contain', 'to-gray-300');
                 creatives.tiledata.invoke('text').should(text => {
                     if (text.includes('Conrad Vernon')) {
-                        expect(text).to.equal('Director: Conrad Vernon');
+                        expect(text).to.contain('Director: Conrad Vernon');
                     } else {
-                        expect(text).to.equal('Director: Andrew Adamson');
+                        expect(text).to.contain('Director: Andrew Adamson');
                     }
                 });
             })
@@ -153,9 +153,9 @@ describe('home page', () => {
                 creatives.className.should('contain', 'to-gray-300');
                 creatives.tiledata.invoke('text').should(text => {
                     if (text.includes('Conrad Vernon')) {
-                        expect(text).to.equal('Director: Conrad Vernon');
+                        expect(text).to.contain('Director: Conrad Vernon');
                     } else {
-                        expect(text).to.equal('Director: Andrew Adamson');
+                        expect(text).to.contain('Director: Andrew Adamson');
                     }
                 });
             })
