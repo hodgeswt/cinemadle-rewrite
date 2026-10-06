@@ -58,10 +58,10 @@ describe('custom game', () => {
             getGuessCard(0, 'GENRE').then((genre) => {
                 genre.name.should('have.text', 'GENRE');
                 genre.tiledata.should($elements => {
-                    const texts = $elements.map((_, el) => Cypress.$(el).text()).get();
-                        expect(texts).to.include('Animation');
-                        expect(texts).to.include('Comedy');
-                        expect(texts).to.include('Family');
+                    const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
+                    expect(texts).to.include('Animation');
+                    expect(texts).to.include('Comedy');
+                    expect(texts).to.include('Family');
                 });
                 genre.className.should('contain', 'bg-gradient-to-br from-[#ffeb3b] to-[#ffd700]');
             })
@@ -99,10 +99,10 @@ describe('custom game', () => {
         });
 
         it('should remove guess from suggested', () => {
-            makeCustomGuess('Shrek 2');
+            makeCustomGuess('Shrek');
 
             cy.getByDataTestId('customgame-guess-input').type('Shrek');
-            cy.getByDataTestId('customgame-guess-Shrek-2-button').should('not.exist');
+            cy.getByDataTestId('customgame-guess-Shrek-button').should('not.exist');
         });
 
         it('should let you win', () => {
