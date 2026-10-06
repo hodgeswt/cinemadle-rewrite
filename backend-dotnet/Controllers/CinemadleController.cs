@@ -641,23 +641,4 @@ public class CinemadleController(
             return new StatusCodeResult(500);
         }
     }
-
-    [HttpGet("movie/{movieName}")]
-    public async Task<ActionResult> GetMovie(string movieName)
-    {
-        if (!_isDevelopment)
-        {
-            return new NotFoundResult();
-        }
-
-        MovieDto? movie = await tmdbRepository.GetMovie(movieName);
-        if (movie is null)
-        {
-            return new NotFoundResult();
-        }
-
-        return new OkObjectResult(movie!);
-    }
-
-    
 }
