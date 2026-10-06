@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using Cinemadle.HealthChecks;
 using Cinemadle.ServiceExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 namespace Cinemadle;
 
@@ -137,6 +139,24 @@ public class Program
         app.MapHealthChecks("/healthz");
         app.MapControllers();
         app.UseCors("AllowFrontend");
+
+        // https://stackoverflow.com/a/78608072
+        app.Lifetime.ApplicationStarted.Register(() =>
+        {
+            var server = app.Services.GetRequiredService<IServer>();
+            var serverAddressesFeature = server.Features.Get<IServerAddressesFeature>();
+
+            if (serverAddressesFeature == null)
+            {
+                return;
+            }
+
+            foreach (var address in serverAddressesFeature.Addresses)
+            {
+                logger.LogInformation("Application is listening on: {address}", address);
+            }
+        });
+
 
         logger.LogInformation("cinemadle started at {Time}", DateTime.UtcNow);
         await app.RunAsync();

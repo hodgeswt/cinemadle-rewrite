@@ -24,6 +24,7 @@ export default defineConfig({
   },
   env: {
     backendUrl: process.env['CYPRESS_BACKEND_URL'] || '',
+    frontendUrl: process.env['CYPRESS_HOSTNAME'] || '',
   },
   experimentalModifyObstructiveThirdPartyCode: true,
 });

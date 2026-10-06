@@ -34,8 +34,8 @@ describe('custom game', () => {
 
             cy.createCustomGame('Shrek 2').then((copiedUrl) => {
               let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
-              path = path.replace("https://cinemadle.com", Cypress.env().backendUrl);
-              cy.log('received url', copiedUrl)
+              path = path.replace("https://cinemadle.com", Cypress.env().frontendUrl);
+              cy.log('received url', path)
               cy.visit(path);
             });
         })

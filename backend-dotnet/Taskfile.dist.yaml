@@ -16,6 +16,7 @@ tasks:
     cmds:
       - dotnet build --no-restore
     desc: "Build the backend project"
+
   run:
     dir: "{{.TASKFILE_DIR}}"
     deps:
@@ -24,7 +25,7 @@ tasks:
       CinemadleTestMode: "true"
       ASPNETCORE_ENVIRONMENT: "Development"
     cmds:
-      - dotnet run --no-build
+      - dotnet run --no-build --no-restore --urls="http://localhost:5566"
     desc: "Run the backend project"
 
   test:
