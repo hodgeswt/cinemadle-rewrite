@@ -75,7 +75,7 @@ describe('custom game', () => {
             getGuessCard(0, 'CAST').then((cast) => {
                 cast.name.should('have.text', 'CAST');
                 cast.tiledata.should($elements => {
-                    const texts = $elements.map((_, el) => Cypress.$(el).text()).get();
+                    const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
                     expect(texts).to.include('Mike Myers');
                     expect(texts).to.include('Eddie Murphy');
                     expect(texts).to.include('Cameron Diaz');
