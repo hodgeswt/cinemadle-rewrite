@@ -2,12 +2,13 @@
 
 public class TestModeEndpointsDisabledTests(CinemadleWebApplicationFactoryTestModeDisabled factory) : IClassFixture<CinemadleWebApplicationFactoryTestModeDisabled>
 {
+
+    private readonly HttpClient _client = factory.CreateClient();
+
     [Fact]
     public async Task TestModeDestroyEndpointGivesExpectedStatusCode()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.DeleteAsync("/api/test/destroy");
+        var response = await _client.DeleteAsync("/api/test/destroy");
         
         Assert.Equal(404, (int)response.StatusCode);
     }
@@ -15,9 +16,7 @@ public class TestModeEndpointsDisabledTests(CinemadleWebApplicationFactoryTestMo
     [Fact]
     public async Task TestModeRigEndpointGivesExpectedResults()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.GetAsync($"/api/test/rig/1924");
+        var response = await _client.GetAsync($"/api/test/rig/1924");
         
         Assert.Equal(404, (int)response.StatusCode);
     }
@@ -25,9 +24,7 @@ public class TestModeEndpointsDisabledTests(CinemadleWebApplicationFactoryTestMo
     [Fact]
     public async Task TestModeUnrigEndpointGivesExpectedResults()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.GetAsync($"/api/test/rig/undo");
+        var response = await _client.GetAsync($"/api/test/rig/undo");
         
         Assert.Equal(404, (int)response.StatusCode);
     }
@@ -35,12 +32,12 @@ public class TestModeEndpointsDisabledTests(CinemadleWebApplicationFactoryTestMo
 
 public class TestModeEndpointsEnabledTests(CinemadleWebApplicationFactory factory) : IClassFixture<CinemadleWebApplicationFactory>
 {
+    private readonly HttpClient _client = factory.CreateClient();
+
     [Fact]
     public async Task TestModeDestroyEndpointGivesExpectedStatusCode()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.DeleteAsync("/api/test/destroy");
+        var response = await _client.DeleteAsync("/api/test/destroy");
         
         Assert.Equal(200, (int)response.StatusCode);
     }
@@ -48,9 +45,7 @@ public class TestModeEndpointsEnabledTests(CinemadleWebApplicationFactory factor
     [Fact]
     public async Task TestModeRigEndpointGivesExpectedResults()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.GetAsync($"/api/test/rig/1924");
+        var response = await _client.GetAsync($"/api/test/rig/1924");
         
         Assert.Equal(200, (int)response.StatusCode);
     }
@@ -58,9 +53,7 @@ public class TestModeEndpointsEnabledTests(CinemadleWebApplicationFactory factor
     [Fact]
     public async Task TestModeUnrigEndpointGivesExpectedResults()
     {
-        
-        var client = factory.CreateClient();
-        var response = await client.GetAsync($"/api/test/rig/undo");
+        var response = await _client.GetAsync($"/api/test/rig/undo");
         
         Assert.Equal(200, (int)response.StatusCode);
     }
