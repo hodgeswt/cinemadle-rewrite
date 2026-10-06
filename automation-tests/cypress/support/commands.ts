@@ -66,9 +66,8 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .type(movieName);
-
-    cy.log('found movie input');
+        .type(movieName)
+        .then(() => cy.log('found movie input'));
 
     let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
 
@@ -76,17 +75,15 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .click();
-
-    cy.log('selected shrek 2');
+        .click()
+        .then(() => cy.log('selected shrek 2'));
 
     let customCreateTitle = cy.getByDataTestId('customcreate-selection', {timeout: 10000});
 
     customCreateTitle
         .should('exist')
-        .should('be.visible');
-
-    cy.log('custom create title visible');
+        .should('be.visible')
+        .then(() => cy.log('custom create title visible'));
 
     let customCreateSubmit = cy.getByDataTestId('customcreate-submit', {timeout: 10000});
 
@@ -94,17 +91,15 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .click();
-
-    cy.log('custom create submitted');
+        .click()
+        .then(() => cy.log('custom create submitted'));
 
     let popupMessage = cy.getByDataTestId('success-body-text', {timeout: 10000});
     popupMessage
         .should('exist')
         .should('be.visible')
-        .should('have.text', 'share this link with your friends to let them play your custom game');
-
-    cy.log('popup found');
+        .should('have.text', 'share this link with your friends to let them play your custom game')
+        .then(() => cy.log('popup found'));
 
     let positiveButton = cy.getByDataTestId('success-copy-button');
     let negativeButton = cy.getByDataTestId('success-close-button');
@@ -112,17 +107,17 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
     negativeButton
         .should('exist')
         .should('be.visible')
-        .should('not.be.disabled');
+        .should('not.be.disabled')
+        .then(() => cy.log('negative button disabled'));
 
-    cy.log('negative button disabled');
+    
 
     positiveButton
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .click();
-
-    cy.log('positive button clicked');
+        .click()
+        .then(() => cy.log('positive button clicked'));
 
     return cy.getClipboard();
 });
@@ -147,7 +142,7 @@ const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: stri
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest').should(({ request, response }) => {
+    cy.wait('@guessRequest').then(({ request, response }) => {
       cy.log("Guess Response Body: ", response?.body);
       cy.log("Guess Response Headers: ", response?.headers);
       cy.log("Guess Response Status Code: ", response?.statusCode);
