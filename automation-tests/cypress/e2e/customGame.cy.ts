@@ -72,6 +72,7 @@ describe('custom game', () => {
                 boxOffice.className.should('contain', 'to-gray-300');
             })
 
+
             getGuessCard(0, 'CAST').then((cast) => {
                 cast.name.should('have.text', 'CAST');
                 cast.tiledata.should($elements => {
@@ -85,14 +86,8 @@ describe('custom game', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.className.should('contain', 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]');
-                creatives.tiledata.invoke('text').should(text => {
-                    if (text.includes('Conrad Vernon')) {
-                        expect(text).to.contain('Director: Conrad Vernon');
-                    } else {
-                        expect(text).to.contain('Director: Andrew Adamson');
-                    }
-                });
+                creatives.className.should('contain', 'bg-gradient-to-br from-gray-200 to-gray-300');
+                creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
 
