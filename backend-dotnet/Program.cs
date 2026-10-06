@@ -1,16 +1,9 @@
 using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
-using Cinemadle.Interfaces;
-using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Cinemadle.HealthChecks;
-using NLog.Extensions.Logging;
-using Cinemadle.Jobs;
 using Cinemadle.ServiceExtensions;
-using Quartz;
-using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle;

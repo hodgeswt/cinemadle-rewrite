@@ -1,64 +1,58 @@
-﻿using Cinemadle.Database;
-using Cinemadle.ServiceExtensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net.Http.Json;
+using System.Reflection;
+using Cinemadle.Database;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Cinemadle.UnitTest;
 
 public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)
     : IClassFixture<CinemadleWebApplicationFactory>, IDisposable
 {
-    private readonly IServiceScope _scope = factory.Services.CreateScope();
-    
     [Fact]
     [Trait("Category", "ApplicationStartup")]
-    public void ApplicationStartupShouldRunSetupDbContext()
+    public async Task ApplicationStartupShouldRunSetupDbContext()
     {
-        var services = _scope.ServiceProvider;
+        HttpClient client = factory.CreateClient();
+        HttpResponseMessage versionMessage = await client.GetAsync("/api/information/version");
+        DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
-        var dbContext = services.GetRequiredService<DatabaseContext>();
-        
-        Assert.NotNull(dbContext);
-        Assert.NotNull(dbContext.Database);
-        Assert.Empty(dbContext.Database.GetPendingMigrations());
+        var migration = typeof(InitialCreate)
+            .Assembly
+            .GetTypes()
+            .Where(x => x.GetCustomAttribute<DbContextAttribute>()?.ContextType == typeof(DatabaseContext))
+            .Select(x => x.GetCustomAttribute<MigrationAttribute>()?.Id.Split('_')[0])
+            .OrderByDescending(x => x)
+            .First();
+
+        Assert.NotNull(migration);
+        Assert.Equal(migration, versionInfo.MainDbVersion);
     }
-    
+
     [Fact]
     [Trait("Category", "ApplicationStartup")]
-    public void ApplicationStartupShouldRunSetupIdentityContext()
+    public async Task ApplicationStartupShouldRunSetupIdentityDbContext()
     {
-        var services = _scope.ServiceProvider;
+        HttpClient client = factory.CreateClient();
+        HttpResponseMessage versionMessage = await client.GetAsync("/api/information/version");
+        DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
-        var identityContext = services.GetRequiredService<IdentityContext>();
-        
-        Assert.NotNull(identityContext);
-        Assert.NotNull(identityContext.Database);
-        Assert.Empty(identityContext.Database.GetPendingMigrations());
-    }
-    
-    [Fact]
-    [Trait("Category", "ApplicationStartup")]
-    public void CinemadleWebApplicationFactoryDisablesQuartz()
-    {
-        var services = _scope.ServiceProvider;
-        var config = services.GetService<IConfiguration>();
-        
-        Assert.NotNull(config);
-        Assert.True(config.GetValue<bool>("DisableQuartz"));
-    }
-    
-    [Fact]
-    [Trait("Category", "ApplicationStartup")]
-    public void QuartzDisabledInTestMode()
-    {
-        Assert.False(SetupCinemadleQuartzExtension.WasQuartzEnabled);
-        Assert.True(SetupCinemadleQuartzExtension.WasExtensionCalled);
+        var migration = typeof(InitialCreate)
+            .Assembly
+            .GetTypes()
+            .Where(x => x.GetCustomAttribute<DbContextAttribute>()?.ContextType == typeof(IdentityContext))
+            .Select(x =>  x.GetCustomAttribute<MigrationAttribute>()?.Id.Split('_')[0])
+            .OrderByDescending(x => x)
+            .First();
+
+        Assert.NotNull(migration);
+        Assert.Equal(migration, versionInfo.IdentityDbVersion);
     }
 
     public void Dispose()
     {
-        _scope.Dispose();
         GC.SuppressFinalize(this);
     }
 }

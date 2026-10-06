@@ -6,10 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
-using Cinemadle.Utilities;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats.Png;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
