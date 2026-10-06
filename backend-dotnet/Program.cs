@@ -1,17 +1,12 @@
 using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
-using Cinemadle.Interfaces;
-using Cinemadle.Repositories;
 using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Cinemadle.HealthChecks;
-using NLog.Extensions.Logging;
-using Cinemadle.Jobs;
 using Cinemadle.ServiceExtensions;
-using Quartz;
-using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 namespace Cinemadle;
 
@@ -81,39 +76,19 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
-        var dbConnectionString = builder.Configuration.GetSection("DatabaseConnectionString").Value ?? string.Empty;
+
+        var dbConnectionString = builder.Configuration.GetValue<string>("DatabaseConnectionString") ?? string.Empty;
         var logConfiguration = builder.Configuration.GetSection("NLog");
+        var isTestMode = builder.Configuration.GetValue<bool>("CinemadleTestMode");
+        var disableQuartz = builder.Configuration.GetValue<bool>("DisableQuartz");
 
-        foreach (var provider in (builder.Configuration as IConfigurationRoot).Providers)
-        {
-            if (provider is not Microsoft.Extensions.Configuration.Json.JsonConfigurationProvider jsonProvider)
-            {
-                continue;
-            }
-            
-            var fileProvider = jsonProvider.Source.FileProvider;
-            var path = jsonProvider.Source.Path;
-
-            if (fileProvider is Microsoft.Extensions.FileProviders.PhysicalFileProvider physicalProvider)
-            {
-                if (path == null) continue;
-                var fullPath = Path.Combine(physicalProvider.Root, path);
-                var exists = File.Exists(fullPath);
-                Console.WriteLine($"{fullPath} (Exists: {exists})");
-            }
-            else
-            {
-                Console.WriteLine($"{path} (FileProvider: {fileProvider?.GetType().Name})");
-            }
-        }
         builder.Services
             .AddCinemadleOpenApi()
             .AddCinemadleCors(builder.Environment.IsDevelopment())
             .ForwardHeaders()
             .AddMemoryCache()
             .RegisterCinemadleServices(dbConnectionString)
-            .SetupCinemadleQuartz()
+            .SetupCinemadleQuartz(disableQuartz)
             .SetupCinemadleAuthIdent()
             .SetupCinemadleLogging(logConfiguration)
             .Configure<CinemadleConfig>(builder.Configuration.GetSection("CinemadleConfig"));
@@ -123,8 +98,12 @@ public class Program
             .AddCheck<TmdbHealthCheck>("tmdb")
                 .AddDbContextCheck<DatabaseContext>()
                 .AddDbContextCheck<IdentityContext>();
+
         
-        builder.Services.AddControllers()
+        builder.Services.AddControllers(opts =>
+            {
+                opts.Conventions.Add(new TestModeInclusionConvention(isTestMode));
+            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -133,6 +112,8 @@ public class Program
         var app = builder.Build();
 
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        
+        logger.LogInformation("~~~ Excluded controllers: {controllers}", string.Join(',', TestModeInclusionConvention.ExcludedControllers));
 
         if (app.Environment.IsDevelopment())
         {
@@ -158,6 +139,24 @@ public class Program
         app.MapHealthChecks("/healthz");
         app.MapControllers();
         app.UseCors("AllowFrontend");
+
+        // https://stackoverflow.com/a/78608072
+        app.Lifetime.ApplicationStarted.Register(() =>
+        {
+            var server = app.Services.GetRequiredService<IServer>();
+            var serverAddressesFeature = server.Features.Get<IServerAddressesFeature>();
+
+            if (serverAddressesFeature == null)
+            {
+                return;
+            }
+
+            foreach (var address in serverAddressesFeature.Addresses)
+            {
+                logger.LogInformation("Application is listening on: {address}", address);
+            }
+        });
+
 
         logger.LogInformation("cinemadle started at {Time}", DateTime.UtcNow);
         await app.RunAsync();

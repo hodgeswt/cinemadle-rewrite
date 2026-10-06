@@ -9,7 +9,7 @@ import { isoDateNoTime } from "./util";
 export const PING_LIMIT = 10;
 
 export async function ping(): Promise<boolean> {
-    const data = await get("heartbeat", null)
+    const data = await get("healthz", null, null, undefined, true);
 
     return data.ok
 }
@@ -105,7 +105,7 @@ export async function loadPreviousGuesses(userToken: string): Promise<Result<num
 }
 
 export async function loadCustomGamePreviousGuesses(customGameId: string, userToken: string): Promise<Result<number[]>> {
-    const data = await get(`custom/${customGameId}/guesses`, null, { "Authorization": userToken });
+    const data = await get(`api/custom/${customGameId}/guesses`, null, { "Authorization": userToken }, undefined, true);
 
     if (!data.ok) {
         return err(data.error!);
@@ -136,13 +136,13 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
     }
 
     const result = await post(
-        "custom/create",
-        false,
+        "api/custom/create",
+        true,
         JSON.stringify(dtoResult.data),
         {
             "Authorization": userToken,
             "Content-Type": "application/json"
-        }
+        },
     );
 
     if (!result.ok) {
@@ -171,7 +171,7 @@ export async function createCustomGame(movieId: number, userToken: string): Prom
 export async function getCustomGame(customGameId: string, userToken: string): Promise<Result<CustomGameDomain>> {
     Logger.log("middleware.getCustomGame: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}`, null, { "Authorization": userToken });
+    const result = await get(`api/custom/${customGameId}`, null, { "Authorization": userToken }, undefined, true);
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGame: request failed {0}", result.error);
@@ -197,7 +197,7 @@ export async function getCustomGame(customGameId: string, userToken: string): Pr
 export async function getCustomGameSummary(customGameId: string, userToken: string): Promise<Result<GameSummaryDto>> {
     Logger.log("middleware.getCustomGameSummary: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/gameSummary`, null, { "Authorization": userToken });
+    const result = await get(`api/custom/${customGameId}/gameSummary`, null, { "Authorization": userToken }, undefined, true);
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameSummary: request failed {0}", result.error);
@@ -221,7 +221,7 @@ export async function getCustomGameSummary(customGameId: string, userToken: stri
 export async function getCustomGameAnswer(customGameId: string, userToken: string): Promise<Result<GuessDomain>> {
     Logger.log("middleware.getCustomGameAnswer: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/target`, null, { "Authorization": userToken });
+    const result = await get(`api/custom/${customGameId}/target`, null, { "Authorization": userToken }, undefined, true);
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameAnswer: request failed {0}", result.error);
@@ -247,7 +247,7 @@ export async function getCustomGameAnswer(customGameId: string, userToken: strin
 export async function getCustomGameVisualClue(customGameId: string, userToken: string): Promise<Result<ImageDto>> {
     Logger.log("middleware.getCustomGameVisualClue: customGameId {0}", customGameId);
 
-    const result = await get(`custom/${customGameId}/target/image`, null, { "Authorization": userToken });
+    const result = await get(`api/custom/${customGameId}/target/image`, null, { "Authorization": userToken }, undefined, true);
 
     if (!result.ok) {
         Logger.log("middleware.getCustomGameVisualClue: request failed {0}", result.error);

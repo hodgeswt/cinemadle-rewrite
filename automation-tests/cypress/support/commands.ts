@@ -22,19 +22,19 @@ Cypress.Commands.add('customTask', (task: string) => {
         case 'destroyDatabase':
             return cy.request({
                 method: 'DELETE',
-                url: `${backendUrl}/api/cinemadle/destroy`,
+                url: `${backendUrl}/api/test/destroy`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'rigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${backendUrl}/api/cinemadle/rig/85`,
+                url: `${backendUrl}/api/test/rig/85`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
         case 'unrigMovie':
             return cy.request({
                 method: 'GET',
-                url: `${backendUrl}/api/cinemadle/rig/undo`,
+                url: `${backendUrl}/api/test/rig/undo`,
                 failOnStatusCode: true
             }).then(r => expect(r.status).to.eq(200));
     }
@@ -50,27 +50,109 @@ Cypress.Commands.add('init', () => {
         .should('not.be.disabled');
 });
 
-// Helper to make a guess and wait for the response
-export const makeGuess = (guess: string, expectedTitle?: string) => {
-    // Intercept the guess API call (it's a GET request)
-    cy.intercept('GET', '**/api/cinemadle/guess/**').as('guessRequest');
+Cypress.Commands.add('getClipboard', () => {
+  return cy.window().then((win) => {
+    return win.navigator.clipboard.readText();
+  });
+});
+
+Cypress.Commands.add('createCustomGame', (movieName: string) => {
+    cy.visit('/customCreate');
+
+    // Wait for the app to be fully loaded
+    let movieInput = cy.getByDataTestId('customcreate-search-input', {timeout: 10000});
+
+    movieInput
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .type(movieName)
+        .then(() => cy.log('found movie input'));
+
+    let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
+
+    dropdownItem
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click()
+        .then(() => cy.log('selected shrek 2'));
+
+    let customCreateTitle = cy.getByDataTestId('customcreate-selection', {timeout: 10000});
+
+    customCreateTitle
+        .should('exist')
+        .should('be.visible')
+        .then(() => cy.log('custom create title visible'));
+
+    let customCreateSubmit = cy.getByDataTestId('customcreate-submit', {timeout: 10000});
+
+    customCreateSubmit
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click()
+        .then(() => cy.log('custom create submitted'));
+
+    let popupMessage = cy.getByDataTestId('success-body-text', {timeout: 10000});
+    popupMessage
+        .should('exist')
+        .should('be.visible')
+        .should('have.text', 'share this link with your friends to let them play your custom game')
+        .then(() => cy.log('popup found'));
+
+    let positiveButton = cy.getByDataTestId('success-copy-button');
+    let negativeButton = cy.getByDataTestId('success-close-button');
+
+    negativeButton
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .then(() => cy.log('negative button disabled'));
+
     
-    cy.getByDataTestId('guess-input')
+
+    positiveButton
+        .should('exist')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .click()
+        .then(() => cy.log('positive button clicked'));
+
+    return cy.getClipboard();
+});
+
+export const makeCustomGuess = (guess: string, expectedTitle?: string) => makeGuessBase(guess, true, expectedTitle);
+export const makeGuess = (guess: string, expectedTitle?: string) => makeGuessBase(guess, false, expectedTitle);
+
+const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: string) => {
+    // Intercept the guess API call (it's a GET request)
+    cy.intercept('GET', '**/api/**/guess/**').as('guessRequest');
+    
+    const inputTestId = customGuess ? 'customgame-guess-input' : 'guess-input';
+    cy.getByDataTestId(inputTestId)
         .should('be.visible')
         .should('not.be.disabled')
         .clear()
         .type(guess);
     
-    cy.getByDataTestId('submit-button')
+    const submitButtonTestId = customGuess ? 'customgame-submit-button' : 'submit-button';
+    cy.getByDataTestId(submitButtonTestId)
         .should('not.be.disabled')
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest');
+    cy.wait('@guessRequest').then(({ request, response }) => {
+      cy.log("Guess Response Body: ", response?.body);
+      cy.log("Guess Response Headers: ", response?.headers);
+      cy.log("Guess Response Status Code: ", response?.statusCode);
+      cy.log("Guess Response Status Message: ", response?.statusMessage);
+    });
     
     // Verify the guess appeared
-    const title = expectedTitle ?? guess;
-    cy.getByDataTestId('guess-0-title').should('have.text', title);
+    if (expectedTitle) {
+        cy.getByDataTestId('guess-0-title').should('have.text', expectedTitle);
+    }
 };
 
 export const goToPage = (page: string) => {
@@ -99,6 +181,12 @@ export type LogInParams = {
     username?: string,
     password?: string,
     initialize?: boolean,
+}
+
+export const logOut = (): void => {
+    goToPage('about');
+    cy.getByDataTestId('logout-button').click();
+    goToPage('home');
 }
 
 export const logIn = (params: LogInParams): LogInParams => {
@@ -195,3 +283,15 @@ export const getGuessCard = (cardId: number, category: string) => {
             });
     });
 };
+
+// https://stackoverflow.com/a/73827995
+Cypress.Commands.overwrite("log", function(log, ...args) {
+  if (Cypress.browser.isHeadless) {
+    return cy.task("log", args, { log: false }).then(() => {
+      return log(...args);
+    });
+  } else {
+    console.log(...args);
+    return log(...args);
+  }
+});

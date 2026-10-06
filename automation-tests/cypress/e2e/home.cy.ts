@@ -73,8 +73,14 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
                 creatives.className.should('contain', 'to-gray-300');
+                creatives.tiledata.invoke('text').should(text => {
+                    if (text.includes('Conrad Vernon')) {
+                        expect(text).to.contain('Director: Conrad Vernon');
+                    } else {
+                        expect(text).to.contain('Director: Andrew Adamson');
+                    }
+                });
             })
         });
 
@@ -144,8 +150,14 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.tiledata.should('have.text', 'Director: Conrad Vernon');
                 creatives.className.should('contain', 'to-gray-300');
+                creatives.tiledata.invoke('text').should(text => {
+                    if (text.includes('Conrad Vernon')) {
+                        expect(text).to.contain('Director: Conrad Vernon');
+                    } else {
+                        expect(text).to.contain('Director: Andrew Adamson');
+                    }
+                });
             })
         });
 

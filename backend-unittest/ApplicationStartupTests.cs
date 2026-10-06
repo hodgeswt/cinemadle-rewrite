@@ -1,41 +1,58 @@
-﻿using Cinemadle.Database;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using System.Net.Http.Json;
+using System.Reflection;
+using Cinemadle.Database;
+using Cinemadle.Datamodel.DTO;
+using Cinemadle.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Cinemadle.UnitTest;
 
-public class ApplicationStartupTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)
+    : IClassFixture<CinemadleWebApplicationFactory>, IDisposable
 {
-    [Fact]
-    public void ApplicationStartupShouldRunSetupDbContext()
-    {
-        _ = factory.Server;
+    private readonly HttpClient _client = factory.CreateClient();
 
-        using var scope = factory.Services.CreateScope();
-        var services = scope.ServiceProvider;
-        
-        var dbContext = services.GetRequiredService<DatabaseContext>();
-        
-        Assert.NotNull(dbContext);
-        Assert.NotNull(dbContext.Database);
-        Assert.Empty(dbContext.Database.GetPendingMigrations());
-    }
-    
     [Fact]
-    public void ApplicationStartupShouldRunSetupIdentityContext()
+    [Trait("Category", "ApplicationStartup")]
+    public async Task ApplicationStartupShouldRunSetupDbContext()
     {
-        _ = factory.Server;
+        HttpResponseMessage versionMessage = await _client.GetAsync("/api/information/version");
+        DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
-        using var scope = factory.Services.CreateScope();
-        var services = scope.ServiceProvider;
+        var migration = typeof(InitialCreate)
+            .Assembly
+            .GetTypes()
+            .Where(x => x.GetCustomAttribute<DbContextAttribute>()?.ContextType == typeof(DatabaseContext))
+            .Select(x => x.GetCustomAttribute<MigrationAttribute>()?.Id.Split('_')[0])
+            .OrderByDescending(x => x)
+            .First();
+
+        Assert.NotNull(migration);
+        Assert.Equal(migration, versionInfo.MainDbVersion);
+    }
+
+    [Fact]
+    [Trait("Category", "ApplicationStartup")]
+    public async Task ApplicationStartupShouldRunSetupIdentityDbContext()
+    {
+        HttpResponseMessage versionMessage = await _client.GetAsync("/api/information/version");
+        DbVersionDto versionInfo = await versionMessage.Content.ReadFromJsonAsync<DbVersionDto>();
         
-        var identityContext = services.GetRequiredService<IdentityContext>();
-        
-        Assert.NotNull(identityContext);
-        Assert.NotNull(identityContext.Database);
-        Assert.Empty(identityContext.Database.GetPendingMigrations());
+        var migration = typeof(InitialCreate)
+            .Assembly
+            .GetTypes()
+            .Where(x => x.GetCustomAttribute<DbContextAttribute>()?.ContextType == typeof(IdentityContext))
+            .Select(x =>  x.GetCustomAttribute<MigrationAttribute>()?.Id.Split('_')[0])
+            .OrderByDescending(x => x)
+            .First();
+
+        Assert.NotNull(migration);
+        Assert.Equal(migration, versionInfo.IdentityDbVersion);
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
     }
 }
