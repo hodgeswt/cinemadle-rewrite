@@ -1,10 +1,7 @@
-using Cinemadle.Database;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace Cinemadle.UnitTest;
 
