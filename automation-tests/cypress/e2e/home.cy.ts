@@ -73,6 +73,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
+                creatives.className.should('contain', 'to-gray-300');
                 creatives.tiledata.invoke('text').should(text => {
                     if (text.includes('Conrad Vernon')) {
                         expect(text).to.equal('Director: Conrad Vernon');
@@ -80,7 +81,6 @@ describe('home page', () => {
                         expect(text).to.equal('Director: Andrew Adamson');
                     }
                 });
-                creatives.className.should('contain', 'to-gray-300');
             })
         });
 
@@ -150,6 +150,7 @@ describe('home page', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
+                creatives.className.should('contain', 'to-gray-300');
                 creatives.tiledata.invoke('text').should(text => {
                     if (text.includes('Conrad Vernon')) {
                         expect(text).to.equal('Director: Conrad Vernon');
@@ -157,7 +158,6 @@ describe('home page', () => {
                         expect(text).to.equal('Director: Andrew Adamson');
                     }
                 });
-                creatives.className.should('contain', 'to-gray-300');
             })
         });
 

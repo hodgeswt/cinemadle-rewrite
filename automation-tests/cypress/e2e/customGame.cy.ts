@@ -1,4 +1,4 @@
-import { getGuessCard, logIn, makeGuess } from "../support/commands";
+import { getGuessCard, logIn, makeCustomGuess } from "../support/commands";
 
 describe('custom game', () => {
     before(() => {
@@ -40,7 +40,7 @@ describe('custom game', () => {
         })
 
         it('should render a guess', () => {
-            makeGuess('Shrek');
+            makeCustomGuess('Shrek');
             
             getGuessCard(0, 'YEAR').then((year) => {
                 year.name.should('have.text', 'YEAR');
@@ -90,22 +90,22 @@ describe('custom game', () => {
         });
 
         it('should decrement guess count', () => {
-            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
+            cy.getByDataTestId('customgame-guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
             
-            makeGuess('Shrek');
+            makeCustomGuess('Shrek');
 
-            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
+            cy.getByDataTestId('customgame-guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
         });
 
         it('should remove guess from suggested', () => {
-            makeGuess('Shrek');
+            makeCustomGuess('Shrek 2');
 
-            cy.getByDataTestId('guess-input').type('Shrek');
-            cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
+            cy.getByDataTestId('customgame-guess-input').type('Shrek');
+            cy.getByDataTestId('customgame-guess-Shrek-2-button').should('not.exist');
         });
 
         it('should let you win', () => {
-          makeGuess('Shrek 2');
+          makeCustomGuess('Shrek 2');
 
           cy.getByDataTestId('customgame-youwin')
             .should('exist')

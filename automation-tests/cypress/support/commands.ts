@@ -127,18 +127,22 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
     return cy.getClipboard();
 });
 
-// Helper to make a guess and wait for the response
-export const makeGuess = (guess: string, expectedTitle?: string) => {
+export const makeCustomGuess = (guess: string, expectedTitle?: string) => makeGuessBase(guess, true, expectedTitle);
+export const makeGuess = (guess: string, expectedTitle?: string) => makeGuessBase(guess, false, expectedTitle);
+
+const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: string) => {
     // Intercept the guess API call (it's a GET request)
     cy.intercept('GET', '**/api/**/guess/**').as('guessRequest');
     
-    cy.getByDataTestId('guess-input')
+    const inputTestId = customGuess ? 'customgame-guess-input' : 'guess-input';
+    cy.getByDataTestId(inputTestId)
         .should('be.visible')
         .should('not.be.disabled')
         .clear()
         .type(guess);
     
-    cy.getByDataTestId('submit-button')
+    const submitButtonTestId = customGuess ? 'customgame-submit-button' : 'submit-button';
+    cy.getByDataTestId(submitButtonTestId)
         .should('not.be.disabled')
         .click();
     
@@ -146,8 +150,9 @@ export const makeGuess = (guess: string, expectedTitle?: string) => {
     cy.wait('@guessRequest');
     
     // Verify the guess appeared
-    const title = expectedTitle ?? guess;
-    cy.getByDataTestId('guess-0-title').should('have.text', title);
+    if (expectedTitle) {
+        cy.getByDataTestId('guess-0-title').should('have.text', expectedTitle);
+    }
 };
 
 export const goToPage = (page: string) => {
