@@ -16,6 +16,7 @@ tasks:
       - backend:build
       - frontend:dev
     desc: "Build both backend and frontend projects"
+
   setup:
     deps:
       - backend:setup

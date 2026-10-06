@@ -26,13 +26,18 @@ tasks:
     cmds:
       - dotnet run --no-build
     desc: "Run the backend project"
+
   test:
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - build
+    env:
+      CinemadleTestMode: true
+      DisableQuartz: true
     cmds:
-      - cd ../backend-unittest && dotnet test
+      - cd ../ && dotnet test backend-unittest/backend-unittest.csproj
     desc: "Run unit tests"
+
   generate-e2e-config:
       dir: "{{.TASKFILE_DIR}}"
       cmds:
