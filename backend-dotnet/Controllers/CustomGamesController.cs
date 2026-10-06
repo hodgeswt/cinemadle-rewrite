@@ -162,27 +162,6 @@ public class CustomGamesController(
             return new UnauthorizedResult();
         }
 
-        bool paymentsEnabled = await flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
-
-        if (paymentsEnabled)
-        {
-            UserAccount? userAccount = db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
-            if (userAccount is null)
-            {
-                logger.LogDebug("GetCustomGameImage({customGameId}): user account does not exist", customGameId);
-                logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-            if ((addOn?.Count ?? 0) <= 0)
-            {
-                logger.LogDebug("GetCustomGameImage({customGameId}): user had no visual clues", customGameId);
-                logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new UnauthorizedResult();
-            }
-        }
-
         try
         {
             CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
@@ -235,21 +214,6 @@ public class CustomGamesController(
                     logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
 
                     return new StatusCodeResult(500);
-                }
-            }
-
-            if (paymentsEnabled)
-            {
-                AddOnRecord? record = db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-
-                if (record is null)
-                {
-                    return new StatusCodeResult(500);
-                }
-
-                if (clue is null)
-                {
-                    record.Count -= 1;
                 }
             }
 

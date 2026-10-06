@@ -137,9 +137,11 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         const id = skipTitleMap !== true ? this._possibleGuesses[guess] : guess;
 
         let result = await get(
-            `/custom/${customGameId}/guess/${id}`,
+            `api/custom/${customGameId}/guess/${id}`,
             null,
             { Authorization: sget(userStore).jwt },
+            undefined,
+            true
         );
 
         const title = skipTitleMap !== true ? guess : this.getTitle(guess);

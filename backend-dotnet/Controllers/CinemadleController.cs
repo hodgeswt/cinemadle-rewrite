@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
 using SixLabors.ImageSharp;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Cinemadle.Controllers;
@@ -221,27 +220,6 @@ public class CinemadleController(
             return new UnauthorizedResult();
         }
 
-        bool paymentsEnabled = await flagRepo.Get(nameof(FeatureFlags.PaymentsEnabled));
-
-        if (paymentsEnabled)
-        {
-            UserAccount? userAccount = db.UserAccounts.Include(x => x.AddOns).FirstOrDefault(x => x.UserId == userId);
-            if (userAccount is null)
-            {
-                logger.LogDebug("GetMovieImage({date}): user account does not exist", date);
-                logger.LogDebug("-GetMovieImage({date})", date);
-                return new NotFoundResult();
-            }
-
-            AddOnRecord? addOn = userAccount.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-            if ((addOn?.Count ?? 0) <= 0)
-            {
-                logger.LogDebug("GetMovieImage({date}): user had no visual clues", date);
-                logger.LogDebug("-GetMovieImage({date})", date);
-                return new UnauthorizedResult();
-            }
-        }
-
         try
         {
             int userGuesses = db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
@@ -295,21 +273,6 @@ public class CinemadleController(
                     return new StatusCodeResult(500);
                 }
 
-            }
-
-            if (paymentsEnabled)
-            {
-                AddOnRecord? record = db.UserAccounts.FirstOrDefault(x => x.UserId == userId)?.AddOns.FirstOrDefault(x => x.AddOn == AddOn.VisualClue);
-
-                if (record is null)
-                {
-                    return new StatusCodeResult(500);
-                }
-
-                if (clue is null)
-                {
-                    record.Count -= 1;
-                }
             }
 
             await db.SaveChangesAsync();

@@ -23,6 +23,5 @@ public enum AddOn
 
 public enum FeatureFlags
 {
-    PaymentsEnabled,
     MigrateUsers
 }
