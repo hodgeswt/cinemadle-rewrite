@@ -22,7 +22,7 @@ export default defineConfig({
       openMode: 0,
     },
   },
-  env: {
+  expose: {
     backendUrl: process.env['CYPRESS_BACKEND_URL'] || '',
     frontendUrl: process.env['CYPRESS_HOSTNAME'] || '',
   },

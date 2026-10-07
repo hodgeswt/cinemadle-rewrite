@@ -126,6 +126,23 @@ describe('custom game', () => {
                     expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩play at');
                 });
         });
+
+        it('should preserve guesses on a refresh', () => {
+            makeCustomGuess('The Avengers');
+            makeCustomGuess('Shrek');
+
+            cy.reload();
+
+            cy.getByDataTestId('guess-0-title')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Shrek');
+
+            cy.getByDataTestId('guess-1-title')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'The Avengers');
+        });
     });
 
 });
