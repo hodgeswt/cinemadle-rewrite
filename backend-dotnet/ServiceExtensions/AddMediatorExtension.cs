@@ -6,10 +6,10 @@ public static class AddMediatorExtension
 {
   public static IServiceCollection AddMediator(this IServiceCollection services)
   {
-    services.AddSingleton<IHandlersProvider, ServicesHandlersProvider>();
-    services.AddSingleton<Mediator>();
+    services.AddScoped<IHandlersProvider, ServicesHandlersProvider>();
+    services.AddScoped<Mediator>();
 
-    var handlers = typeof(Mediator).Assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(IRequestHandler<,>))) ?? [];
+    var handlers = typeof(Mediator).Assembly.GetTypes() ?? [];
 
     foreach (Type handler in handlers)
     {

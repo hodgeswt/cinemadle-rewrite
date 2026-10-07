@@ -79,7 +79,17 @@ public class CinemadleController(
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
             new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
         );
-        var handler = new MediatorResponseHandler<GameSummaryDto>(o);
+        var handler = new MediatorResponseHandler<GameSummaryDto>(o)
+            .OnProcessingError((e) =>
+            {
+                logger.LogError("GetGameSummary processing error: {Message}", e.Message);
+                return new StatusCodeResult(e.StatusCode);
+            })
+            .OnException((e) =>
+            {
+                logger.LogError(e, "GetGameSummary exception");
+                return new StatusCodeResult(500);
+            });
         return handler.Handle();
     }
 
@@ -93,7 +103,17 @@ public class CinemadleController(
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
             new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
         );
-        var handler = new MediatorResponseHandler<GameSummaryDto>(o);
+        var handler = new MediatorResponseHandler<GameSummaryDto>(o)
+            .OnProcessingError((e) =>
+            {
+                logger.LogError("GetGameSummary processing error: {Message}", e.Message);
+                return new StatusCodeResult(e.StatusCode);
+            })
+            .OnException((e) =>
+            {
+                logger.LogError(e, "GetGameSummary exception");
+                return new StatusCodeResult(500);
+            });
         return handler.Handle();
     }
 
@@ -228,75 +248,47 @@ public class CinemadleController(
     }
 
     [HttpGet("guesses/anon")]
-    public ActionResult GetPastGuessesAnon(
+    public async Task<ActionResult> GetPastGuessesAnon(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
         [FromQuery, Required] Guid userId
     )
     {
-        logger.LogDebug("+GetPastGuessesAnon({date}, {userId})", date, userId);
+        var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
+            new GetPastGuessesRequest(true, userId.ToString(), date)
+        );
 
-        string anonUserId = userId.ToString();
-        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+        var handler =
+            new MediatorResponseHandler<GetPastGuessesResponse>(o)
+                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds))
+                .OnException((x) =>
+                {
+                    logger.LogError("Exception in anon guesses: {Message}", x.Message);
+                    return new StatusCodeResult(500);
+                });
 
-        if (user is null)
-        {
-            logger.LogWarning("GetPastGuessesAnon: attempted access by invalid user: {userId}", anonUserId);
-            logger.LogDebug("-GetPastGuessesAnon({date}, {userId}", date, userId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            IEnumerable<UserGuess> guesses = db.AnonUserGuesses.Where(
-                x => x.GameId == date && x.UserId == userId.ToString()
-            )
-            .OrderBy(x => x.SequenceId);
-
-            logger.LogDebug("-GetPastGuessesAnon({date}, {userId})", date, userId);
-            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            logger.LogDebug("-GetPastGuesses({date}, {userId})", date, userId);
-
-            return new StatusCodeResult(500);
-        }
+        return handler.Handle();
     }
 
     [Authorize]
     [HttpGet("guesses")]
-    public ActionResult GetPastGuesses(
+    public async Task<ActionResult> GetPastGuesses(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        logger.LogDebug("+GetPastGuesses({date})", date);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetPastGuesses({date})", date);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
+            new GetPastGuessesRequest(false, GetUserId(), date)
+        );
 
-        try
-        {
-            IEnumerable<UserGuess> guesses = db.Guesses.Where(
-                x => x.GameId == date && x.UserId == userId
-            )
-            .OrderBy(x => x.SequenceId);
-
-            logger.LogDebug("GetPastGuesses({date}): {data}", date, guesses.Count());
-
-            logger.LogDebug("-GetPastGuesses({date})", date);
-            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetPastGuesses Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            logger.LogDebug("-GetPastGuesses({date})", date);
-
-            return new StatusCodeResult(500);
-        }
+        var handler =
+            new MediatorResponseHandler<GetPastGuessesResponse>(o)
+                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds))
+                .OnException((x) =>
+                {
+                    logger.LogError("Exception in anon guesses: {Message}", x.Message);
+                    return new StatusCodeResult(500);
+                });
+        
+        return handler.Handle();
     }
 
     [HttpGet("guess/anon/{id}")]

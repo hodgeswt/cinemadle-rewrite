@@ -92,7 +92,19 @@ public class GetGameSummaryHandler(
   public async Task<ProcessingError?> PreProcess(GetGameSummaryRequest request)
   {
     var guessIds = _userGuesses!.Select(x => x.GuessMediaId);
-    _guessDtos = await Task.WhenAll(guessIds.Select(x => GuessMovieInternal(x, request.GameId)));
+    var targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
+    if (targetMovie is null)
+    {
+      return new ProcessingError("Unable to find target movie");
+    }
+
+    // sequential: TmdbRepository shares a scoped DbContext, which is not thread-safe
+    var dtos = new List<GuessDto?>();
+    foreach (var id in guessIds)
+    {
+      dtos.Add(await GuessMovieInternal(id, targetMovie));
+    }
+    _guessDtos = [.. dtos];
 
     if (_guessDtos is null || _guessDtos.Any(x => x is null))
     {
@@ -102,18 +114,11 @@ public class GetGameSummaryHandler(
     return null;
   }
 
-  private async Task<GuessDto?> GuessMovieInternal(int id, string date)
+  private async Task<GuessDto?> GuessMovieInternal(int id, MovieDto targetMovie)
   {
       MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
 
       if (guessMovie is null)
-      {
-          return null;
-      }
-
-      MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-
-      if (targetMovie is null)
       {
           return null;
       }
