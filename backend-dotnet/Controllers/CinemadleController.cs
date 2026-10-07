@@ -19,16 +19,13 @@ public class CinemadleController(
     ILogger<CinemadleController> logger,
     IOptions<CinemadleConfig> configRepository,
     ITmdbRepository tmdbRepository,
-    IWebHostEnvironment env,
     IGuessRepository guessRepository,
     IHintRepository hintRepository,
-    IFeatureFlagRepository flagRepo,
     Mediator mediator,
     DatabaseContext db)
     : CinemadleControllerBase
 {
     private readonly CinemadleConfig _config = configRepository.Value;
-    private readonly bool _isDevelopment = env.IsDevelopment();
 
     [Authorize]
     [HttpGet("validate")]

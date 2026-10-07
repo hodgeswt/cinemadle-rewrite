@@ -29,11 +29,8 @@ public class CinemadleControllerUnitTest
     [Fact]
     public async Task CinemadleControllerAnonUserIdEndpointSuccessTest()
     {
-        Mock<IWebHostEnvironment> webHostEnvMock = new();
-        webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
-        IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
         var db = CinemadleMocks.GetDatabaseContext();
-        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(UnitTestAssist.GetLogger<CinemadleController>(), webHostEnv, db);
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(UnitTestAssist.GetLogger<CinemadleController>(), db);
         var anonUserIdResult = await controller.GetAnonUserId();
 
         Assert.IsType<OkObjectResult>(anonUserIdResult);
