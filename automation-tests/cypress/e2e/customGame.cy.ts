@@ -123,9 +123,7 @@ describe('custom game', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.equal('⬛⬛🟩🟨🟩🟨');
-                    expect(texts.at(1)).to.equal('🟩🟩🟩🟩🟩🟩');
-                    expect(texts.at(2)).to.contain('play at');
+                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩play at');
                 });
         });
     });

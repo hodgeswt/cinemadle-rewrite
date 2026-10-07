@@ -146,12 +146,7 @@ const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: stri
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest').then(({ request, response }) => {
-      cy.log("Guess Response Body: ", response?.body);
-      cy.log("Guess Response Headers: ", response?.headers);
-      cy.log("Guess Response Status Code: ", response?.statusCode);
-      cy.log("Guess Response Status Message: ", response?.statusMessage);
-    });
+    cy.wait('@guessRequest').then(() => {});
     
     // Verify the guess appeared
     if (expectedTitle) {
