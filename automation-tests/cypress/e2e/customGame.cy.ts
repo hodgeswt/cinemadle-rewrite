@@ -2,12 +2,15 @@ import { getGuessCard, logIn, makeCustomGuess } from "../support/commands";
 
 describe('custom game', () => {
     before(() => {
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     });
 
     beforeEach(() => {
         cy.init();
-        cy.customTask('destroyDatabase');
+    })
+
+    afterEach(() => {
+        cy.destroyDatabase();
     })
 
     describe('logged out', () => {
@@ -28,13 +31,13 @@ describe('custom game', () => {
 
     describe('logged in', () => {
         beforeEach(() => {
-            cy.customTask('destroyDatabase');
+            cy.destroyDatabase();
 
             logIn({initialize: true});
 
             cy.createCustomGame('Shrek 2').then((copiedUrl) => {
               let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
-              path = path.replace("https://cinemadle.com", Cypress.env().frontendUrl);
+              path = path.replace("https://cinemadle.com", Cypress.expose().frontendUrl);
               cy.log('received url', path)
               cy.visit(path);
             });
@@ -106,12 +109,39 @@ describe('custom game', () => {
             cy.getByDataTestId('customgame-guess-Shrek-button').should('not.exist');
         });
 
-        it('should let you win', () => {
-          makeCustomGuess('Shrek 2');
+        it('should let you win and show the share sheet', () => {
+            makeCustomGuess('Shrek');
+            makeCustomGuess('Shrek 2');
 
-          cy.getByDataTestId('customgame-youwin')
-            .should('exist')
-            .should('be.visible');
+            cy.getByDataTestId('customgame-share-button')
+                .should('exist')
+                .should('be.visible')
+                .click();
+
+            cy.getByDataTestId('customgame-results-body-text')
+                .should('exist')
+                .should('be.visible')
+                .should($elements => {
+                    const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
+                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩play at');
+                });
+        });
+
+        it('should preserve guesses on a refresh', () => {
+            makeCustomGuess('The Avengers');
+            makeCustomGuess('Shrek');
+
+            cy.reload();
+
+            cy.getByDataTestId('guess-0-title')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Shrek');
+
+            cy.getByDataTestId('guess-1-title')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'The Avengers');
         });
     });
 

@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
+using Cinemadle.UnitTest.Infrastructure;
+
 namespace Cinemadle.UnitTest;
 
 public class CustomGamesControllerUnitTests
@@ -35,15 +37,15 @@ public class CustomGamesControllerUnitTests
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetMovieById(movieId)).ReturnsAsync(movie);
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
 
         var controller = new CustomGamesController(
             logger,
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -75,12 +77,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         )
         {
             ControllerContext = new ControllerContext
@@ -106,12 +108,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -134,7 +136,7 @@ public class CustomGamesControllerUnitTests
         var customGameId = Guid.NewGuid().ToString();
         var targetMovieId = 123;
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -146,11 +148,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -178,12 +180,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -217,7 +219,7 @@ public class CustomGamesControllerUnitTests
             Rating = Rating.R
         };
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -232,11 +234,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -264,12 +266,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -292,7 +294,7 @@ public class CustomGamesControllerUnitTests
         var customGameId = Guid.NewGuid().ToString();
         var targetMovieId = 123;
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -323,11 +325,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -357,12 +359,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -418,7 +420,7 @@ public class CustomGamesControllerUnitTests
             }
         };
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -438,11 +440,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -477,12 +479,12 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+            CinemadleMocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedTmdbRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetDatabaseContext()
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -540,7 +542,7 @@ public class CustomGamesControllerUnitTests
             }
         };
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -576,11 +578,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -608,7 +610,7 @@ public class CustomGamesControllerUnitTests
         var customGameId = Guid.NewGuid().ToString();
         var targetMovieId = 456;
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -649,11 +651,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedGuessRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -709,7 +711,7 @@ public class CustomGamesControllerUnitTests
             }
         };
 
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         db.CustomGames.Add(new CustomGame
         {
             Id = customGameId,
@@ -758,11 +760,11 @@ public class CustomGamesControllerUnitTests
 
         var controller = new CustomGamesController(
             UnitTestAssist.GetLogger<CustomGamesController>(),
-            Mocks.GetMockedConfigRepository(),
+            CinemadleMocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
+            CinemadleMocks.GetMockedHintRepository().Object,
+            CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 

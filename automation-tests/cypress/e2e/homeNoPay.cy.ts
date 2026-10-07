@@ -2,25 +2,25 @@ import { logIn, makeGuess } from "../support/commands";
 
 describe('home page', () => {
     before(() => {
-        cy.customTask('destroyDatabase');
-        cy.customTask('rigMovie');
+        cy.destroyDatabase();
+        cy.rigMovie();
     });
 
     after(() => {
-        cy.customTask('unrigMovie');
+        cy.unrigMovie();
     })
 
     beforeEach(() => {
         cy.init();
         cy.request({
             method: 'GET',
-            url: `${Cypress.env().backendUrl}/api/flags/all`,
+            url: `${Cypress.expose().backendUrl}/api/flags/all`,
             failOnStatusCode: true
         }).then(r => expect(r.body.featureFlags.PaymentsEnabled).to.eq(false));
     })
 
     afterEach(() => {
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     });
 
     describe('it should allow visual clues when payments disabled', () => {

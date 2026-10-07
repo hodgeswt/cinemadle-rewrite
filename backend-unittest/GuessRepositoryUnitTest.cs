@@ -3,6 +3,8 @@ using Cinemadle.Datamodel.Domain;
 using Cinemadle.Interfaces;
 using Cinemadle.Repositories;
 
+using Cinemadle.UnitTest.Infrastructure;
+
 namespace Cinemadle.UnitTest;
 
 public class GuessRepositoryUnitTest
@@ -35,13 +37,13 @@ public class GuessRepositoryUnitTest
 
     private static CinemadleConfig GetConfig()
     {
-        return Mocks.GetMockedConfigRepository().Value;
+        return CinemadleMocks.GetMockedConfigRepository().Value;
     }
 
     [Fact]
     public void AllCategoriesGreenTest()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
 
@@ -109,7 +111,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void CastGreyNoBoldTest()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         guess.Cast = [
             new PersonDto { Name = "Harrison Ford", Role = "Cast" },
@@ -182,7 +184,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void CastYellowTest()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         guess.Cast = [
             new PersonDto { Name = "Mike Myers", Role = "Cast" },
@@ -258,7 +260,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeGreenWhenExactMatch()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
 
@@ -271,7 +273,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeYellowWhenWithinThreshold()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
 
@@ -286,7 +288,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeGreyWithSingleUpArrowWhenBelowTarget()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         
@@ -301,7 +303,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeGreyWithDoubleUpArrowWhenFarBelowTarget()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         
@@ -316,7 +318,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeGreyWithSingleDownArrowWhenAboveTarget()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         
@@ -331,7 +333,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeGreyWithDoubleDownArrowWhenFarAboveTarget()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         
@@ -346,7 +348,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeHandlesZeroBoxOfficeGuess()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         
@@ -361,7 +363,7 @@ public class GuessRepositoryUnitTest
     [Fact]
     public void BoxOfficeHandlesZeroBoxOfficeTarget()
     {
-        IGuessRepository guessRepo = Mocks.GetGuessRepository();
+        IGuessRepository guessRepo = CinemadleMocks.GetGuessRepository();
         MovieDto guess = GetTargetMovie();
         MovieDto target = GetTargetMovie();
         

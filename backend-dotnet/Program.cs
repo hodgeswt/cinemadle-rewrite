@@ -85,6 +85,7 @@ public class Program
         builder.Services
             .AddCinemadleOpenApi()
             .AddCinemadleCors(builder.Environment.IsDevelopment())
+            .AddMediator()
             .ForwardHeaders()
             .AddMemoryCache()
             .RegisterCinemadleServices(dbConnectionString)

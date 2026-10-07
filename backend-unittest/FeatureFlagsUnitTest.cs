@@ -2,7 +2,10 @@
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Repositories;
 
+using Cinemadle.UnitTest.Infrastructure;
+
 namespace Cinemadle.UnitTest;
+
 
 public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IClassFixture<FeatureFlagWebApplicationFactory>
 {
@@ -12,7 +15,7 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     public async Task GetAllReturnsFlags()
     {
         var logger = UnitTestAssist.GetLogger<FeatureFlagRepository>();
-        var config = Mocks.GetMockedConfigRepository();
+        var config = CinemadleMocks.GetMockedConfigRepository();
         var flagRepository = new FeatureFlagRepository(logger, config);
         
         var result = await flagRepository.GetAll();
@@ -29,7 +32,7 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     public async Task GetFlagReturnsProperValue(string flagName, bool expectedValue)
     {
         var logger = UnitTestAssist.GetLogger<FeatureFlagRepository>();
-        var config = Mocks.GetMockedConfigRepository();
+        var config = CinemadleMocks.GetMockedConfigRepository();
         var flagRepository = new FeatureFlagRepository(logger, config);
         
         var result = await flagRepository.Get(flagName);

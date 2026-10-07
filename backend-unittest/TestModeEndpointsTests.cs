@@ -1,4 +1,6 @@
-﻿namespace Cinemadle.UnitTest;
+﻿using Cinemadle.UnitTest.Infrastructure;
+
+namespace Cinemadle.UnitTest;
 
 public class TestModeEndpointsDisabledTests(CinemadleWebApplicationFactoryTestModeDisabled factory) : IClassFixture<CinemadleWebApplicationFactoryTestModeDisabled>
 {

@@ -2,7 +2,7 @@ import { goToPage, logIn } from "../support/commands";
 
 describe('login page', () => {
   before(() => {
-    cy.customTask('destroyDatabase');
+    cy.destroyDatabase();
   });
 
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('login page', () => {
   })
 
   afterEach(() => {
-    cy.customTask('destroyDatabase');
+    cy.destroyDatabase();
   });
 
   it('renders the whole form', () => {

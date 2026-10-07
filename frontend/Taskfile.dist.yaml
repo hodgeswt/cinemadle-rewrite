@@ -17,6 +17,8 @@ tasks:
 
   dev:
     dir: "{{.TASKFILE_DIR}}"
+    env:
+      VITE_API_ENDPOINT: 'http://localhost:5566'
     deps:
       - setup
     cmds:

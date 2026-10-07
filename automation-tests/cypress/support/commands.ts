@@ -15,30 +15,34 @@ Cypress.Commands.add('maybeGet', (selector: string, options?: Partial<Cypress.Lo
     });
 })
 
-Cypress.Commands.add('customTask', (task: string) => {
-    const backendUrl = Cypress.env().backendUrl;
-    
-    switch(task) {
-        case 'destroyDatabase':
-            return cy.request({
-                method: 'DELETE',
-                url: `${backendUrl}/api/test/destroy`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-        case 'rigMovie':
-            return cy.request({
-                method: 'GET',
-                url: `${backendUrl}/api/test/rig/85`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-        case 'unrigMovie':
-            return cy.request({
-                method: 'GET',
-                url: `${backendUrl}/api/test/rig/undo`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-    }
+Cypress.Commands.add('rigMovie', (id?: string) => {
+    const backendUrl = Cypress.expose().backendUrl;
+    return cy.request({
+        method: 'GET',
+        url: `${backendUrl}/api/test/rig/${id ?? '85'}`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
 });
+
+Cypress.Commands.add('unrigMovie', () => {
+    const backendUrl = Cypress.expose().backendUrl;
+    return cy.request({
+        method: 'GET',
+        url: `${backendUrl}/api/test/rig/undo`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
+});
+
+Cypress.Commands.add('destroyDatabase', () => {
+    const backendUrl = Cypress.expose().backendUrl;
+
+    return cy.request({
+        method: 'DELETE',
+        url: `${backendUrl}/api/test/destroy`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
+});
+
 
 Cypress.Commands.add('init', () => {
     cy.visit('/');
@@ -57,6 +61,20 @@ Cypress.Commands.add('getClipboard', () => {
 });
 
 Cypress.Commands.add('createCustomGame', (movieName: string) => {
+    // Newer Chromium denies clipboard access in automated runs unless granted explicitly
+    if (Cypress.isBrowser({ family: 'chromium' })) {
+        cy.wrap(
+            Cypress.automation('remote:debugger:protocol', {
+                command: 'Browser.grantPermissions',
+                params: {
+                    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+                    origin: new URL(Cypress.config('baseUrl') as string).origin,
+                },
+            }),
+            { log: false },
+        );
+    }
+
     cy.visit('/customCreate');
 
     // Wait for the app to be fully loaded
@@ -142,12 +160,7 @@ const makeGuessBase = (guess: string, customGuess: boolean, expectedTitle?: stri
         .click();
     
     // Wait for the guess API to complete
-    cy.wait('@guessRequest').then(({ request, response }) => {
-      cy.log("Guess Response Body: ", response?.body);
-      cy.log("Guess Response Headers: ", response?.headers);
-      cy.log("Guess Response Status Code: ", response?.statusCode);
-      cy.log("Guess Response Status Message: ", response?.statusMessage);
-    });
+    cy.wait('@guessRequest').then(() => {});
     
     // Verify the guess appeared
     if (expectedTitle) {

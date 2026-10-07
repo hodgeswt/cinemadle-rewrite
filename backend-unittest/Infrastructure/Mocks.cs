@@ -8,10 +8,11 @@ using Cinemadle.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
+using Cinemadle.Mediation;
 
-namespace Cinemadle.UnitTest;
+namespace Cinemadle.UnitTest.Infrastructure;
 
-public class Mocks
+public class CinemadleMocks
 {
     private static readonly CinemadleConfig DefaultConfig = new()
     {
@@ -122,6 +123,11 @@ public class Mocks
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
 
         return webHostEnvMock;
+    }
+
+    public static Mediator GetMediator()
+    {
+        return new Mediator(new AssemblyDiscoverHandlersProvider());
     }
 
     public static Mock<IFeatureFlagRepository> GetMockedFeatureFlagRepository()

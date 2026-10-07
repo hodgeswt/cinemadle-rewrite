@@ -1,6 +1,8 @@
 Taskfile.yaml
 .task/
 
+automation-tests/cypress/screenshots/
+
 .vscode/
 *.exe
 *.exe~
