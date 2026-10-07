@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Cinemadle.UnitTest;
+namespace Cinemadle.UnitTest.Infrastructure;
 
 public class ActivationException(Type t) : Exception($"Unable to activate type {t}");
 
@@ -15,7 +15,7 @@ public class AssemblyDiscoverHandlersProvider : IHandlersProvider
   {
     var t = typeof(Mediator).Assembly.GetTypes().FirstOrDefault(x => x.IsAssignableTo(typeof(T))) ?? throw new ActivationException(typeof(T));
     var m = typeof(UnitTestAssist).GetMethod(nameof(UnitTestAssist.CreateInstanceWithMocks))!.MakeGenericMethod(t);
-    return (T)m.Invoke(null, null)!;
+    return (T)m.Invoke(null, [Array.Empty<object>()])!;
   }
 }
 
@@ -28,6 +28,8 @@ public abstract class UnitTestAssist
         return LoggerFactory.CreateLogger<T>();
     }
 
+    private static readonly List<object> _sharedObjectPool = [];
+
     /// <summary>
     /// Create instance of type T. Type T must have unique parameters,
     /// And this will try to create mocked versions of all parameters
@@ -38,12 +40,7 @@ public abstract class UnitTestAssist
     /// <returns>Instance, if possible; otherwise, null</returns>
     public static T CreateInstanceWithMocks<T>(params object[] args) where T : class
     {
-        if (args.Length == 0)
-        {
-            return Activator.CreateInstance<T>();
-        }
-
-        var candidates = typeof(T).GetConstructors().Where(x => x.IsPublic && x.GetParameters().Length > 0);
+        var candidates = typeof(T).GetConstructors().Where(x => x.IsPublic);
 
         ConstructorInfo? ctor = null;
         Dictionary<int, int> parameterOrder = [];
@@ -80,10 +77,6 @@ public abstract class UnitTestAssist
         {
             throw new ActivationException(typeof(T));
         }
-        else
-        {
-            Console.WriteLine($"Found ctor: {ctor}");
-        }
 
         object[] finalParams = new object[actualParams.Length];
 
@@ -98,7 +91,7 @@ public abstract class UnitTestAssist
             Type pt = actualParams[i].ParameterType;
             Type mockedType = typeof(Mock<>).MakeGenericType(pt);
 
-            var mockCtor = typeof(Mocks)
+            var mockCtor = typeof(CinemadleMocks)
                 .GetMethods()
                 .FirstOrDefault(x =>
                     x.ReturnType == mockedType &&
@@ -113,7 +106,7 @@ public abstract class UnitTestAssist
                 continue;
             }
 
-            var stubCtor = typeof(Mocks)
+            var stubCtor = typeof(CinemadleMocks)
                 .GetMethods()
                 .FirstOrDefault(x =>
                     x.ReturnType == pt &&

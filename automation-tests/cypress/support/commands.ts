@@ -15,30 +15,34 @@ Cypress.Commands.add('maybeGet', (selector: string, options?: Partial<Cypress.Lo
     });
 })
 
-Cypress.Commands.add('customTask', (task: string) => {
+Cypress.Commands.add('rigMovie', (id?: string) => {
     const backendUrl = Cypress.env().backendUrl;
-    
-    switch(task) {
-        case 'destroyDatabase':
-            return cy.request({
-                method: 'DELETE',
-                url: `${backendUrl}/api/test/destroy`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-        case 'rigMovie':
-            return cy.request({
-                method: 'GET',
-                url: `${backendUrl}/api/test/rig/85`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-        case 'unrigMovie':
-            return cy.request({
-                method: 'GET',
-                url: `${backendUrl}/api/test/rig/undo`,
-                failOnStatusCode: true
-            }).then(r => expect(r.status).to.eq(200));
-    }
+    return cy.request({
+        method: 'GET',
+        url: `${backendUrl}/api/test/rig/${id ?? '85'}`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
 });
+
+Cypress.Commands.add('unrigMovie', () => {
+    const backendUrl = Cypress.env().backendUrl;
+    return cy.request({
+        method: 'GET',
+        url: `${backendUrl}/api/test/rig/undo`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
+});
+
+Cypress.Commands.add('destroyDatabase', () => {
+    const backendUrl = Cypress.env().backendUrl;
+
+    return cy.request({
+        method: 'DELETE',
+        url: `${backendUrl}/api/test/destroy`,
+        failOnStatusCode: true
+    }).then(r => expect(r.status).to.eq(200));
+});
+
 
 Cypress.Commands.add('init', () => {
     cy.visit('/');

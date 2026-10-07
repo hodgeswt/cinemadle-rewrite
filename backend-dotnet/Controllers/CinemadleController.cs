@@ -94,7 +94,7 @@ public class CinemadleController(
     )
     {
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-            new GetGameSummaryRequest(true, GetUserId(), date, _config.GameLength)
+            new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
         );
         var handler = new MediatorResponseHandler<GameSummaryDto>(o);
         return handler.Handle();

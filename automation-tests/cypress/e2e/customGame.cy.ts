@@ -2,12 +2,12 @@ import { getGuessCard, logIn, makeCustomGuess } from "../support/commands";
 
 describe('custom game', () => {
     before(() => {
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     });
 
     beforeEach(() => {
         cy.init();
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     })
 
     describe('logged out', () => {
@@ -28,7 +28,7 @@ describe('custom game', () => {
 
     describe('logged in', () => {
         beforeEach(() => {
-            cy.customTask('destroyDatabase');
+            cy.destroyDatabase();
 
             logIn({initialize: true});
 
@@ -106,12 +106,24 @@ describe('custom game', () => {
             cy.getByDataTestId('customgame-guess-Shrek-button').should('not.exist');
         });
 
-        it('should let you win', () => {
-          makeCustomGuess('Shrek 2');
+        it('should let you win and show the share sheet', () => {
+            makeCustomGuess('Shrek');
+            makeCustomGuess('Shrek 2');
 
-          cy.getByDataTestId('customgame-youwin')
-            .should('exist')
-            .should('be.visible');
+            cy.getByDataTestId('customgame-share-button')
+                .should('exist')
+                .should('be.visible')
+                .click();
+
+            cy.getByDataTestId('customgame-results-body-text')
+                .should('exist')
+                .should('be.visible')
+                .should($elements => {
+                    const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
+                    expect(texts.at(0)).to.equal('⬛⬛🟩🟨🟩🟨');
+                    expect(texts.at(1)).to.equal('🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(2)).to.contain('play at');
+                });
         });
     });
 

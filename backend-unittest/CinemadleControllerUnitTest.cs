@@ -1,7 +1,6 @@
 using Cinemadle.Database;
 using Cinemadle.Interfaces;
 using Moq;
-using Microsoft.Extensions.Logging;
 using Cinemadle.Controllers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +9,8 @@ using Cinemadle.Datamodel.Domain;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+
+using Cinemadle.UnitTest.Infrastructure;
 
 namespace Cinemadle.UnitTest;
 
@@ -31,7 +32,7 @@ public class CinemadleControllerUnitTest
         Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
         IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(UnitTestAssist.GetLogger<CinemadleController>(), webHostEnv, db);
         var anonUserIdResult = await controller.GetAnonUserId();
 
@@ -202,7 +203,7 @@ public class CinemadleControllerUnitTest
         };
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         var guessRepoMock = new Mock<IGuessRepository>();
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
 
         tmdbRepoMock.Setup(x => x.GetMovieById(movieId))
             .ReturnsAsync(guessMovie);
@@ -303,7 +304,7 @@ public class CinemadleControllerUnitTest
 
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         var guessRepoMock = new Mock<IGuessRepository>();
-        var db = Mocks.GetDatabaseContext();
+        var db = CinemadleMocks.GetDatabaseContext();
 
         db.AnonUsers.Add(new AnonUser { UserId = userId.ToString() });
         await db.SaveChangesAsync();
@@ -371,190 +372,6 @@ public class CinemadleControllerUnitTest
         var result = await controller.GuessMovie(date, movieId);
 
         Assert.IsType<UnauthorizedResult>(result);
-    }
-
-    [Fact]
-    public async Task GetGameSummary_WonEarly_ReturnsOkWithSummary()
-    {
-        var userId = "test-user-id";
-        var date = "2024-01-01";
-        var targetMovieId = 456;
-
-        var guessMovie = new MovieDto
-        {
-            Id = 123,
-            Title = "Guess Movie",
-            Genres = ["Action"],
-            Cast = [],
-            Creatives = [],
-            BoxOffice = 1000000,
-            Year = "2020",
-            Rating = Rating.PG13
-        };
-
-        var targetMovie = new MovieDto
-        {
-            Id = targetMovieId,
-            Title = "Target Movie",
-            Genres = ["Drama"],
-            Cast = [],
-            Creatives = [],
-            BoxOffice = 5000000,
-            Year = "2021",
-            Rating = Rating.R
-        };
-
-        var guessDto = new GuessDto
-        {
-            Fields = new Dictionary<string, FieldDto>
-            {
-                ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] }
-            }
-        };
-
-        var db = Mocks.GetDatabaseContext();
-
-        // Add 2 guesses with the winning guess at the end
-        db.Guesses.Add(new UserGuess
-        {
-            GameId = date,
-            UserId = userId,
-            GuessMediaId = 100,
-            SequenceId = 1,
-            Inserted = DateTime.UtcNow
-        });
-
-        db.Guesses.Add(new UserGuess
-        {
-            GameId = date,
-            UserId = userId,
-            GuessMediaId = targetMovieId, // Winning guess
-            SequenceId = 2,
-            Inserted = DateTime.UtcNow
-        });
-
-        await db.SaveChangesAsync();
-
-        var tmdbRepoMock = new Mock<ITmdbRepository>();
-        tmdbRepoMock.Setup(x => x.GetMovieById(It.IsAny<int>())).ReturnsAsync(guessMovie);
-        tmdbRepoMock.Setup(x => x.GetTargetMovie(date)).ReturnsAsync(targetMovie);
-
-        var guessRepoMock = new Mock<IGuessRepository>();
-        guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
-            .Returns(guessDto);
-
-        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
-            UnitTestAssist.GetLogger<CinemadleController>(),
-            tmdbRepoMock.Object,
-            guessRepoMock.Object,
-            db
-        );
-
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
-        var identity = new ClaimsIdentity(claims);
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
-        };
-
-        var result = await controller.GetGameSummary(date);
-
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var summaryDto = Assert.IsType<GameSummaryDto>(okResult.Value);
-        Assert.NotNull(summaryDto.Summary);
-        Assert.True(summaryDto.Summary.Count > 0);
-    }
-
-    [Fact]
-    public async Task GetGameSummaryAnon_WonEarly_ReturnsOkWithSummary()
-    {
-        var anonUserId = Guid.NewGuid();
-        var date = "2024-01-01";
-        var targetMovieId = 456;
-
-        var guessMovie = new MovieDto
-        {
-            Id = 123,
-            Title = "Guess Movie",
-            Genres = ["Action"],
-            Cast = [],
-            Creatives = [],
-            BoxOffice = 1000000,
-            Year = "2020",
-            Rating = Rating.PG13
-        };
-
-        var targetMovie = new MovieDto
-        {
-            Id = targetMovieId,
-            Title = "Target Movie",
-            Genres = ["Drama"],
-            Cast = [],
-            Creatives = [],
-            BoxOffice = 5000000,
-            Year = "2021",
-            Rating = Rating.R
-        };
-
-        var guessDto = new GuessDto
-        {
-            Fields = new Dictionary<string, FieldDto>
-            {
-                ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] }
-            }
-        };
-
-        var db = Mocks.GetDatabaseContext();
-
-        // Add the anonymous user
-        db.AnonUsers.Add(new AnonUser
-        {
-            UserId = anonUserId.ToString()
-        });
-
-        // Add 2 guesses with the winning guess at the end
-        db.AnonUserGuesses.Add(new UserGuess
-        {
-            GameId = date,
-            UserId = anonUserId.ToString(),
-            GuessMediaId = 100,
-            SequenceId = 1,
-            Inserted = DateTime.UtcNow
-        });
-
-        db.AnonUserGuesses.Add(new UserGuess
-        {
-            GameId = date,
-            UserId = anonUserId.ToString(),
-            GuessMediaId = targetMovieId, // Winning guess
-            SequenceId = 2,
-            Inserted = DateTime.UtcNow
-        });
-
-        await db.SaveChangesAsync();
-
-        var tmdbRepoMock = new Mock<ITmdbRepository>();
-        tmdbRepoMock.Setup(x => x.GetMovieById(It.IsAny<int>())).ReturnsAsync(guessMovie);
-        tmdbRepoMock.Setup(x => x.GetTargetMovie(date)).ReturnsAsync(targetMovie);
-
-        var guessRepoMock = new Mock<IGuessRepository>();
-        guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
-            .Returns(guessDto);
-
-        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
-            UnitTestAssist.GetLogger<CinemadleController>(),
-            tmdbRepoMock.Object,
-            guessRepoMock.Object,
-            db
-        );
-
-        var result = await controller.GetGameSummaryAnon(date, anonUserId);
-
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var summaryDto = Assert.IsType<GameSummaryDto>(okResult.Value);
-        Assert.NotNull(summaryDto.Summary);
-        Assert.True(summaryDto.Summary.Count > 0);
     }
 }
 

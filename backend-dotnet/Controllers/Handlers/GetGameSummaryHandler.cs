@@ -2,7 +2,6 @@ using Cinemadle.Database;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
 using Cinemadle.Mediation;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 
@@ -18,38 +17,46 @@ public class GetGameSummaryHandler(
   IGuessRepository guessRepository
 ) : IRequestHandler<GetGameSummaryRequest, GameSummaryDto?>
 {
-  private DbSet<UserGuess>? _userGuesses = null;
   private GuessDto?[]? _guessDtos = null;
+  private IEnumerable<UserGuess>? _userGuesses = null;
+
+  public async Task<ProcessingError?> PreValidate(GetGameSummaryRequest request)
+  {
+    var guessTable = request.IsAnon ? db.AnonUserGuesses : db.Guesses;
+
+    _userGuesses =
+      guessTable
+        .Where(x =>
+          x.UserId == request.UserId &&
+          x.GameId == request.GameId)
+        .OrderBy(x => x.SequenceId);
+    
+    return null;
+  }
   
-  public async Task<List<RequestValidationError>> Validate(GetGameSummaryRequest request)
+  public async Task<RequestValidationError?> Validate(GetGameSummaryRequest request)
   {
     if (ValidateUser(request) is RequestValidationError userValidationErr)
     {
-      return [userValidationErr];
+      return userValidationErr;
     }
 
     if (await UserCanGuess(request) is RequestValidationError userCannotGuessErr)
     {
-      return [userCannotGuessErr];
+      return userCannotGuessErr;
     }
 
-    return [];
+    return null;
   }
 
   private async Task<RequestValidationError?> UserCanGuess(GetGameSummaryRequest request)
   {
-    IEnumerable<UserGuess> userGuesses =
-      _userGuesses!.Where(x =>
-        x.UserId == request.UserId &&
-        x.GameId == request.GameId
-      ).OrderBy(x => x.SequenceId);
-    
     // Check if user has won
     MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
-    bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
+    bool hasWon = targetMovie != null && _userGuesses!.Any(x => x.GuessMediaId == targetMovie.Id);
 
     // Allow summary if user has completed the game OR won
-    if (userGuesses.Count() < request.GameLength && !hasWon)
+    if (_userGuesses!.Count() < request.GameLength && !hasWon)
     {
       // TODO : this should be 403
       return new RequestValidationError("User cannot guess yet", 404);
@@ -70,8 +77,16 @@ public class GetGameSummaryHandler(
 
   public async Task<GameSummaryDto?> Handle(GetGameSummaryRequest request)
   {
-    _userGuesses = request.IsAnon ? db.AnonUserGuesses : db.Guesses;
-    return await HandleInternal(request);
+    IEnumerable<string> gameSummary = _guessDtos!.Select(
+      x => string.Join("", x!.Fields.Select(x => MapColorToEmoji(x.Value.Color)))
+    ) ?? [];
+
+    gameSummary = gameSummary.Append($"cinemadle {request.GameId}").Append("play at https://cinemadle.com");
+
+    return new GameSummaryDto
+    {
+        Summary = [.. gameSummary]
+    };
   }
 
   public async Task<ProcessingError?> PreProcess(GetGameSummaryRequest request)
@@ -85,20 +100,6 @@ public class GetGameSummaryHandler(
     }
 
     return null;
-  }
-
-  private async Task<GameSummaryDto> HandleInternal(GetGameSummaryRequest request)
-  {
-    IEnumerable<string> gameSummary = _guessDtos!.Select(
-      x => string.Join("", x!.Fields.Select(x => MapColorToEmoji(x.Value.Color)))
-    ) ?? [];
-
-    gameSummary = gameSummary.Append($"cinemadle {request.GameId}").Append("play at https://cinemadle.com");
-
-    return new GameSummaryDto
-    {
-        Summary = [.. gameSummary]
-    };
   }
 
   private async Task<GuessDto?> GuessMovieInternal(int id, string date)

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Moq;
 using Quartz;
 
+using Cinemadle.UnitTest.Infrastructure;
+
 namespace Cinemadle.UnitTest;
 
 public class EmailAnonymizationUnitTests
@@ -27,8 +29,8 @@ public class EmailAnonymizationUnitTests
     })]
     public void DbAnonymizationTest(string[] emails, string[] anonymizedEmails)
     {
-        using var db = Mocks.GetDatabaseContext();
-        using var identityDb = Mocks.GetIdentityContext();
+        using var db = CinemadleMocks.GetDatabaseContext();
+        using var identityDb = CinemadleMocks.GetIdentityContext();
 
         var users = emails.Select(email => new IdentityUser { Email = email, UserName = email, NormalizedEmail = email, NormalizedUserName = email }).ToList();
         identityDb.Users.AddRange(users);
@@ -54,8 +56,8 @@ public class EmailAnonymizationUnitTests
     [Fact]
     public void DbAnonymizationTestDoesNotRunWhenAlreadyCompleted()
     {
-        using var db = Mocks.GetDatabaseContext();
-        using var identityDb = Mocks.GetIdentityContext();
+        using var db = CinemadleMocks.GetDatabaseContext();
+        using var identityDb = CinemadleMocks.GetIdentityContext();
         
         const string testEmail = "test@test.com";
         

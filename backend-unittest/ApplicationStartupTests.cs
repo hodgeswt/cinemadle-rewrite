@@ -6,6 +6,8 @@ using Cinemadle.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
+using Cinemadle.UnitTest.Infrastructure;
+
 namespace Cinemadle.UnitTest;
 
 public class ApplicationStartupTests(CinemadleWebApplicationFactory factory)

@@ -9,6 +9,11 @@ public interface IRequestHandler<TRequest, TResponse>
     return Task.FromResult<ProcessingError?>(null);
   }
 
+  Task<ProcessingError?> PreValidate(TRequest request)
+  {
+    return Task.FromResult<ProcessingError?>(null);
+  }
+
   Task<RequestValidationError?> Validate(TRequest request)
   {
     return Task.FromResult<RequestValidationError?>(null);

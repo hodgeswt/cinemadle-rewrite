@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Cinemadle.Mediation;
 
-namespace Cinemadle.UnitTest;
+namespace Cinemadle.UnitTest.Infrastructure;
 
-public class Mocks
+public class CinemadleMocks
 {
     private static readonly CinemadleConfig DefaultConfig = new()
     {

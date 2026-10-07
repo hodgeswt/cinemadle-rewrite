@@ -7,5 +7,8 @@ declare namespace Cypress {
     createCustomGame(movieName: string): Chainable<string>;
     getClipboard(): Chainable<string>;
     init(): void;
+    rigMovie(id?: string): void;
+    unrigMovie(): void;
+    destroyDatabase(): void;
   }
 }

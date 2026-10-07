@@ -2,12 +2,12 @@ import { logIn, makeGuess } from "../support/commands";
 
 describe('home page', () => {
     before(() => {
-        cy.customTask('destroyDatabase');
-        cy.customTask('rigMovie');
+        cy.destroyDatabase();
+        cy.rigMovie();
     });
 
     after(() => {
-        cy.customTask('unrigMovie');
+        cy.unrigMovie();
     })
 
     beforeEach(() => {
@@ -20,7 +20,7 @@ describe('home page', () => {
     })
 
     afterEach(() => {
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     });
 
     describe('it should allow visual clues when payments disabled', () => {

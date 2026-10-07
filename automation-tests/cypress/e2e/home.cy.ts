@@ -2,12 +2,12 @@ import { getGuessCard, isoDateNoTime, logIn, makeGuess } from "../support/comman
 
 describe('home page', () => {
     before(() => {
-        cy.customTask('destroyDatabase');
-        cy.customTask('rigMovie');
+        cy.destroyDatabase();
+        cy.rigMovie();
     });
 
     after(() => {
-        cy.customTask('unrigMovie');
+        cy.unrigMovie();
     })
 
     beforeEach(() => {
@@ -15,7 +15,7 @@ describe('home page', () => {
     })
 
     afterEach(() => {
-        cy.customTask('destroyDatabase');
+        cy.destroyDatabase();
     });
 
     describe('logged out', () => {
@@ -174,6 +174,29 @@ describe('home page', () => {
 
             cy.getByDataTestId('guess-input').type('Shrek');
             cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
+        });
+
+        it('should let you win and show the share sheet', () => {
+            cy.unrigMovie();
+            cy.rigMovie('808');
+
+            makeGuess('Shrek 2');
+            makeGuess('Shrek');
+
+            cy.getByDataTestId('share-button')
+                .should('exist')
+                .should('be.visible')
+                .click();
+
+            cy.getByDataTestId('results-body-text')
+                .should('exist')
+                .should('be.visible')
+                .should($elements => {
+                    const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
+                    expect(texts.at(0)).to.equal('⬛⬛🟩🟨🟩🟨');
+                    expect(texts.at(1)).to.equal('🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(2)).to.contain('play at');
+                });
         });
     });
 

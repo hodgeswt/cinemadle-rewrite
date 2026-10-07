@@ -20,6 +20,12 @@ public class Mediator(IHandlersProvider handlersProvider)
   {
     try {
       var handler = handlersProvider.GetHandler<IRequestHandler<TRequest, TResponse>>();
+
+      if (await handler.PreValidate(request) is ProcessingError preValidateError)
+      {
+        return new ProcessingErrorMediatorResponse<TResponse>(preValidateError);
+      }
+
       if (await handler.Validate(request) is RequestValidationError validationError)
       {
         return new InvalidMediatorResponse<TResponse>(validationError);
