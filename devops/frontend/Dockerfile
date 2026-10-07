@@ -1,11 +1,11 @@
-FROM node:20-bookworm AS base
+FROM denoland/deno:alpine AS base
 WORKDIR /app
 
 # Install dependencies separately for better layer caching
 FROM base AS deps
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm ci --include=dev
+RUN deno install
 
 FROM deps AS builder
 WORKDIR /app/frontend
@@ -21,7 +21,7 @@ ENV VITE_PRODUCT_IDS=${VITE_PRODUCT_IDS}
 RUN echo "API ENDPOINT IS: $VITE_API_ENDPOINT"
 RUN echo "VITE_API_ENDPOINT=$VITE_API_ENDPOINT" > .env
 
-RUN npm run build
+RUN deno task build
 
 FROM nginx:1.27-alpine
 WORKDIR /usr/share/nginx/html
