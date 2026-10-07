@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 public class CinemadleControllerBase : ControllerBase
 {
-    protected string? GetUserId()
+    protected string GetUserId()
     {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
     }
 
     protected bool UserHasRole(string claim)

@@ -1,8 +1,23 @@
+using System.Reflection;
+using Cinemadle.Mediation;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Cinemadle.UnitTest;
+
+public class ActivationException(Type t) : Exception($"Unable to activate type {t}");
+
+public class AssemblyDiscoverHandlersProvider : IHandlersProvider
+{
+  public T GetHandler<T>() where T : notnull
+  {
+    var t = typeof(Mediator).Assembly.GetTypes().FirstOrDefault(x => x.IsAssignableTo(typeof(T))) ?? throw new ActivationException(typeof(T));
+    var m = typeof(UnitTestAssist).GetMethod(nameof(UnitTestAssist.CreateInstanceWithMocks))!.MakeGenericMethod(t);
+    return (T)m.Invoke(null, null)!;
+  }
+}
 
 public abstract class UnitTestAssist
 {
@@ -11,6 +26,122 @@ public abstract class UnitTestAssist
     public static ILogger<T> GetLogger<T>()
     {
         return LoggerFactory.CreateLogger<T>();
+    }
+
+    /// <summary>
+    /// Create instance of type T. Type T must have unique parameters,
+    /// And this will try to create mocked versions of all parameters
+    /// that were not provided as inputs.
+    /// </summary>
+    /// <typeparam name="T">Type to instantiate</typeparam>
+    /// <param name="args">Arguments to the constructor</param>
+    /// <returns>Instance, if possible; otherwise, null</returns>
+    public static T CreateInstanceWithMocks<T>(params object[] args) where T : class
+    {
+        if (args.Length == 0)
+        {
+            return Activator.CreateInstance<T>();
+        }
+
+        var candidates = typeof(T).GetConstructors().Where(x => x.IsPublic && x.GetParameters().Length > 0);
+
+        ConstructorInfo? ctor = null;
+        Dictionary<int, int> parameterOrder = [];
+        ParameterInfo[] actualParams = [];
+        foreach (var candidate in candidates)
+        {
+            actualParams = candidate.GetParameters();
+            parameterOrder = [];
+            bool allMatched = true;
+            for (int i = 0; i < args.Length; i++)
+            {
+                var param = actualParams
+                    .Where(x => x.ParameterType.IsInstanceOfType(args[i]) && !parameterOrder.ContainsKey(x.Position))
+                    .ToList();
+                if (param.Count != 1)
+                {
+                    allMatched = false;
+                    break;
+                }
+
+                parameterOrder.Add(param[0].Position, i);
+            }
+
+            if (!allMatched)
+            {
+                continue;
+            }
+
+            ctor = candidate;
+            break;
+        }
+
+        if (ctor is null)
+        {
+            throw new ActivationException(typeof(T));
+        }
+        else
+        {
+            Console.WriteLine($"Found ctor: {ctor}");
+        }
+
+        object[] finalParams = new object[actualParams.Length];
+
+        for (int i = 0; i < actualParams.Length; i++)
+        {
+            if (parameterOrder.TryGetValue(i, out int t))
+            {
+                finalParams[i] = args[t];
+                continue;
+            }
+
+            Type pt = actualParams[i].ParameterType;
+            Type mockedType = typeof(Mock<>).MakeGenericType(pt);
+
+            var mockCtor = typeof(Mocks)
+                .GetMethods()
+                .FirstOrDefault(x =>
+                    x.ReturnType == mockedType &&
+                    x.IsStatic &&
+                    x.GetParameters().All(p => p.IsOptional)
+                );
+
+            if (mockCtor is not null)
+            {
+                var mock = InvokeWithDefaults(mockCtor) ?? throw new ActivationException(mockedType);
+                finalParams[i] = (mock as Mock)?.Object ?? throw new ActivationException(mockedType);
+                continue;
+            }
+
+            var stubCtor = typeof(Mocks)
+                .GetMethods()
+                .FirstOrDefault(x =>
+                    x.ReturnType == pt &&
+                    x.IsStatic &&
+                    x.GetParameters().All(p => p.IsOptional)
+                ) ?? throw new ActivationException(pt);
+
+            finalParams[i] = InvokeWithDefaults(stubCtor) ?? throw new ActivationException(pt);
+        }
+
+        return Activator.CreateInstance(typeof(T), finalParams) as T ?? throw new ActivationException(typeof(T));
+    }
+
+    /// <summary>
+    /// Invoke a static method, supplying default values for any optional parameters.
+    /// Reflection does not fill in optional parameters automatically, so
+    /// Invoke(null, null) throws TargetParameterCountException for them.
+    /// </summary>
+    private static object? InvokeWithDefaults(MethodInfo method)
+    {
+        var parameters = method.GetParameters();
+        object?[] args = new object?[parameters.Length];
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            args[i] = parameters[i].HasDefaultValue ? parameters[i].DefaultValue : Type.Missing;
+        }
+
+        return method.Invoke(null, args);
     }
 }
 

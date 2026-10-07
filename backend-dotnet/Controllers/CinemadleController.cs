@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using SixLabors.ImageSharp;
 using Microsoft.Extensions.Options;
+using Cinemadle.Mediation;
+using Cinemadle.Controllers.Handlers;
 
 namespace Cinemadle.Controllers;
 
@@ -21,6 +23,7 @@ public class CinemadleController(
     IGuessRepository guessRepository,
     IHintRepository hintRepository,
     IFeatureFlagRepository flagRepo,
+    Mediator mediator,
     DatabaseContext db)
     : CinemadleControllerBase
 {
@@ -70,86 +73,17 @@ public class CinemadleController(
         return new OkObjectResult(userId);
     }
 
-    private async Task<List<string>?> GetGameSummaryInternal(IEnumerable<int> userGuesses, string date)
-    {
-        var guessDtos = await Task.WhenAll(userGuesses.Select(x => GuessMovieInternal(x, date)));
-        if (guessDtos is null || !guessDtos.All(x => x is not null))
-        {
-            return null;
-        }
-
-        List<string> o = [];
-        foreach (GuessDto? guessDto in guessDtos)
-        {
-            if (guessDto is null)
-            {
-                return null;
-            }
-
-            o.Add(string.Join("", guessDto.Fields.Select(x => MapColorToEmoji(x.Value.Color))));
-        }
-
-        o.Add($"cinemadle {date}");
-        o.Add("play at https://cinemadle.com");
-
-        return o;
-    }
-
     [HttpGet("gameSummary/anon")]
     public async Task<ActionResult> GetGameSummaryAnon(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
         [FromQuery, Required] Guid userId
     )
     {
-        logger.LogDebug("+GetGameSummaryAnon({date}, {userId})", date, userId);
-
-        string anonUserId = userId.ToString();
-        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
-
-        if (user is null)
-        {
-            logger.LogWarning("GetGameSummaryAnon: attempted access by invalid user: {userId}", anonUserId);
-            logger.LogDebug("-GetGameSummaryAnon({date}, {userId}", date, userId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            IEnumerable<UserGuess> userGuesses = db.AnonUserGuesses.Where(x => x.UserId == userId.ToString() && x.GameId == date).OrderBy(x => x.SequenceId);
-
-            // Check if user has won
-            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-            bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
-
-            // Allow summary if user has completed the game OR won
-            if (userGuesses.Count() < _config.GameLength && !hasWon)
-            {
-                logger.LogDebug("-GetGameSummaryAnon({date}, {userId}): User tried summary gen on guess {guess}", date, userId, userGuesses.Count());
-                logger.LogDebug("-GetGameSummaryAnon({date}, {userId})", date, userId);
-                return new NotFoundResult();
-            }
-
-            List<string>? gameSummary = await GetGameSummaryInternal(userGuesses.Select(x => x.GuessMediaId), date);
-
-            if (gameSummary is null || gameSummary.Count == 0)
-            {
-                logger.LogDebug("-GetGameSummary({date}, {userId}): Unable to make guess data", date, userId);
-                logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
-                return new NotFoundResult();
-            }
-
-            return new OkObjectResult(new GameSummaryDto
-            {
-                Summary = gameSummary
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetGameSummary({date}, {userId})", date, userId);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
+            new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
+        );
+        var handler = new MediatorResponseHandler<GameSummaryDto>(o);
+        return handler.Handle();
     }
 
 
@@ -159,51 +93,11 @@ public class CinemadleController(
         [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
     )
     {
-        logger.LogDebug("+GetGameSummary({date})", date);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetGameSummary({date})", date);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            IEnumerable<UserGuess> userGuesses = db.Guesses.Where(x => x.UserId == userId && x.GameId == date).OrderBy(x => x.SequenceId);
-
-            // Check if user has won
-            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-            bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
-
-            // Allow summary if user has completed the game OR won
-            if (userGuesses.Count() < _config.GameLength && !hasWon)
-            {
-                logger.LogDebug("-GetGameSummary({date}): User tried summary gen on guess {guess}", date, userGuesses.Count());
-                logger.LogDebug("-GetGameSummary({date})", date);
-                return new NotFoundResult();
-            }
-
-            List<string>? gameSummary = await GetGameSummaryInternal(userGuesses.Select(x => x.GuessMediaId), date);
-
-            if (gameSummary is null || gameSummary.Count == 0)
-            {
-                logger.LogDebug("-GetGameSummary({date}): Unable to make guess data", date);
-                logger.LogDebug("-GetGameSummary({date})", date);
-                return new NotFoundResult();
-            }
-
-            return new OkObjectResult(new GameSummaryDto
-            {
-                Summary = gameSummary
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetGameSummary Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetGameSummary({date})", date);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
+            new GetGameSummaryRequest(true, GetUserId(), date, _config.GameLength)
+        );
+        var handler = new MediatorResponseHandler<GameSummaryDto>(o);
+        return handler.Handle();
     }
 
     [Authorize]

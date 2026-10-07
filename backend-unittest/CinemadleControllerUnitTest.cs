@@ -18,25 +18,9 @@ public class CinemadleControllerUnitTest
     [Fact]
     public void CinemadleControllerValidateEndpointTest()
     {
-        ILogger<CinemadleController> logger = UnitTestAssist.GetLogger<CinemadleController>();
-        var configRepo = Mocks.GetMockedConfigRepository();
-
-        Mock<ICacheRepository> cacheRepoMock = Mocks.GetMockedCacheRepository();
-        ICacheRepository cacheRepo = cacheRepoMock.Object;
-
-        Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
-        ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
-
-        Mock<IWebHostEnvironment> webHostEnvMock = new();
-        webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
-        IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
-
-        DatabaseContext db = Mocks.GetDatabaseContext();
-
-        Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
-        IGuessRepository guessRepo = guessRepoMock.Object;
-
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object, db);
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>()
+        );
 
         Assert.True(controller.Validate().Value);
     }
@@ -44,26 +28,11 @@ public class CinemadleControllerUnitTest
     [Fact]
     public async Task CinemadleControllerAnonUserIdEndpointSuccessTest()
     {
-        ILogger<CinemadleController> logger = UnitTestAssist.GetLogger<CinemadleController>();
-        var configRepo = Mocks.GetMockedConfigRepository();
-
-        Mock<ICacheRepository> cacheRepoMock = Mocks.GetMockedCacheRepository();
-        ICacheRepository cacheRepo = cacheRepoMock.Object;
-
-        Mock<ITmdbRepository> tmdbRepositoryMock = Mocks.GetMockedTmdbRepository();
-        ITmdbRepository tmdbRepo = tmdbRepositoryMock.Object;
-
         Mock<IWebHostEnvironment> webHostEnvMock = new();
         webHostEnvMock.SetupGet(e => e.EnvironmentName).Returns("Development");
         IWebHostEnvironment webHostEnv = webHostEnvMock.Object;
-
-        DatabaseContext db = Mocks.GetDatabaseContext();
-
-        Mock<IGuessRepository> guessRepoMock = Mocks.GetMockedGuessRepository();
-        IGuessRepository guessRepo = guessRepoMock.Object;
-
-        CinemadleController controller = new(logger, configRepo, tmdbRepo, webHostEnv, guessRepo, Mocks.GetMockedHintRepository().Object, Mocks.GetMockedFeatureFlagRepository().Object, db);
-
+        var db = Mocks.GetDatabaseContext();
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(UnitTestAssist.GetLogger<CinemadleController>(), webHostEnv, db);
         var anonUserIdResult = await controller.GetAnonUserId();
 
         Assert.IsType<OkObjectResult>(anonUserIdResult);
@@ -95,20 +64,13 @@ public class CinemadleControllerUnitTest
             Year = "2017"
         };
 
-        var logger = UnitTestAssist.GetLogger<CinemadleController>();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync(expectedMovie);
 
-        var controller = new CinemadleController(
-            logger,
-            Mocks.GetMockedConfigRepository(),
-            tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
+            tmdbRepoMock.Object
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -124,20 +86,13 @@ public class CinemadleControllerUnitTest
     {
         var date = "2024-01-01";
 
-        var logger = UnitTestAssist.GetLogger<CinemadleController>();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync((MovieDto?)null);
 
-        var controller = new CinemadleController(
-            logger,
-            Mocks.GetMockedConfigRepository(),
-            tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
+            tmdbRepoMock.Object
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -150,20 +105,13 @@ public class CinemadleControllerUnitTest
     {
         var date = "2024-01-01";
 
-        var logger = UnitTestAssist.GetLogger<CinemadleController>();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ThrowsAsync(new Exception("Test exception"));
 
-        var controller = new CinemadleController(
-            logger,
-            Mocks.GetMockedConfigRepository(),
-            tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
+            tmdbRepoMock.Object
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -252,7 +200,6 @@ public class CinemadleControllerUnitTest
                 }
             }
         };
-        var logger = UnitTestAssist.GetLogger<CinemadleController>();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         var guessRepoMock = new Mock<IGuessRepository>();
         var db = Mocks.GetDatabaseContext();
@@ -264,14 +211,10 @@ public class CinemadleControllerUnitTest
         guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
             .Returns(expectedGuessDto);
 
-        var controller = new CinemadleController(
-            logger,
-            Mocks.GetMockedConfigRepository(),
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -358,7 +301,6 @@ public class CinemadleControllerUnitTest
             }
         };
 
-        var logger = UnitTestAssist.GetLogger<CinemadleController>();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         var guessRepoMock = new Mock<IGuessRepository>();
         var db = Mocks.GetDatabaseContext();
@@ -373,14 +315,10 @@ public class CinemadleControllerUnitTest
         guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
             .Returns(expectedGuessDto);
 
-        var controller = new CinemadleController(
-            logger,
-            Mocks.GetMockedConfigRepository(),
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -406,15 +344,8 @@ public class CinemadleControllerUnitTest
         var movieId = 123;
         var invalidUserId = Guid.NewGuid();
 
-        var controller = new CinemadleController(
-            UnitTestAssist.GetLogger<CinemadleController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>()
         );
 
         var result = await controller.GuessMovieAnon(date, invalidUserId, movieId);
@@ -428,15 +359,8 @@ public class CinemadleControllerUnitTest
         var date = "2024-01-01";
         var movieId = 123;
 
-        var controller = new CinemadleController(
-            UnitTestAssist.GetLogger<CinemadleController>(),
-            Mocks.GetMockedConfigRepository(),
-            Mocks.GetMockedTmdbRepository().Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
-            Mocks.GetMockedGuessRepository().Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
-            Mocks.GetDatabaseContext()
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>()
         );
 
         controller.ControllerContext = new ControllerContext
@@ -519,14 +443,10 @@ public class CinemadleControllerUnitTest
         guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
             .Returns(guessDto);
 
-        var controller = new CinemadleController(
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
-            Mocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
@@ -622,14 +542,10 @@ public class CinemadleControllerUnitTest
         guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
             .Returns(guessDto);
 
-        var controller = new CinemadleController(
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
-            Mocks.GetMockedConfigRepository(),
             tmdbRepoMock.Object,
-            Mocks.GetMockedWebHostEnvironment().Object,
             guessRepoMock.Object,
-            Mocks.GetMockedHintRepository().Object,
-            Mocks.GetMockedFeatureFlagRepository().Object,
             db
         );
 
