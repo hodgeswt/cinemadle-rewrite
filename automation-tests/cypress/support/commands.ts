@@ -16,7 +16,7 @@ Cypress.Commands.add('maybeGet', (selector: string, options?: Partial<Cypress.Lo
 })
 
 Cypress.Commands.add('rigMovie', (id?: string) => {
-    const backendUrl = Cypress.env().backendUrl;
+    const backendUrl = Cypress.expose().backendUrl;
     return cy.request({
         method: 'GET',
         url: `${backendUrl}/api/test/rig/${id ?? '85'}`,
@@ -25,7 +25,7 @@ Cypress.Commands.add('rigMovie', (id?: string) => {
 });
 
 Cypress.Commands.add('unrigMovie', () => {
-    const backendUrl = Cypress.env().backendUrl;
+    const backendUrl = Cypress.expose().backendUrl;
     return cy.request({
         method: 'GET',
         url: `${backendUrl}/api/test/rig/undo`,
@@ -34,7 +34,7 @@ Cypress.Commands.add('unrigMovie', () => {
 });
 
 Cypress.Commands.add('destroyDatabase', () => {
-    const backendUrl = Cypress.env().backendUrl;
+    const backendUrl = Cypress.expose().backendUrl;
 
     return cy.request({
         method: 'DELETE',
