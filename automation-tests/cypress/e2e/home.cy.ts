@@ -3,14 +3,14 @@ import { getGuessCard, isoDateNoTime, logIn, makeGuess } from "../support/comman
 describe('home page', () => {
     before(() => {
         cy.destroyDatabase();
-        cy.rigMovie();
-    });
+    })
 
     after(() => {
         cy.unrigMovie();
     })
 
     beforeEach(() => {
+        cy.rigMovie();
         cy.init();
     })
 

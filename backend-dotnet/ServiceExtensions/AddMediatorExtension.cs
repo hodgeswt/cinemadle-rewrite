@@ -2,11 +2,12 @@ using Cinemadle.Mediation;
 
 namespace Cinemadle.ServiceExtensions;
 
-public static class AddMediatorHandlersExtension
+public static class AddMediatorExtension
 {
-  public static IServiceCollection AddMediatorHandlers(this IServiceCollection services)
+  public static IServiceCollection AddMediator(this IServiceCollection services)
   {
     services.AddSingleton<IHandlersProvider, ServicesHandlersProvider>();
+    services.AddSingleton<Mediator>();
 
     var handlers = typeof(Mediator).Assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(IRequestHandler<,>))) ?? [];
 

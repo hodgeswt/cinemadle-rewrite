@@ -7,6 +7,9 @@ describe('custom game', () => {
 
     beforeEach(() => {
         cy.init();
+    })
+
+    afterEach(() => {
         cy.destroyDatabase();
     })
 
