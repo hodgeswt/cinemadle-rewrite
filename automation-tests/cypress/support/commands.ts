@@ -61,6 +61,20 @@ Cypress.Commands.add('getClipboard', () => {
 });
 
 Cypress.Commands.add('createCustomGame', (movieName: string) => {
+    // Newer Chromium denies clipboard access in automated runs unless granted explicitly
+    if (Cypress.isBrowser({ family: 'chromium' })) {
+        cy.wrap(
+            Cypress.automation('remote:debugger:protocol', {
+                command: 'Browser.grantPermissions',
+                params: {
+                    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+                    origin: new URL(Cypress.config('baseUrl') as string).origin,
+                },
+            }),
+            { log: false },
+        );
+    }
+
     cy.visit('/customCreate');
 
     // Wait for the app to be fully loaded
