@@ -13,7 +13,6 @@
         healthcheck,
         getCustomGame,
     } from "$lib/middleware";
-    import { FeatureFlags } from "$lib/domain";
     import { onDestroy, onMount } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { guessStore, userStore, hintsStore } from "$lib/stores";
@@ -29,7 +28,7 @@
     import { CustomGameState } from "./page.state.svelte";
     import { get } from "svelte/store";
 
-    export let data: { id: string };
+    let { data }: { data: { id: string } } = $props();
 
     const customGameId = data.id;
     const pageState = new CustomGameState(customGameId);

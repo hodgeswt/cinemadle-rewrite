@@ -3,7 +3,7 @@ import { getCustomGameAnswer } from "$lib/middleware";
 import { guessStore, userStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
 import { untrack } from "svelte";
-import { writable, get } from "svelte/store";
+import { writable, get, fromStore } from "svelte/store";
 import Logger from "$lib/logger";
 
 export class CustomGameState {
@@ -23,8 +23,15 @@ export class CustomGameState {
     errorOpen = writable(false);
     answerOpen = writable(false);
 
-    private guesses: GuessDomain[] = $state([]);
-    private possibleGuesses: PossibleMediaDomain = $state({});
+    private storeState = fromStore(guessStore);
+
+    private get guesses(): GuessDomain[] {
+        return this.storeState.current.guesses;
+    }
+
+    private get possibleGuesses(): PossibleMediaDomain {
+        return this.storeState.current.possibleGuesses ?? {};
+    }
 
     LIMIT = 10;
     remaining = $derived(this.LIMIT - this.guesses.length);
@@ -41,13 +48,6 @@ export class CustomGameState {
     );
 
     constructor(private readonly customGameId: string) {
-        guessStore.subscribe((x) => {
-            this.guesses = x.guesses;
-        });
-        guessStore.subscribe((x) => {
-            this.possibleGuesses = x.possibleGuesses ?? {};
-        });
-
         $effect(() => {
             if (!this.lose) {
                 return;
