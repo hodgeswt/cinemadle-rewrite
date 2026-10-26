@@ -31,7 +31,13 @@ public class CinemadleControllerUnitTest
     public async Task CinemadleControllerAnonUserIdEndpointSuccessTest()
     {
         var db = CinemadleMocks.GetDatabaseContext();
-        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(UnitTestAssist.GetLogger<CinemadleController>(), db);
+        
+        var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
+            UnitTestAssist.GetLogger<CinemadleController>(),
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(db))
+        );
+        
         var anonUserIdResult = await controller.GetAnonUserId();
 
         Assert.IsType<OkObjectResult>(anonUserIdResult);
