@@ -1,3 +1,4 @@
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Mediation;
 
 namespace Cinemadle.ServiceExtensions;

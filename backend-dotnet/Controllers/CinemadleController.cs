@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
-using SixLabors.ImageSharp;
 using Microsoft.Extensions.Options;
 using Cinemadle.Mediation;
 using Cinemadle.Controllers.Handlers;
+using System.Xml.Linq;
 
 namespace Cinemadle.Controllers;
 
@@ -298,84 +298,20 @@ public class CinemadleController(
             int id
     )
     {
-        logger.LogDebug("+GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+            new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
+        );
 
-        string anonUserId = userId.ToString();
-        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
-
-        if (user is null)
-        {
-            logger.LogWarning("GuessMovieAnon: attempted access by invalid user: {userId}", anonUserId);
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
-            UserGuess? x = db.AnonUserGuesses.FirstOrDefault(
-                                           x => x.GuessMediaId == id && x.GameId == date && x.UserId == anonUserId
-                                      );
-
-            if (x is null)
-            {
-                int seqNo = (db.AnonUserGuesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
-                db.AnonUserGuesses.Add(new UserGuess
+        var handler =
+            new MediatorResponseHandler<GuessDto?>(o)
+                .OnSuccess((x) => new OkObjectResult(x))
+                .OnException((x) =>
                 {
-                    GameId = date,
-                    UserId = anonUserId,
-                    GuessMediaId = id,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
+                    logger.LogError("Exception in anon guess: {Message}", x.Message);
+                    return new StatusCodeResult(500);
                 });
-
-                await db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                hintRepository.InvalidateHints(anonUserId, date);
-            }
-
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
-            return new OkObjectResult(guessDto);
-
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GuessMovieAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    private async Task<GuessDto?> GuessMovieInternal(int id, string date)
-    {
-        MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
-
-        if (guessMovie is null)
-        {
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-
-        if (targetMovie is null)
-        {
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        GuessDto? guessDto = guessRepository.Guess(guessMovie, targetMovie);
-
-        if (guessDto is null)
-        {
-            logger.LogError("GuessMovieInternal: unable to create guess DTO");
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        return guessDto;
+        
+        return handler.Handle();
     }
 
     [Authorize]
@@ -385,56 +321,20 @@ public class CinemadleController(
             int id
     )
     {
-        logger.LogDebug("+GuessMovie({date}, {id})", date, id);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+            new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
+        );
 
-        try
-        {
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
-
-            UserGuess? x = db.Guesses.FirstOrDefault(
-                x => x.GuessMediaId == id && x.GameId == date && x.UserId == userId
-            );
-
-            if (x is null)
-            {
-                int seqNo = (db.Guesses.Where(
-                    x => x.GameId == date && x.UserId == userId
-                )
-                .OrderByDescending(x => x.SequenceId)
-                .FirstOrDefault()?.SequenceId ?? 0) + 1;
-
-                db.Guesses.Add(new UserGuess
+        var handler =
+            new MediatorResponseHandler<GuessDto?>(o)
+                .OnSuccess((x) => new OkObjectResult(x))
+                .OnException((x) =>
                 {
-                    GameId = date,
-                    UserId = userId,
-                    GuessMediaId = id,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
+                    logger.LogError("Exception in guess: {Message}", x.Message);
+                    return new StatusCodeResult(500);
                 });
-
-                await db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                hintRepository.InvalidateHints(userId, date);
-            }
-
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-            return new OkObjectResult(guessDto);
-
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-
-            return new StatusCodeResult(500);
-        }
+        
+        return handler.Handle();
     }
 
     [Authorize]

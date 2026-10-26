@@ -1,16 +1,16 @@
 using Cinemadle.Database;
+using Cinemadle.Datamodel.Domain;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
-using Cinemadle.Mediation;
 
 namespace Cinemadle.Controllers.Handlers;
 
-public readonly record struct GetGameSummaryRequest(
+public record GetGameSummaryRequest(
   bool IsAnon,
   string UserId,
   string GameId,
   int GameLength
-);
+) : RequestWithUser(IsAnon, UserId);
 public class GetGameSummaryHandler(
   ITmdbRepository tmdbRepository,
   DatabaseContext db,
@@ -36,44 +36,34 @@ public class GetGameSummaryHandler(
   
   public async Task<RequestValidationError?> Validate(GetGameSummaryRequest request)
   {
-    if (ValidateUser(request) is RequestValidationError userValidationErr)
+    if (request.ValidateUser(db) is RequestValidationError userValidationErr)
     {
       return userValidationErr;
     }
 
-    if (await UserCanGuess(request) is RequestValidationError userCannotGuessErr)
+    if (await UserCanGetSummary(request) is RequestValidationError userCannotGetSummaryErr)
     {
-      return userCannotGuessErr;
+      return userCannotGetSummaryErr;
     }
 
     return null;
   }
 
-  private async Task<RequestValidationError?> UserCanGuess(GetGameSummaryRequest request)
+  private async Task<RequestValidationError?> UserCanGetSummary(
+    GetGameSummaryRequest request
+  )
   {
-    // Check if user has won
     MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
     bool hasWon = targetMovie != null && _userGuesses!.Any(x => x.GuessMediaId == targetMovie.Id);
 
-    // Allow summary if user has completed the game OR won
     if (_userGuesses!.Count() < request.GameLength && !hasWon)
     {
-      // TODO : this should be 403
-      return new RequestValidationError("User cannot guess yet", 404);
+      return new RequestValidationError("User cannot get summary", 403);
     }
 
     return null;
   }
 
-  private RequestValidationError? ValidateUser(GetGameSummaryRequest request)
-  {
-    if (string.IsNullOrEmpty(request.UserId) || (request.IsAnon && db.AnonUsers.Where(x => x.UserId == request.UserId).FirstOrDefault() is null))
-    {
-      return new RequestValidationError("Unauthorized access", 401);
-    }
-
-    return null;
-  }
 
   public async Task<GameSummaryDto?> Handle(GetGameSummaryRequest request)
   {

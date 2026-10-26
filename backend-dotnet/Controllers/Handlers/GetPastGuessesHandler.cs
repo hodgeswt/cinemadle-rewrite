@@ -1,13 +1,13 @@
 using Cinemadle.Database;
-using Cinemadle.Mediation;
+using Cinemadle.Datamodel.Domain;
 
 namespace Cinemadle.Controllers.Handlers;
 
-public readonly record struct GetPastGuessesRequest(
+public record GetPastGuessesRequest(
   bool IsAnon,
   string UserId,
   string GameId
-);
+) : RequestWithUser(IsAnon, UserId);
 
 public readonly record struct GetPastGuessesResponse(IEnumerable<int> PastGuessMediaIds);
 
@@ -15,12 +15,7 @@ public class GetPastGuessesHandler(DatabaseContext db) : IRequestHandler<GetPast
 {
   public async Task<RequestValidationError?> Validate(GetPastGuessesRequest request)
   {
-    if (string.IsNullOrEmpty(request.UserId) || (request.IsAnon && db.AnonUsers.Where(x => x.UserId == request.UserId).FirstOrDefault() is null))
-    {
-      return new RequestValidationError("Unauthorized access", 401);
-    }
-
-    return null;
+    return request.ValidateUser(db);
   }
 
   public Task<GetPastGuessesResponse> Handle(GetPastGuessesRequest request)

@@ -1,5 +1,6 @@
 using Cinemadle.Database;
 using Cinemadle.Interfaces;
+using Cinemadle.Mediation;
 using Moq;
 using Cinemadle.Controllers;
 using Microsoft.AspNetCore.Hosting;
@@ -213,7 +214,8 @@ public class CinemadleControllerUnitTest
             UnitTestAssist.GetLogger<CinemadleController>(),
             tmdbRepoMock.Object,
             guessRepoMock.Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, guessRepoMock.Object, db))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -317,7 +319,8 @@ public class CinemadleControllerUnitTest
             UnitTestAssist.GetLogger<CinemadleController>(),
             tmdbRepoMock.Object,
             guessRepoMock.Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, guessRepoMock.Object, db))
         );
 
         var result = await controller.GuessMovieAnon(date, userId, movieId);
@@ -348,7 +351,8 @@ public class CinemadleControllerUnitTest
 
         var result = await controller.GuessMovieAnon(date, invalidUserId, movieId);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.IsType<StatusCodeResult>(result);
+        Assert.Equal(401, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -368,7 +372,8 @@ public class CinemadleControllerUnitTest
 
         var result = await controller.GuessMovie(date, movieId);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.IsType<StatusCodeResult>(result);
+        Assert.Equal(401, (result as StatusCodeResult)!.StatusCode);
     }
 }
 

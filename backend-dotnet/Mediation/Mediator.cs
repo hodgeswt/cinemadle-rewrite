@@ -1,4 +1,6 @@
 
+using Cinemadle.Datamodel.Domain;
+
 namespace Cinemadle.Mediation;
 
 public interface IHandlersProvider
