@@ -9,13 +9,13 @@ namespace Cinemadle.UnitTest.Infrastructure;
 
 public class ActivationException(Type t) : Exception($"Unable to activate type {t}");
 
-public class AssemblyDiscoverHandlersProvider : IHandlersProvider
+public class AssemblyDiscoverHandlersProvider(params object[] sharedArgs) : IHandlersProvider
 {
   public T GetHandler<T>() where T : notnull
   {
     var t = typeof(Mediator).Assembly.GetTypes().FirstOrDefault(x => x.IsAssignableTo(typeof(T))) ?? throw new ActivationException(typeof(T));
     var m = typeof(UnitTestAssist).GetMethod(nameof(UnitTestAssist.CreateInstanceWithMocks))!.MakeGenericMethod(t);
-    return (T)m.Invoke(null, [Array.Empty<object>()])!;
+    return (T)m.Invoke(null, [sharedArgs])!;
   }
 }
 

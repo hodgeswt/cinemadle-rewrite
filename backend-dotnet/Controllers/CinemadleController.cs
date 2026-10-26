@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using System.ComponentModel.DataAnnotations;
-using SixLabors.ImageSharp;
 using Microsoft.Extensions.Options;
 using Cinemadle.Mediation;
 using Cinemadle.Controllers.Handlers;
+using System.Xml.Linq;
+using System.Reflection.Metadata;
 
 namespace Cinemadle.Controllers;
 
@@ -37,37 +38,8 @@ public class CinemadleController(
     [HttpGet("anonUserId")]
     public async Task<ActionResult> GetAnonUserId()
     {
-        logger.LogDebug("+GetAnonUserId");
-
-        IEnumerable<AnonUser>? users = null;
-        int count = 0;
-        string userId = string.Empty;
-
-        while ((users == null || users.Any()) && count < 5)
-        {
-            userId = Guid.NewGuid().ToString();
-
-            users = db.AnonUsers
-                .Where(x => x.UserId == userId);
-
-            count++;
-        }
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetAnonUserId");
-            return new StatusCodeResult(500);
-        }
-
-        db.AnonUsers.Add(new()
-        {
-            UserId = userId
-        });
-
-        await db.SaveChangesAsync();
-
-        logger.LogDebug("-GetAnonUserId");
-        return new OkObjectResult(userId);
+        var o = await mediator.Dispatch<CreateAnonUserIdRequest, string>(new CreateAnonUserIdRequest());
+        return new MediatorResponseHandler<string>(o).Handle();
     }
 
     [HttpGet("gameSummary/anon")]
@@ -79,18 +51,7 @@ public class CinemadleController(
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
             new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
         );
-        var handler = new MediatorResponseHandler<GameSummaryDto>(o)
-            .OnProcessingError((e) =>
-            {
-                logger.LogError("GetGameSummary processing error: {Message}", e.Message);
-                return new StatusCodeResult(e.StatusCode);
-            })
-            .OnException((e) =>
-            {
-                logger.LogError(e, "GetGameSummary exception");
-                return new StatusCodeResult(500);
-            });
-        return handler.Handle();
+        return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
     }
 
 
@@ -103,18 +64,7 @@ public class CinemadleController(
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
             new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
         );
-        var handler = new MediatorResponseHandler<GameSummaryDto>(o)
-            .OnProcessingError((e) =>
-            {
-                logger.LogError("GetGameSummary processing error: {Message}", e.Message);
-                return new StatusCodeResult(e.StatusCode);
-            })
-            .OnException((e) =>
-            {
-                logger.LogError(e, "GetGameSummary exception");
-                return new StatusCodeResult(500);
-            });
-        return handler.Handle();
+        return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
     }
 
     [Authorize]
@@ -259,12 +209,7 @@ public class CinemadleController(
 
         var handler =
             new MediatorResponseHandler<GetPastGuessesResponse>(o)
-                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds))
-                .OnException((x) =>
-                {
-                    logger.LogError("Exception in anon guesses: {Message}", x.Message);
-                    return new StatusCodeResult(500);
-                });
+                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
 
         return handler.Handle();
     }
@@ -281,12 +226,7 @@ public class CinemadleController(
 
         var handler =
             new MediatorResponseHandler<GetPastGuessesResponse>(o)
-                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds))
-                .OnException((x) =>
-                {
-                    logger.LogError("Exception in anon guesses: {Message}", x.Message);
-                    return new StatusCodeResult(500);
-                });
+                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
         
         return handler.Handle();
     }
@@ -298,84 +238,11 @@ public class CinemadleController(
             int id
     )
     {
-        logger.LogDebug("+GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
+        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+            new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
+        );
 
-        string anonUserId = userId.ToString();
-        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
-
-        if (user is null)
-        {
-            logger.LogWarning("GuessMovieAnon: attempted access by invalid user: {userId}", anonUserId);
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id}", date, userId, id);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
-            UserGuess? x = db.AnonUserGuesses.FirstOrDefault(
-                                           x => x.GuessMediaId == id && x.GameId == date && x.UserId == anonUserId
-                                      );
-
-            if (x is null)
-            {
-                int seqNo = (db.AnonUserGuesses.Where(x => x.GameId == date).OrderByDescending(x => x.SequenceId).FirstOrDefault()?.SequenceId ?? 0) + 1;
-                db.AnonUserGuesses.Add(new UserGuess
-                {
-                    GameId = date,
-                    UserId = anonUserId,
-                    GuessMediaId = id,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
-                });
-
-                await db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                hintRepository.InvalidateHints(anonUserId, date);
-            }
-
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
-            return new OkObjectResult(guessDto);
-
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GuessMovieAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GuessMovieAnon({date}, {userId}, {id})", date, userId, id);
-
-            return new StatusCodeResult(500);
-        }
-    }
-
-    private async Task<GuessDto?> GuessMovieInternal(int id, string date)
-    {
-        MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
-
-        if (guessMovie is null)
-        {
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-
-        if (targetMovie is null)
-        {
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        GuessDto? guessDto = guessRepository.Guess(guessMovie, targetMovie);
-
-        if (guessDto is null)
-        {
-            logger.LogError("GuessMovieInternal: unable to create guess DTO");
-            logger.LogDebug("-GuessMovieInternal({date}, {id})", date, id);
-            return null;
-        }
-
-        return guessDto;
+        return new MediatorResponseHandler<GuessDto?>(o).Handle();
     }
 
     [Authorize]
@@ -385,56 +252,11 @@ public class CinemadleController(
             int id
     )
     {
-        logger.LogDebug("+GuessMovie({date}, {id})", date, id);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+            new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
+        );
 
-        try
-        {
-            GuessDto? guessDto = await GuessMovieInternal(id, date);
-
-            UserGuess? x = db.Guesses.FirstOrDefault(
-                x => x.GuessMediaId == id && x.GameId == date && x.UserId == userId
-            );
-
-            if (x is null)
-            {
-                int seqNo = (db.Guesses.Where(
-                    x => x.GameId == date && x.UserId == userId
-                )
-                .OrderByDescending(x => x.SequenceId)
-                .FirstOrDefault()?.SequenceId ?? 0) + 1;
-
-                db.Guesses.Add(new UserGuess
-                {
-                    GameId = date,
-                    UserId = userId,
-                    GuessMediaId = id,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
-                });
-
-                await db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                hintRepository.InvalidateHints(userId, date);
-            }
-
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-            return new OkObjectResult(guessDto);
-
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GuessMovie Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GuessMovie({date}, {id})", date, id);
-
-            return new StatusCodeResult(500);
-        }
+        return new MediatorResponseHandler<GuessDto?>(o).Handle();
     }
 
     [Authorize]

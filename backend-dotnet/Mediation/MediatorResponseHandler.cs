@@ -1,6 +1,7 @@
+using Cinemadle.Datamodel.Domain;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Cinemadle.Mediation; 
+namespace Cinemadle.Mediation;
 
 public class MediatorResponseHandler<TResponse>(IMediatorResponse<TResponse> response)
 {
@@ -32,24 +33,31 @@ public class MediatorResponseHandler<TResponse>(IMediatorResponse<TResponse> res
 
   public ActionResult Handle()
   {
-    if (response is InvalidMediatorResponse<TResponse> invalid)
+    try
     {
-      return _onValidationError(invalid.Error);
-    }
+      if (response is InvalidMediatorResponse<TResponse> invalid)
+      {
+        return _onValidationError(invalid.Error);
+      }
 
-    if (response is ExceptionThrownDuringProcessing<TResponse> exception)
-    {
-      return _onException(exception.InnerException);
-    }
+      if (response is ExceptionThrownDuringProcessing<TResponse> exception)
+      {
+        return _onException(exception.InnerException);
+      }
 
-    if (response is ProcessingErrorMediatorResponse<TResponse> processingError)
-    {
-      return _onProcessingError(processingError.Value);
-    }
+      if (response is ProcessingErrorMediatorResponse<TResponse> processingError)
+      {
+        return _onProcessingError(processingError.Value);
+      }
 
-    if (response is ValidMediatorResponse<TResponse> valid)
+      if (response is ValidMediatorResponse<TResponse> valid)
+      {
+        return _onSuccess(valid.Value);
+      }
+    }
+    catch
     {
-      return _onSuccess(valid.Value);
+      // Let below return handle it
     }
 
     return _onException(new MediatorException());

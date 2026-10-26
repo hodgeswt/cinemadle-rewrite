@@ -1,4 +1,4 @@
-namespace Cinemadle.Mediation;
+namespace Cinemadle.Datamodel.Domain;
 
 public interface IRequestHandler<TRequest, TResponse>
 {
