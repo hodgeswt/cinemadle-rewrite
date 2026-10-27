@@ -1,8 +1,4 @@
-﻿using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Processing;
-
-namespace Cinemadle.Utilities;
+﻿namespace Cinemadle.Utilities;
 
 /// <summary>
 /// Receives an image and returns it with the desired gaussian blur applied

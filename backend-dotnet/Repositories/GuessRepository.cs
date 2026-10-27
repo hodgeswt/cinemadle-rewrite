@@ -103,7 +103,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = new List<string> { target.BoxOffice.ToString() },
+                Values = [target.BoxOffice.ToString()],
             });
         }
 
@@ -133,7 +133,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = new List<string> { target.Rating.ToString() },
+                Values = [target.Rating.ToString()],
             });
         }
 
@@ -148,7 +148,7 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = target.Genres,
+                Values = target.Genres.Where(x => x is not null).Select(x => x!),
             });
         }
 
@@ -292,25 +292,28 @@ public class GuessRepository : IGuessRepository
         return true;
     }
 
-    private static bool IsListMismatch(IEnumerable<string> guessList, IEnumerable<string> targetList, out FieldDto? fieldOut)
+    private static bool IsListMismatch(IEnumerable<string?> guessList, IEnumerable<string?> targetList, out FieldDto? fieldOut)
     {
         fieldOut = null;
 
-        IEnumerable<string> shared = guessList.Intersect(targetList);
+        var shared = guessList.Intersect(targetList);
 
-        if (targetList.Count() == shared.Count())
+        if (shared is null || targetList.Count() == shared.Count())
         {
             return false;
         }
 
-        string color = shared.Count() > 0 ? "yellow" : "grey";
+        string color = shared.Any() ? "yellow" : "grey";
+        Dictionary<string, List<string>> modifiers = shared
+            .Where(x => x is not null)
+            .ToDictionary(k => k!.ToString(), v => new List<string>() { "bold" } );
 
         fieldOut = new FieldDto
         {
             Direction = 0,
             Color = color,
-            Values = guessList,
-            Modifiers = shared.ToDictionary(k => k, v => new List<string>() { "bold" })
+            Values = guessList.Where(x => x is not null).Select(x => x!),
+            Modifiers = modifiers
         };
 
         return true;
