@@ -25,7 +25,7 @@ public class GetMovieImageHandler(
   private MovieDto? _targetMovie = null;
   private bool _win = false;
 
-  public async Task<ProcessingError?> PreProcess(GuessMovieRequest request)
+  public async Task<ProcessingError?> PreProcess(GetMovieImageRequest request)
   {
     var guessTable = request.IsAnon ? db.AnonUserGuesses : db.Guesses;
     _userGuesses = guessTable.Where(x => x.GameId == request.GameId && x.UserId == request.UserId).Count();
