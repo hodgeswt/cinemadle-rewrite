@@ -9,8 +9,6 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
 using Cinemadle.Mediation;
 using Cinemadle.Controllers.Handlers;
-using System.Xml.Linq;
-using System.Reflection.Metadata;
 
 namespace Cinemadle.Controllers;
 
@@ -26,324 +24,273 @@ public class CinemadleController(
     DatabaseContext db)
     : CinemadleControllerBase
 {
-    private readonly CinemadleConfig _config = configRepository.Value;
+  private readonly CinemadleConfig _config = configRepository.Value;
 
-    [Authorize]
-    [HttpGet("validate")]
-    public ActionResult<bool> Validate()
+  [Authorize]
+  [HttpGet("validate")]
+  public ActionResult<bool> Validate()
+  {
+    return true;
+  }
+
+  [HttpGet("anonUserId")]
+  public async Task<ActionResult> GetAnonUserId()
+  {
+    var o = await mediator.Dispatch<CreateAnonUserIdRequest, string>(new CreateAnonUserIdRequest());
+    return new MediatorResponseHandler<string>(o).Handle();
+  }
+
+  [HttpGet("gameSummary/anon")]
+  public async Task<ActionResult> GetGameSummaryAnon(
+      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+      [FromQuery, Required] Guid userId
+  )
+  {
+    var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
+      new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
+    );
+    return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
+  }
+
+
+  [Authorize]
+  [HttpGet("gameSummary")]
+  public async Task<ActionResult> GetGameSummary(
+      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+  )
+  {
+    var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
+      new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
+    );
+    return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
+  }
+
+  [Authorize]
+  [HttpGet("target/image")]
+  public async Task<ActionResult> GetMovieImage(
+      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+  )
+  {
+    logger.LogDebug("+GetMovieImage({date})", date);
+    string? userId = GetUserId();
+    if (string.IsNullOrWhiteSpace(userId))
     {
-        return true;
+      logger.LogDebug("-GetMovieImage({date})", date);
+      return new UnauthorizedResult();
     }
 
-    [HttpGet("anonUserId")]
-    public async Task<ActionResult> GetAnonUserId()
+    try
     {
-        var o = await mediator.Dispatch<CreateAnonUserIdRequest, string>(new CreateAnonUserIdRequest());
-        return new MediatorResponseHandler<string>(o).Handle();
-    }
+      int userGuesses = db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
 
-    [HttpGet("gameSummary/anon")]
-    public async Task<ActionResult> GetGameSummaryAnon(
-        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
-        [FromQuery, Required] Guid userId
-    )
-    {
-        var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-            new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
-        );
-        return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
-    }
+      MovieDto? target = await tmdbRepository.GetTargetMovie(date);
 
+      if (target is null)
+      {
+        logger.LogDebug("-GetMovieImage({date})", date);
+        return new StatusCodeResult(500);
+      }
 
-    [Authorize]
-    [HttpGet("gameSummary")]
-    public async Task<ActionResult> GetGameSummary(
-        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
-    )
-    {
-        var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-            new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
-        );
-        return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
-    }
+      bool win = db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
 
-    [Authorize]
-    [HttpGet("target/image")]
-    public async Task<ActionResult> GetMovieImage(
-        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
-    )
-    {
-        logger.LogDebug("+GetMovieImage({date})", date);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetMovieImage({date})", date);
-            return new UnauthorizedResult();
-        }
+      if (!win && !_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
+      {
+        logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
+        logger.LogDebug("-GetMovieImage({date})", date);
+        return new UnauthorizedResult();
+      }
 
+      float blurFactor = (userGuesses >= _config.GameLength || win) ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
+
+      ImageDto? image = await GetBlurredImage(date, blurFactor, tmdbRepository);
+
+      if (image is null)
+      {
+        logger.LogDebug("GetMovieImage({date}): No image found", date);
+        logger.LogDebug("-GetMovieImage({date})", date);
+        return new NotFoundResult();
+      }
+
+      Clue? clue = db.UserClues.Where(x => x.GameId == date && x.UserId == userId && x.ClueType == ClueType.Visual).FirstOrDefault();
+      if (clue is null)
+      {
         try
         {
-            int userGuesses = db.Guesses.Where(x => x.GameId == date && x.UserId == userId).Count();
-
-            MovieDto? target = await tmdbRepository.GetTargetMovie(date);
-
-            if (target is null)
-            {
-                logger.LogDebug("-GetMovieImage({date})", date);
-                return new StatusCodeResult(500);
-            }
-
-            bool win = db.Guesses.Where(x => x.GameId == date && x.GuessMediaId == target.Id).Any();
-
-            if (!win &&!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
-            {
-                logger.LogDebug("GetMovieImage({date}): User attempted to access image on guess {number}", date, userGuesses);
-                logger.LogDebug("-GetMovieImage({date})", date);
-                return new UnauthorizedResult();
-            }
-
-            float blurFactor = (userGuesses >= _config.GameLength || win) ? 0.0F : _config.MovieImageBlurFactors[userGuesses.ToString()];
-
-            ImageDto? image = await GetBlurredImage(date, blurFactor, tmdbRepository);
-
-            if (image is null)
-            {
-                logger.LogDebug("GetMovieImage({date}): No image found", date);
-                logger.LogDebug("-GetMovieImage({date})", date);
-                return new NotFoundResult();
-            }
-
-            Clue? clue = db.UserClues.Where(x => x.GameId == date && x.UserId == userId && x.ClueType == ClueType.Visual).FirstOrDefault();
-            if (clue is null)
-            {
-                try
-                {
-                    db.UserClues.Add(new Clue
-                    {
-                        UserId = userId,
-                        GameId = date,
-                        ClueType = ClueType.Visual,
-                        Inserted = DateTime.Now
-                    });
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-                    logger.LogDebug("-GetMovieImage({date})", date);
-
-                    return new StatusCodeResult(500);
-                }
-
-            }
-
-            await db.SaveChangesAsync();
-
-            logger.LogDebug("-GetMovieImage({date})", date);
-            return new OkObjectResult(image);
+          db.UserClues.Add(new Clue
+          {
+            UserId = userId,
+            GameId = date,
+            ClueType = ClueType.Visual,
+            Inserted = DateTime.Now
+          });
         }
         catch (Exception ex)
         {
-            logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetMovieImage({date})", date);
+          logger.LogError("GetMovieImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+          logger.LogDebug("-GetMovieImage({date})", date);
 
-            return new StatusCodeResult(500);
+          return new StatusCodeResult(500);
         }
-    }
 
-    [HttpGet("target")]
-    public async Task<ActionResult> GetTargetMovie(
-            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
-    )
+      }
+
+      await db.SaveChangesAsync();
+
+      logger.LogDebug("-GetMovieImage({date})", date);
+      return new OkObjectResult(image);
+    }
+    catch (Exception ex)
     {
-        logger.LogDebug("+GetTargetMovie({date})", date);
-        try
-        {
-            MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
+      logger.LogError("GetMovieImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
+      logger.LogDebug("-GetMovieImage({date})", date);
 
-            if (targetMovie is null)
-            {
-                return new NotFoundResult();
-            }
-
-            logger.LogDebug("-GetTargetMovie({date})", date);
-            return new OkObjectResult(targetMovie);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetTargetMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            logger.LogDebug("-GetTargetMovie({date}", date);
-
-            return new StatusCodeResult(500);
-
-        }
+      return new StatusCodeResult(500);
     }
+  }
 
-    [HttpGet("movielist")]
-    public async Task<ActionResult> GetMovieList()
+  [HttpGet("target")]
+  public async Task<ActionResult> GetTargetMovie(
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+  )
+  {
+    logger.LogDebug("+GetTargetMovie({date})", date);
+    try
     {
-        logger.LogDebug("+GetMovieList");
+      MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
 
-        try
-        {
-            Dictionary<string, int> movies = await tmdbRepository.GetMovieList();
-            return new OkObjectResult(movies);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetMovieList Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+      if (targetMovie is null)
+      {
+        return new NotFoundResult();
+      }
 
-            logger.LogDebug("-GetMovieList");
-            return new StatusCodeResult(500);
-        }
+      logger.LogDebug("-GetTargetMovie({date})", date);
+      return new OkObjectResult(targetMovie);
     }
-
-    [HttpGet("guesses/anon")]
-    public async Task<ActionResult> GetPastGuessesAnon(
-        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
-        [FromQuery, Required] Guid userId
-    )
+    catch (Exception ex)
     {
-        var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-            new GetPastGuessesRequest(true, userId.ToString(), date)
-        );
+      logger.LogError("GetTargetMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
+      logger.LogDebug("-GetTargetMovie({date}", date);
 
-        var handler =
-            new MediatorResponseHandler<GetPastGuessesResponse>(o)
-                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
+      return new StatusCodeResult(500);
 
-        return handler.Handle();
     }
+  }
 
-    [Authorize]
-    [HttpGet("guesses")]
-    public async Task<ActionResult> GetPastGuesses(
-        [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
-    )
+  [HttpGet("movielist")]
+  public async Task<ActionResult> GetMovieList()
+  {
+    logger.LogDebug("+GetMovieList");
+
+    try
     {
-        var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-            new GetPastGuessesRequest(false, GetUserId(), date)
-        );
-
-        var handler =
-            new MediatorResponseHandler<GetPastGuessesResponse>(o)
-                .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
-        
-        return handler.Handle();
+      Dictionary<string, int> movies = await tmdbRepository.GetMovieList();
+      return new OkObjectResult(movies);
     }
-
-    [HttpGet("guess/anon/{id}")]
-    public async Task<ActionResult> GuessMovieAnon(
-            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
-            [FromQuery, Required] Guid userId,
-            int id
-    )
+    catch (Exception ex)
     {
-        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-            new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
-        );
+      logger.LogError("GetMovieList Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
 
-        return new MediatorResponseHandler<GuessDto?>(o).Handle();
+      logger.LogDebug("-GetMovieList");
+      return new StatusCodeResult(500);
     }
+  }
 
-    [Authorize]
-    [HttpGet("guess/{id}")]
-    public async Task<ActionResult> GuessMovie(
-            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
-            int id
-    )
-    {
-        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-            new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
-        );
+  [HttpGet("guesses/anon")]
+  public async Task<ActionResult> GetPastGuessesAnon(
+      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+      [FromQuery, Required] Guid userId
+  )
+  {
+    var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
+      new GetPastGuessesRequest(true, userId.ToString(), date)
+    );
 
-        return new MediatorResponseHandler<GuessDto?>(o).Handle();
-    }
+    var handler =
+      new MediatorResponseHandler<GetPastGuessesResponse>(o)
+      .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
 
-    [Authorize]
-    [HttpGet("hints")]
-    public async Task<ActionResult> GetHints(
-            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
-    )
-    {
-        logger.LogDebug("+GetHints({date})", date);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetHints({date})", date);
-            return new UnauthorizedResult();
-        }
+    return handler.Handle();
+  }
 
-        try
-        {
-            var hints = await hintRepository.GetHints(userId, date, isAnonymous: false, isCustomGame: false);
-            logger.LogDebug("-GetHints({date})", date);
-            return new OkObjectResult(hints);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetHints Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetHints({date})", date);
-            return new StatusCodeResult(500);
-        }
-    }
+  [Authorize]
+  [HttpGet("guesses")]
+  public async Task<ActionResult> GetPastGuesses(
+      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+  )
+  {
+    var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
+      new GetPastGuessesRequest(false, GetUserId(), date)
+    );
 
-    [HttpGet("hints/anon")]
-    public async Task<ActionResult> GetHintsAnon(
-            [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
-            [FromQuery, Required] Guid userId
-    )
-    {
-        logger.LogDebug("+GetHintsAnon({date}, {userId})", date, userId);
+    var handler =
+      new MediatorResponseHandler<GetPastGuessesResponse>(o)
+      .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
 
-        string anonUserId = userId.ToString();
-        AnonUser? user = db.AnonUsers.Where(x => x.UserId == anonUserId).FirstOrDefault();
+    return handler.Handle();
+  }
 
-        if (user is null)
-        {
-            logger.LogWarning("GetHintsAnon: attempted access by invalid user: {userId}", anonUserId);
-            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
-            return new UnauthorizedResult();
-        }
+  [HttpGet("guess/anon/{id}")]
+  public async Task<ActionResult> GuessMovieAnon(
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+    [FromQuery, Required] Guid userId,
+    int id
+  )
+  {
+    var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+      new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
+    );
 
-        try
-        {
-            var hints = await hintRepository.GetHints(anonUserId, date, isAnonymous: true, isCustomGame: false);
-            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
-            return new OkObjectResult(hints);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetHintsAnon Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetHintsAnon({date}, {userId})", date, userId);
-            return new StatusCodeResult(500);
-        }
-    }
+    return new MediatorResponseHandler<GuessDto?>(o).Handle();
+  }
 
-    [Authorize]
-    [HttpGet("hints/custom/{customGameId}")]
-    public async Task<ActionResult> GetHintsCustomGame(
-            string customGameId
-    )
-    {
-        logger.LogDebug("+GetHintsCustomGame({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
+  [Authorize]
+  [HttpGet("guess/{id}")]
+  public async Task<ActionResult> GuessMovie(
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+    int id
+  )
+  {
+    var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+      new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
+    );
 
-        try
-        {
-            var hints = await hintRepository.GetHints(userId, customGameId, isAnonymous: false, isCustomGame: true);
-            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
-            return new OkObjectResult(hints);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetHintsCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetHintsCustomGame({customGameId})", customGameId);
-            return new StatusCodeResult(500);
-        }
-    }
+    return new MediatorResponseHandler<GuessDto?>(o).Handle();
+  }
+
+  [Authorize]
+  [HttpGet("hints")]
+  public async Task<ActionResult> GetHints(
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+  )
+  {
+    var o = await mediator.Dispatch<GetHintsRequest, Dictionary<string, HintsDto>>(
+      new GetHintsRequest(false, GetUserId(), date, false)
+    );
+
+    return new MediatorResponseHandler<Dictionary<string, HintsDto>>(o).Handle();
+  }
+
+  [HttpGet("hints/anon")]
+  public async Task<ActionResult> GetHintsAnon(
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date,
+    [FromQuery, Required] Guid userId
+  )
+  {
+    var o = await mediator.Dispatch<GetHintsRequest, Dictionary<string, HintsDto>>(
+      new GetHintsRequest(true, userId.ToString(), date, false)
+    );
+
+    return new MediatorResponseHandler<Dictionary<string, HintsDto>>(o).Handle();
+  }
+
+  [Authorize]
+  [HttpGet("hints/custom/{customGameId}")]
+  public async Task<ActionResult> GetHintsCustomGame(string customGameId)
+  {
+    var o = await mediator.Dispatch<GetHintsRequest, Dictionary<string, HintsDto>>(
+      new GetHintsRequest(false, GetUserId(), customGameId, true)
+    );
+
+    return new MediatorResponseHandler<Dictionary<string, HintsDto>>(o).Handle();
+  }
 }
