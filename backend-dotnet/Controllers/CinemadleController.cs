@@ -14,6 +14,7 @@ namespace Cinemadle.Controllers;
 
 [Route("api/cinemadle")]
 [ApiController]
+// TODO: remove unused arguments. It breaks unit test constructors right now
 public class CinemadleController(
     ILogger<CinemadleController> logger,
     IOptions<CinemadleConfig> configRepository,
