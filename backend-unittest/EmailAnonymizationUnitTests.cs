@@ -27,7 +27,7 @@ public class EmailAnonymizationUnitTests
     }, new[] {
         "973dfe463ec85785f5f95af5ba3906eedb2d931c24e69824a89ea65dba4e813b", "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66", ""
     })]
-    public void DbAnonymizationTest(string[] emails, string[] anonymizedEmails)
+    public async Task DbAnonymizationTest(string[] emails, string[] anonymizedEmails)
     {
         using var db = CinemadleMocks.GetDatabaseContext();
         using var identityDb = CinemadleMocks.GetIdentityContext();
@@ -42,7 +42,7 @@ public class EmailAnonymizationUnitTests
         
         var job = new EmailAnonymizationJob(identityDb, db, logger);
 
-        job.Execute(Mock.Of<IJobExecutionContext>()).Wait();
+        await job.Execute(Mock.Of<IJobExecutionContext>());
 
         var jobStatus = db.OneTimeJobs.Where(x => x.JobName == EmailAnonymizationJob.JobName).Select(x => x.Completed).FirstOrDefault();
         
@@ -54,7 +54,7 @@ public class EmailAnonymizationUnitTests
     }
     
     [Fact]
-    public void DbAnonymizationTestDoesNotRunWhenAlreadyCompleted()
+    public async Task DbAnonymizationTestDoesNotRunWhenAlreadyCompleted()
     {
         using var db = CinemadleMocks.GetDatabaseContext();
         using var identityDb = CinemadleMocks.GetIdentityContext();
@@ -75,7 +75,7 @@ public class EmailAnonymizationUnitTests
         
         var job = new EmailAnonymizationJob(identityDb, db, logger);
         
-        job.Execute(Mock.Of<IJobExecutionContext>()).Wait();
+        await job.Execute(Mock.Of<IJobExecutionContext>());
         
         Assert.Equal(testEmail, identityDb.Users.Single().Email);
         Assert.Equal(testEmail, identityDb.Users.Single().NormalizedEmail);

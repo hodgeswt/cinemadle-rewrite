@@ -8,7 +8,7 @@ public class CustomGameRemovalJob(IServiceProvider serviceProvider) : IJob
 {
     private readonly string _key = "CustomGameRemovalJob";
 
-    public Task Execute(IJobExecutionContext context)
+    public async ValueTask Execute(IJobExecutionContext context)
     {
         ILogger<CustomGameRemovalJob>? logger = null;
         try
@@ -28,24 +28,28 @@ public class CustomGameRemovalJob(IServiceProvider serviceProvider) : IJob
             {
                 existingStat.Count += oldGames.Count();
                 existingStat.LastUpdated = DateTime.UtcNow;
-                return dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
+                return;
             }
-            else
+
+
+            dbContext.Statistics.Add(new Statistic
             {
-                dbContext.Statistics.Add(new Statistic
-                {
-                    Key = _key,
-                    Count = oldGames.Count(),
-                    LastUpdated = DateTime.UtcNow
-                });
-            }
-            
-            return dbContext.SaveChangesAsync();
+                Key = _key,
+                Count = oldGames.Count(),
+                LastUpdated = DateTime.UtcNow
+            });
+
+            await dbContext.SaveChangesAsync();
         }
         catch (Exception ex)
         {
             logger?.LogError("Error in CustomGameRemovalJob: {message}", ex.Message);
-            return Task.CompletedTask;
         }
     }
+
+  ValueTask IJob.Execute(IJobExecutionContext context, CancellationToken cancellationToken)
+  {
+    throw new NotImplementedException();
+  }
 }

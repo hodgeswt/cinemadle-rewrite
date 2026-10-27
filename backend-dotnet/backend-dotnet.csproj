@@ -10,29 +10,28 @@
     <ItemGroup>
         <!-- <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.0" /> -->
         <!-- <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" /> -->
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.10">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
-        <PackageReference Include="Microsoft.OpenApi" Version="2.3.9" />
-        <PackageReference Include="NLog" Version="6.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
+        <PackageReference Include="NLog" Version="6.2.2" />
         <PackageReference Include="NLog.Config" Version="4.7.15" />
-        <PackageReference Include="NLog.Extensions.Logging" Version="6.0.3" />
-        <PackageReference Include="Quartz" Version="3.15.0" />
-        <PackageReference Include="Quartz.AspNetCore" Version="3.15.0" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-        <PackageReference Include="Stripe.net" Version="48.4.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
-        <PackageReference Include="System.Runtime.Caching" Version="10.0.0" />
+        <PackageReference Include="NLog.Extensions.Logging" Version="6.2.2" />
+        <PackageReference Include="Quartz" Version="4.6.2" />
+        <PackageReference Include="Quartz.AspNetCore" Version="4.6.2" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="4.1.3" />
+        <PackageReference Include="Stripe.net" Version="53.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+        <PackageReference Include="System.Runtime.Caching" Version="10.0.14" />
         <PackageReference Include="TMDbLib" Version="3.0.0" />
     </ItemGroup>
 

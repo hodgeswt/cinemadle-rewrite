@@ -15,22 +15,22 @@ public class EmailAnonymizationJob(IdentityContext identityContext, DatabaseCont
         {
             return string.Empty;
         }
-        
+
         var bytes = Encoding.UTF8.GetBytes(email);
         var hash = SHA256.HashData(bytes);
         var hashedEmail = Convert.ToHexStringLower(hash);
 
         return hashedEmail;
     }
-    
-    public Task Execute(IJobExecutionContext context)
+
+    public ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("EmailAnonymizationJob Started");
 
         if (dbContext.OneTimeJobs.Any(x => x.Completed && x.JobName == JobName))
         {
             logger.LogInformation("EmailAnonymizationJob is already completed");
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         try
@@ -56,17 +56,16 @@ public class EmailAnonymizationJob(IdentityContext identityContext, DatabaseCont
                 JobName = JobName,
                 Completed = true
             });
-            
+
             dbContext.SaveChanges();
 
             logger.LogInformation("EmailAnonymizationJob Ended");
-
-            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occured");
-            return Task.CompletedTask;
         }
+
+        return ValueTask.CompletedTask;
     }
 }
