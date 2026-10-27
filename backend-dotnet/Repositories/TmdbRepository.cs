@@ -342,7 +342,12 @@ public class TmdbRepository : ITmdbRepository
         await Initialize();
         var imagesWithId = await _tmdbClient.GetMovieImagesAsync(id);
 
-        var imageData = imagesWithId?.Backdrops?.FirstOrDefault(x => x.FilePath?.EndsWith(".png") ?? false);
+        var imageData = imagesWithId?.Backdrops?
+            .Where(x => !string.IsNullOrWhiteSpace(x.FilePath) && x.FilePath.EndsWith(".jpg"))
+            .OrderByDescending(x => x.VoteAverage)
+            .ThenByDescending(x => x.VoteCount)
+            .FirstOrDefault();
+
 
         if (imageData is null)
         {
