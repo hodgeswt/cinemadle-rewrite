@@ -108,7 +108,7 @@ public class CinemadleControllerUnitTest
 
         var result = await controller.GetTargetMovie(date);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]

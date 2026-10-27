@@ -2,7 +2,6 @@ using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 

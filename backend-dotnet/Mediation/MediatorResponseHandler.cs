@@ -9,6 +9,14 @@ public class MediatorResponseHandler<TResponse>(IMediatorResponse<TResponse> res
   private Func<RequestValidationError, ActionResult> _onValidationError = (error) => { return new StatusCodeResult(error.StatusCode); };
   private Func<ProcessingError, ActionResult> _onProcessingError = (error) => { return new StatusCodeResult(error.StatusCode); };
   private Func<TResponse, ActionResult> _onSuccess = (data) => { return new OkObjectResult(data); };
+  private Func<TResponse, ActionResult> _onSuccessNull404 = (data) => {
+    if (data is null)
+    {
+      return new StatusCodeResult(404);
+    }
+
+    return new OkObjectResult(data);
+  };
 
   public MediatorResponseHandler<TResponse> OnValidationError(Func<RequestValidationError, ActionResult> handler)
   {
@@ -28,6 +36,12 @@ public class MediatorResponseHandler<TResponse>(IMediatorResponse<TResponse> res
   public MediatorResponseHandler<TResponse> OnSuccess(Func<TResponse, ActionResult> handler)
   {
     _onSuccess = handler;
+    return this;
+  }
+
+  public MediatorResponseHandler<TResponse> NullSuccessIs404()
+  {
+    _onSuccess = _onSuccessNull404;
     return this;
   }
 

@@ -6,28 +6,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 
-public record GetTargetMovie(
-  bool IsAnon,
+public record GetTargetMovieRequest(
   string UserId,
   string GameId,
   bool IsCustomGame
-) : RequestWithUser(IsAnon, UserId);
+);
 public class GetTargetMovieHandler(
   DatabaseContext db,
   ITmdbRepository tmdbRepository
-) : IRequestHandler<GetTargetMovie, MovieDto?>
+) : IRequestHandler<GetTargetMovieRequest, MovieDto?>
 {
 
-  public async Task<RequestValidationError?> Validate(GetTargetMovie request)
+  public async Task<RequestValidationError?> Validate(GetTargetMovieRequest request)
   {
-    if (request.IsCustomGame && request.ValidateUser(db) is RequestValidationError userValidationErr)
+    if (request.IsCustomGame && string.IsNullOrWhiteSpace(request.UserId))
     {
-      return userValidationErr;
+      return new RequestValidationError("Unauthorized", 401);
     }
 
     return null;
   }
-  public async Task<MovieDto?> Handle(GetTargetMovie request)
+  public async Task<MovieDto?> Handle(GetTargetMovieRequest request)
   {
     Func<string, Task<MovieDto?>> handler = request.IsCustomGame switch
     {

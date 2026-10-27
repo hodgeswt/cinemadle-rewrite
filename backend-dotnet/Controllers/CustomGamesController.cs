@@ -117,21 +117,11 @@ public class CustomGamesController(
     [HttpGet("{customGameId}/target")]
     public async Task<ActionResult> GetCustomGameTarget(string customGameId)
     {
-        var o = await mediator.Dispatch<GetTargetMovie, MovieDto?>(
-            new GetTargetMovie(false, GetUserId(), customGameId, true)
+        var o = await mediator.Dispatch<GetTargetMovieRequest, MovieDto?>(
+            new GetTargetMovieRequest(GetUserId(), customGameId, true)
         );
 
-        var handler = new MediatorResponseHandler<MovieDto?>(o).OnSuccess(x =>
-        {
-            if (x is null)
-            {
-                return new NotFoundResult();
-            }
-
-            return new OkObjectResult(x);
-        });
-
-        return handler.Handle();
+        return new MediatorResponseHandler<MovieDto?>(o).NullSuccessIs404().Handle();
     }
 
     [Authorize]

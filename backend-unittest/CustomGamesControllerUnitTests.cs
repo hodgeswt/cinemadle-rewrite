@@ -284,7 +284,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.GetCustomGameTarget(customGameId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
