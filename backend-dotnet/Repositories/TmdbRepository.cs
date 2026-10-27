@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.Net;
 
 namespace Cinemadle.Repositories;
 
@@ -108,18 +109,30 @@ public class TmdbRepository : ITmdbRepository
         
         while (movies.Count < 2000 && !c.Token.IsCancellationRequested)
         {
-            await Parallel.ForEachAsync(Enumerable.Range(page, page + 20), c.Token, async (page, _) =>
+            await Parallel.ForEachAsync(Enumerable.Range(page, 20), c.Token, async (page, token) =>
             {
-                var results = await discover.Query(page, c.Token);
+                SearchContainer<SearchMovie>? results = null;
+                
+                try
+                {
+                    results = await discover.Query(page, token);
+                }
+                catch { } 
+
                 foreach (var movie in results?.Results ?? [])
                 {
+                    if (movies.Count >= 2000)
+                    {
+                        continue;
+                    }
+
                     if (!movies.ContainsKey(movie.Title!))
                     {
                         movies[movie.Title!] = movie.Id;
                     }
                 }
             });
-            page += 100;
+            page += 20;
         }
 
         c.Dispose();
