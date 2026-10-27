@@ -87,7 +87,7 @@ public class GuessRepositoryUnitTest
                     {
                         Color = "green",
                         Direction = 0,
-                        Values = target.Genres,
+                        Values = target.Genres!,
                         Modifiers = [],
                     }
                 },
@@ -160,7 +160,7 @@ public class GuessRepositoryUnitTest
                     {
                         Color = "green",
                         Direction = 0,
-                        Values = target.Genres,
+                        Values = target.Genres!,
                         Modifiers = [],
                     }
                 },
@@ -236,7 +236,7 @@ public class GuessRepositoryUnitTest
                     {
                         Color = "green",
                         Direction = 0,
-                        Values = target.Genres,
+                        Values = target.Genres!,
                         Modifiers = [],
                     }
                 },

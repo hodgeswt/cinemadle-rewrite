@@ -1,19 +1,39 @@
-﻿namespace Cinemadle.Utilities;
+﻿using SkiaSharp;
 
-/// <summary>
-/// Receives an image and returns it with the desired gaussian blur applied
-/// </summary>
+namespace Cinemadle.Utilities;
+
 public static class ImageUtilities
 {
     public static string Blur(byte[] imageBytes, float blurFactor)
     {
-        using var image = Image.Load(imageBytes);
+        return $"data:image/png;base64,{Convert.ToBase64String(blurFactor > 0
+            ? GaussianBlurPng(imageBytes, blurFactor)
+            : imageBytes)}";
+    }
 
-        if (blurFactor > 0)
+    public static byte[] GaussianBlurPng(byte[] png, float sigma = 5f)
+    {
+        using var src = SKBitmap.Decode(png)
+            ?? throw new ArgumentException("Invalid PNG data.", nameof(png));
+
+        using var srcImage = SKImage.FromBitmap(src);
+
+        using var surface = SKSurface.Create(
+            new SKImageInfo(src.Width, src.Height, SKColorType.Rgba8888, SKAlphaType.Premul))
+            ?? throw new InvalidOperationException("Could not create SKSurface.");
+
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        using var paint = new SKPaint
         {
-            image.Mutate(x => x.GaussianBlur(blurFactor));
-        }
+            ImageFilter = SKImageFilter.CreateBlur(sigma, sigma, SKShaderTileMode.Clamp)
+        };
 
-        return image.ToBase64String(PngFormat.Instance);
+        canvas.DrawImage(srcImage, 0, 0, new SKSamplingOptions(), paint);
+
+        using var image = surface.Snapshot();
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
     }
 }

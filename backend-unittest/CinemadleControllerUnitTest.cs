@@ -195,7 +195,7 @@ public class CinemadleControllerUnitTest
                 {
                     Color = "yellow",
                     Direction = 0,
-                    Values = guessMovie.Genres,
+                    Values = guessMovie.Genres!,
                     Modifiers = []
                 },
                 ["cast"] = new FieldDto

@@ -41,13 +41,13 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     }
     
     [Fact]
-    public void ControllerShouldReturnAllFlags()
+    public async Task ControllerShouldReturnAllFlags()
     {
-        var response = _client.GetAsync("/api/flags/all").Result;
+        var response = await _client.GetAsync("/api/flags/all");
         
         response.EnsureSuccessStatusCode();
         
-        var content = response.Content.ReadFromJsonAsync<FeatureFlagsDto>().Result;
+        var content = await response.Content.ReadFromJsonAsync<FeatureFlagsDto>();
         
         Assert.NotNull(content);
         Assert.True(content.FeatureFlags["TestTrue"]);
@@ -57,13 +57,13 @@ public class FeatureFlagsUnitTest(FeatureFlagWebApplicationFactory factory) : IC
     [Theory]
     [InlineData("TestTrue", true)]
     [InlineData("TestFalse", false)]
-    public void ControllerShouldReturnProperFlagValue(string flagName, bool expectedValue)
+    public async Task ControllerShouldReturnProperFlagValue(string flagName, bool expectedValue)
     {
-        var response = _client.GetAsync($"/api/flags/{flagName}").Result;
+        var response = await _client.GetAsync($"/api/flags/{flagName}");
         
         response.EnsureSuccessStatusCode();
         
-        var content = response.Content.ReadFromJsonAsync<FeatureFlagDto>().Result;
+        var content = await response.Content.ReadFromJsonAsync<FeatureFlagDto>();
         
         Assert.NotNull(content);
         Assert.Equal(flagName, content.Name);
