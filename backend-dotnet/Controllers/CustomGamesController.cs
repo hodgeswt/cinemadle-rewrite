@@ -31,49 +31,10 @@ public class CustomGamesController(
     [HttpPost("create")]
     public async Task<ActionResult> CreateCustomGame([FromBody] CustomGameCreateDto customGame)
     {
-        logger.LogDebug("+CreateCustomGame({customGame})", customGame);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            MovieDto? movie = await tmdbRepo.GetMovieById(customGame.Id);
-            if (movie is null)
-            {
-                logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-                return new NotFoundResult();
-            }
-
-            CustomGame newCustomGame = new()
-            {
-                Id = Guid.NewGuid().ToString(),
-                TargetMovieId = customGame.Id,
-                CreatorUserId = userId,
-                Inserted = DateTime.UtcNow
-            };
-
-            db.CustomGames.Add(newCustomGame);
-
-            await db.SaveChangesAsync();
-
-            logger.LogDebug("-CreateCustomGame()");
-            return new OkObjectResult(new CustomGameDto
-            {
-                Id = newCustomGame.Id,
-                TargetMovieId = newCustomGame.TargetMovieId
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("CreateCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-CreateCustomGame({customGame})", customGame);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<CreateCustomGameRequest, CustomGameDto>(
+            new CreateCustomGameRequest(false, GetUserId(), customGame.Id)
+        );
+        return new MediatorResponseHandler<CustomGameDto>(o).Handle();
     }
 
     [Authorize]

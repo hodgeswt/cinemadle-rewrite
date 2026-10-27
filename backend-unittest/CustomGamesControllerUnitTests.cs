@@ -47,7 +47,9 @@ public class CustomGamesControllerUnitTests
             CinemadleMocks.GetMockedGuessRepository().Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db))
+            
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -92,7 +94,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.CreateCustomGame(customGameCreate);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Equal(401, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -125,7 +127,8 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.CreateCustomGame(customGameCreate);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
+
     }
 
     [Fact]

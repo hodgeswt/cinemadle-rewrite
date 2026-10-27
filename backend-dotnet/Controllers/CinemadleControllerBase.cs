@@ -28,14 +28,6 @@ public class CinemadleControllerBase : ControllerBase
             _ => "⬛",
         };
     }
-    
-    protected async Task<ImageDto?> GetBlurredImage(string date, float blurFactor, ITmdbRepository tmdbRepository)
-    {
-        var targetMovie = await tmdbRepository.GetTargetMovie(date);
-        if (targetMovie is null) return null;
-        
-        return await GetBlurredImageForMovie(targetMovie.Id, blurFactor, tmdbRepository);
-    }
 
     protected async Task<ImageDto?> GetBlurredImageForMovie(int movieId, float blurFactor, ITmdbRepository tmdbRepository)
     {
