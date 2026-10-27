@@ -11,6 +11,7 @@ using TMDbLib.Objects.General;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 
 namespace Cinemadle.Repositories;
 
@@ -80,7 +81,7 @@ public class TmdbRepository : ITmdbRepository
 
     public async Task<Dictionary<string, int>> GetMovieList()
     {
-        if (_cache.TryGet<Dictionary<string, int>>(_getMovieListCacheKey, out Dictionary<string, int>? movieList) && movieList is not null)
+        if (_cache.TryGet(_getMovieListCacheKey, out Dictionary<string, int>? movieList) && movieList is not null)
         {
             _logger.LogDebug("GetMovieList: using cached movie list");
             return movieList;
@@ -88,41 +89,45 @@ public class TmdbRepository : ITmdbRepository
         
         await Initialize();
 
-        var discover = _tmdbClient.DiscoverMoviesAsync()
-                .OrderBy(DiscoverMovieSortBy.ReleaseDateDesc)
-                .WhereCertificationIsAtMost("US", nameof(Rating.R))
-                .WhereCertificationIsAtLeast("US", nameof(Rating.G))
-                .WhereRuntimeIsAtLeast(_config.MinimumRuntimePossible)
-                .WhereVoteAverageIsAtLeast(_config.MinimumScorePossible)
-                .WhereVoteCountIsAtLeast((int)_config.MinimumVotesPossible)
-                .WithAllOfReleaseTypes(ReleaseDateType.Theatrical)
-                .IncludeAdultMovies(false)
-                .WhereReleaseDateIsAfter(DateTime.ParseExact(_config.OldestMoviePossible, "yyyy-MM-dd", CultureInfo.InvariantCulture));
+        var discover = _tmdbClient
+            .DiscoverMoviesAsync()
+            .OrderBy(DiscoverMovieSortBy.ReleaseDateDesc)
+            .WhereCertificationIsAtMost("US", nameof(Rating.R))
+            .WhereCertificationIsAtLeast("US", nameof(Rating.G))
+            .WhereRuntimeIsAtLeast(_config.MinimumRuntimePossible)
+            .WhereVoteAverageIsAtLeast(_config.MinimumScorePossible)
+            .WhereVoteCountIsAtLeast(_config.MinimumVotesPossible)
+            .WithAllOfReleaseTypes(ReleaseDateType.Theatrical)
+            .IncludeAdultMovies(false)
+            .WhereReleaseDateIsAfter(DateTime.ParseExact(_config.OldestMoviePossible, "yyyy-MM-dd", CultureInfo.InvariantCulture));
 
-        Dictionary<string, int> movies = [];
+        ConcurrentDictionary<string, int> movies = [];
 
         var page = 0;
         CancellationTokenSource c = new(TimeSpan.FromSeconds(90));
+        
         while (movies.Count < 2000 && !c.Token.IsCancellationRequested)
         {
-            var results = await discover.Query(page, c.Token);
-            foreach (var movie in results?.Results ?? [])
+            await Parallel.ForEachAsync(Enumerable.Range(page, page + 20), c.Token, async (page, _) =>
             {
-                try
+                var results = await discover.Query(page, c.Token);
+                foreach (var movie in results?.Results ?? [])
                 {
-                    movies.Add(movie.Title!, movie.Id);
+                    if (!movies.ContainsKey(movie.Title!))
+                    {
+                        movies[movie.Title!] = movie.Id;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error getting movie list");
-                }
-            }
-            page++;
+            });
+            page += 100;
         }
 
         c.Dispose();
-        _cache.Set(_getMovieListCacheKey, movies);
-        return movies;
+
+        var o = movies.ToDictionary();
+
+        _cache.Set(_getMovieListCacheKey, o);
+        return o;
     }
 
     public async Task<MovieDto?> GetTargetMovie(string date)
