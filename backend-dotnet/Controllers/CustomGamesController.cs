@@ -41,37 +41,10 @@ public class CustomGamesController(
     [HttpGet("{id}")]
     public async Task<ActionResult> GetCustomGame(string id)
     {
-        logger.LogDebug("+GetCustomGame({id})", id);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetCustomGame({id})", id);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == id);
-            if (customGame is null)
-            {
-                logger.LogDebug("-GetCustomGame({id})", id);
-                return new NotFoundResult();
-            }
-
-            logger.LogDebug("-GetCustomGame({id})", id);
-            return new OkObjectResult(new CustomGameDto
-            {
-                Id = customGame.Id,
-                TargetMovieId = customGame.TargetMovieId
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetCustomGame({id})", id);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<GetCustomGameRequest, CustomGameDto?>(
+            new GetCustomGameRequest(false, GetUserId(), id)
+        );
+        return new MediatorResponseHandler<CustomGameDto?>(o).NullSuccessIs404().Handle();
     }
 
     [Authorize]
