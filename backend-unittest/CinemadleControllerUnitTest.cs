@@ -69,13 +69,16 @@ public class CinemadleControllerUnitTest
             Year = "2017"
         };
 
+        var db = CinemadleMocks.GetDatabaseContext();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync(expectedMovie);
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
-            tmdbRepoMock.Object
+            tmdbRepoMock.Object,
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db))
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -91,13 +94,16 @@ public class CinemadleControllerUnitTest
     {
         var date = "2024-01-01";
 
+        var db = CinemadleMocks.GetDatabaseContext();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync((MovieDto?)null);
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
-            tmdbRepoMock.Object
+            tmdbRepoMock.Object,
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db))
         );
 
         var result = await controller.GetTargetMovie(date);
@@ -110,13 +116,16 @@ public class CinemadleControllerUnitTest
     {
         var date = "2024-01-01";
 
+        var db = CinemadleMocks.GetDatabaseContext();
         var tmdbRepoMock = new Mock<ITmdbRepository>();
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ThrowsAsync(new Exception("Test exception"));
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
-            tmdbRepoMock.Object
+            tmdbRepoMock.Object,
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db))
         );
 
         var result = await controller.GetTargetMovie(date);

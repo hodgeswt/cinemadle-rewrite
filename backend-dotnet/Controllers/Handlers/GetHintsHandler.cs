@@ -17,7 +17,7 @@ public class GetHintsHandler(
   DatabaseContext db
 ) : IRequestHandler<GetHintsRequest, Dictionary<string, HintsDto>>
 {
-  public async Task<RequestValidationError?> Validate(GuessMovieRequest request)
+  public async Task<RequestValidationError?> Validate(GetHintsRequest request)
   {
     if (request.ValidateUser(db) is RequestValidationError userValidationErr)
     {

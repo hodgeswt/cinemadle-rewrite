@@ -1,7 +1,9 @@
-﻿using Cinemadle.Database;
+﻿using Cinemadle.Controllers.Handlers;
+using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
+using Cinemadle.Mediation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +19,14 @@ public class CustomGamesController(
     IGuessRepository guessRepo,
     IHintRepository hintRepo,
     IFeatureFlagRepository flagRepo,
-    DatabaseContext db
+    DatabaseContext db,
+    Mediator mediator
 )
     : CinemadleControllerBase
 {
 
     private readonly CinemadleConfig _config = options.Value;
-    
+
     [Authorize]
     [HttpPost("create")]
     public async Task<ActionResult> CreateCustomGame([FromBody] CustomGameCreateDto customGame)
@@ -114,40 +117,21 @@ public class CustomGamesController(
     [HttpGet("{customGameId}/target")]
     public async Task<ActionResult> GetCustomGameTarget(string customGameId)
     {
-        logger.LogDebug("+GetCustomGameTarget({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GetTargetMovie, MovieDto?>(
+            new GetTargetMovie(false, GetUserId(), customGameId, true)
+        );
 
-        try
+        var handler = new MediatorResponseHandler<MovieDto?>(o).OnSuccess(x =>
         {
-            CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
+            if (x is null)
             {
-                logger.LogDebug("-GetCustomGameTarget({customGameId}): Custom game not found", customGameId);
                 return new NotFoundResult();
             }
 
-            MovieDto? targetMovie = await tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                logger.LogDebug("-GetCustomGameTarget({customGameId}): Target movie not found", customGameId);
-                return new NotFoundResult();
-            }
+            return new OkObjectResult(x);
+        });
 
-            logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-            return new OkObjectResult(targetMovie);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetCustomGameTarget Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetCustomGameTarget({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
+        return handler.Handle();
     }
 
     [Authorize]
@@ -406,7 +390,7 @@ public class CustomGamesController(
             }
 
             // Generate summary using the existing logic
-            var guessDtos = await Task.WhenAll(userGuesses.Select(async x => 
+            var guessDtos = await Task.WhenAll(userGuesses.Select(async x =>
             {
                 MovieDto? guessMovie = await tmdbRepo.GetMovieById(x.GuessMediaId);
                 if (guessMovie is null) return null;

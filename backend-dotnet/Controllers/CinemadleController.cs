@@ -56,7 +56,7 @@ public class CinemadleController(
   [Authorize]
   [HttpGet("gameSummary")]
   public async Task<ActionResult> GetGameSummary(
-      [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
+    [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
   )
   {
     var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
@@ -153,27 +153,21 @@ public class CinemadleController(
     [FromQuery, Required, StringLength(10), RegularExpression(@"^\d{4}-\d{2}-\d{2}$")] string date
   )
   {
-    logger.LogDebug("+GetTargetMovie({date})", date);
-    try
-    {
-      MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
+    var o = await mediator.Dispatch<GetTargetMovie, MovieDto?>(
+      new GetTargetMovie(false, string.Empty, date, false)
+    );
 
-      if (targetMovie is null)
+    var handler = new MediatorResponseHandler<MovieDto?>(o).OnSuccess(x =>
+    {
+      if (x is null)
       {
         return new NotFoundResult();
       }
 
-      logger.LogDebug("-GetTargetMovie({date})", date);
-      return new OkObjectResult(targetMovie);
-    }
-    catch (Exception ex)
-    {
-      logger.LogError("GetTargetMovie Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-      logger.LogDebug("-GetTargetMovie({date}", date);
+      return new OkObjectResult(x);
+    });
 
-      return new StatusCodeResult(500);
-
-    }
+    return handler.Handle();
   }
 
   [HttpGet("movielist")]
