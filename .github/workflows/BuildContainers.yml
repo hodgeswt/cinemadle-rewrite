@@ -105,7 +105,7 @@ jobs:
         if: ${{ matrix.component == 'backend' }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.117
+          dotnet-version: '11.0.x'
 
       - name: Run Unit Tests
         if: ${{ matrix.component == 'backend' }}
