@@ -70,43 +70,17 @@ public class CustomGamesController(
 
     [Authorize]
     [HttpGet("{customGameId}/guesses")]
-    public ActionResult GetPastGuessesCustomGame(string customGameId)
+    public async Task<ActionResult> GetPastGuessesCustomGame(string customGameId)
     {
-        logger.LogDebug("+GetPastGuessesCustomGame({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
+            new GetPastGuessesRequest(false, GetUserId(), customGameId, true)
+        );
 
-        try
-        {
-            // Verify custom game exists
-            CustomGame? customGame = db.CustomGames.FirstOrDefault(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                logger.LogDebug("-GetPastGuessesCustomGame({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
+        var handler =
+            new MediatorResponseHandler<GetPastGuessesResponse>(o)
+            .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
 
-            IEnumerable<UserGuess> guesses = db.Guesses.Where(
-                x => x.GameId == customGameId && x.UserId == userId
-            )
-            .OrderBy(x => x.SequenceId);
-
-            logger.LogDebug("GetPastGuessesCustomGame({customGameId}): {data}", customGameId, guesses.Count());
-
-            logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-            return new OkObjectResult(guesses.Select(x => x.GuessMediaId));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetPastGuessesCustomGame Exception. Message: {message}, StackTrace: {stackTrace}", ex.Message, ex.StackTrace);
-            logger.LogDebug("-GetPastGuessesCustomGame({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
+        return handler.Handle();
     }
 
     [Authorize]
@@ -127,7 +101,7 @@ public class CustomGamesController(
         var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
             new GetGameSummaryRequest(false, GetUserId(), customGameId, _config.GameLength, true)
         );
-        
+
         return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
     }
 }

@@ -116,7 +116,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-      new GetPastGuessesRequest(true, userId.ToString(), date)
+      new GetPastGuessesRequest(true, userId.ToString(), date, false)
     );
 
     var handler =
@@ -133,7 +133,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-      new GetPastGuessesRequest(false, GetUserId(), date)
+      new GetPastGuessesRequest(false, GetUserId(), date, false)
     );
 
     var handler =
