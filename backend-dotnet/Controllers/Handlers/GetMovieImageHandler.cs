@@ -4,6 +4,7 @@ using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
 using Cinemadle.Utilities;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 
@@ -22,7 +23,7 @@ public class GetMovieImageHandler(
 {
   private int? _userGuesses = null;
   private CinemadleConfig? _config = null;
-  private MovieDto? _targetMovie = null;
+  private int? _targetMovieId = null;
   private bool _win = false;
 
   public async Task<ProcessingError?> PreProcess(GetMovieImageRequest request)
@@ -32,19 +33,26 @@ public class GetMovieImageHandler(
 
     _config = configRepository.Value;
 
-    _targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
+    _targetMovieId = request.IsCustomGame
+      ? (await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId))?.TargetMovieId
+      : (await tmdbRepository.GetTargetMovie(request.GameId))?.Id;
 
-    if (_targetMovie is null)
+    if (_targetMovieId is null)
     {
       return new ProcessingError("Unable to find target movie", 500);
     }
 
-    _win = guessTable.Where(x => x.GameId == request.GameId && x.GuessMediaId == _targetMovie!.Id).Any();
+    _win = guessTable.Where(x => x.GameId == request.GameId && x.UserId == request.UserId && x.GuessMediaId == _targetMovieId).Any();
 
     // If we've not won, and this is not an approved blurred-image guess, we're not authorized
     if (!_win && !_config!.MovieImageBlurFactors.ContainsKey(_userGuesses.ToString()!))
     {
       return new ProcessingError("Not allowed to see blurred image", 401);
+    }
+
+    if (request.IsCustomGame && await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId) is null)
+    {
+      return new ProcessingError("Unable to find custom game", 404);
     }
 
     return null;
@@ -62,7 +70,7 @@ public class GetMovieImageHandler(
 
   protected async Task<ImageDto?> GetBlurredImage(float blurFactor)
   {
-    var imageBytes = await tmdbRepository.GetMovieImageById(_targetMovie!.Id);
+    var imageBytes = await tmdbRepository.GetMovieImageById((int)_targetMovieId!);
 
     if (imageBytes is null)
     {

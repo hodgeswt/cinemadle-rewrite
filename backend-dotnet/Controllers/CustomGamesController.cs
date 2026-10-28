@@ -62,81 +62,10 @@ public class CustomGamesController(
     [HttpGet("{customGameId}/target/image")]
     public async Task<ActionResult> GetCustomGameImage(string customGameId)
     {
-        logger.LogDebug("+GetCustomGameImage({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                logger.LogDebug("-GetCustomGameImage({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            int userGuesses = db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId).Count();
-
-            if (!_config.MovieImageBlurFactors.ContainsKey(userGuesses.ToString()))
-            {
-                logger.LogDebug("GetCustomGameImage({customGameId}): User attempted to access image on guess {number}", customGameId, userGuesses);
-                logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new UnauthorizedResult();
-            }
-
-            bool win = db.Guesses.Where(x => x.GameId == customGameId && x.UserId == userId && x.GuessMediaId == customGame.TargetMovieId).Any();
-
-            float blurFactor = (userGuesses >= _config.GameLength || win)
-                ? 0.0F
-                : _config.MovieImageBlurFactors[userGuesses.ToString()];
-
-            ImageDto? image = await GetBlurredImageForMovie(customGame.TargetMovieId, blurFactor, tmdbRepo);
-
-            if (image is null)
-            {
-                logger.LogDebug("GetCustomGameImage({customGameId}): No image found", customGameId);
-                logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            Clue? clue = db.UserClues.FirstOrDefault(x => x.GameId == customGameId && x.UserId == userId && x.ClueType == ClueType.Visual);
-            if (clue is null)
-            {
-                try
-                {
-                    db.UserClues.Add(new Clue
-                    {
-                        UserId = userId,
-                        GameId = customGameId,
-                        ClueType = ClueType.Visual,
-                        Inserted = DateTime.Now
-                    });
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError("GetCustomGameImage Unable to save to DB. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-                    logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-
-                    return new StatusCodeResult(500);
-                }
-            }
-
-            await db.SaveChangesAsync();
-
-            logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-            return new OkObjectResult(image);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetCustomGameImage Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetCustomGameImage({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<GetMovieImageRequest, ImageDto?>(
+            new GetMovieImageRequest(false, GetUserId(), customGameId, true)
+        );
+        return new MediatorResponseHandler<ImageDto?>(o).NullSuccessIs404().Handle();
     }
 
     [Authorize]
