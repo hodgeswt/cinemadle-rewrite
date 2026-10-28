@@ -86,7 +86,8 @@ public class GetGameSummaryHandler(
     ) ?? [];
 
     string url = request.IsCustomGame ? $"https://cinemadle.com/customGame/{request.GameId}" : "https://cinemadle.com";
-    gameSummary = gameSummary.Append($"cinemadle {request.GameId}").Append($"play at {url}");
+    string title = request.IsCustomGame ? "cinemadle" : $"cinemadle {request.GameId}";
+    gameSummary = gameSummary.Append(title).Append($"play at {url}");
 
     return new GameSummaryDto
     {
