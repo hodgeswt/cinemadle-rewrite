@@ -48,7 +48,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-      new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
+      new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength, false)
     );
     return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
   }
@@ -61,7 +61,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-      new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
+      new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength, false)
     );
     return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
   }
@@ -116,7 +116,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-      new GetPastGuessesRequest(true, userId.ToString(), date)
+      new GetPastGuessesRequest(true, userId.ToString(), date, false)
     );
 
     var handler =
@@ -133,7 +133,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetPastGuessesRequest, GetPastGuessesResponse>(
-      new GetPastGuessesRequest(false, GetUserId(), date)
+      new GetPastGuessesRequest(false, GetUserId(), date, false)
     );
 
     var handler =
@@ -151,7 +151,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-      new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
+      new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength, false)
     );
 
     return new MediatorResponseHandler<GuessDto?>(o).Handle();
@@ -165,7 +165,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-      new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
+      new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength, false)
     );
 
     return new MediatorResponseHandler<GuessDto?>(o).Handle();

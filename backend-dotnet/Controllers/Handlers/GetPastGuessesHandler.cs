@@ -1,12 +1,14 @@
 using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 
 public record GetPastGuessesRequest(
   bool IsAnon,
   string UserId,
-  string GameId
+  string GameId,
+  bool IsCustomGame
 ) : RequestWithUser(IsAnon, UserId);
 
 public readonly record struct GetPastGuessesResponse(IEnumerable<int> PastGuessMediaIds);
@@ -15,6 +17,11 @@ public class GetPastGuessesHandler(DatabaseContext db) : IRequestHandler<GetPast
 {
   public async Task<RequestValidationError?> Validate(GetPastGuessesRequest request)
   {
+    if (request.IsCustomGame && await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId) is null)
+    {
+      return new RequestValidationError("Custom game not found", 404);
+    }
+
     return request.ValidateUser(db);
   }
 

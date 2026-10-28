@@ -47,7 +47,9 @@ public class CustomGamesControllerUnitTests
             CinemadleMocks.GetMockedGuessRepository().Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db))
+            
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -92,7 +94,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.CreateCustomGame(customGameCreate);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Equal(401, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -125,7 +127,8 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.CreateCustomGame(customGameCreate);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
+
     }
 
     [Fact]
@@ -152,7 +155,8 @@ public class CustomGamesControllerUnitTests
             CinemadleMocks.GetMockedGuessRepository().Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(db))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -197,7 +201,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.GetCustomGame(customGameId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -330,7 +334,8 @@ public class CustomGamesControllerUnitTests
             CinemadleMocks.GetMockedGuessRepository().Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(db))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -341,7 +346,7 @@ public class CustomGamesControllerUnitTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
 
-        var result = controller.GetPastGuessesCustomGame(customGameId);
+        var result = await controller.GetPastGuessesCustomGame(customGameId);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var guesses = Assert.IsAssignableFrom<IEnumerable<int>>(okResult.Value);
@@ -375,9 +380,9 @@ public class CustomGamesControllerUnitTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
 
-        var result = controller.GetPastGuessesCustomGame(customGameId);
+        var result = await controller.GetPastGuessesCustomGame(customGameId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -445,7 +450,8 @@ public class CustomGamesControllerUnitTests
             guessRepoMock.Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db, guessRepoMock.Object))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -497,7 +503,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.GuessMovieCustomGame(customGameId, guessMovieId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -583,7 +589,8 @@ public class CustomGamesControllerUnitTests
             guessRepoMock.Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db, guessRepoMock.Object))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -669,7 +676,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.GetGameSummaryCustomGame(customGameId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]
@@ -765,7 +772,8 @@ public class CustomGamesControllerUnitTests
             guessRepoMock.Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db, guessRepoMock.Object))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
