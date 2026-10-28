@@ -151,7 +151,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-      new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength)
+      new GuessMovieRequest(true, userId.ToString(), date, id, _config.GameLength, false)
     );
 
     return new MediatorResponseHandler<GuessDto?>(o).Handle();
@@ -165,7 +165,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
-      new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength)
+      new GuessMovieRequest(false, GetUserId(), date, id, _config.GameLength, false)
     );
 
     return new MediatorResponseHandler<GuessDto?>(o).Handle();

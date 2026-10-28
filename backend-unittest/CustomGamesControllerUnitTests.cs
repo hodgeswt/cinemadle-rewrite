@@ -449,7 +449,8 @@ public class CustomGamesControllerUnitTests
             guessRepoMock.Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
-            db
+            db,
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db, guessRepoMock.Object))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -501,7 +502,7 @@ public class CustomGamesControllerUnitTests
 
         var result = await controller.GuessMovieCustomGame(customGameId, guessMovieId);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(404, (result as StatusCodeResult)!.StatusCode);
     }
 
     [Fact]

@@ -11,7 +11,8 @@ public record GuessMovieRequest(
   string UserId,
   string GameId,
   int GuessId,
-  int GameLength
+  int GameLength,
+  bool IsCustomGame
 ) : RequestWithUser(IsAnon, UserId);
 
 public class GuessMovieHandler(
@@ -22,10 +23,24 @@ public class GuessMovieHandler(
 ) : IRequestHandler<GuessMovieRequest, GuessDto?>
 {
   private DbSet<UserGuess>? _guessTable = null;
+  private MovieDto? _targetMovie = null;
 
   public async Task<ProcessingError?> PreValidate(GuessMovieRequest request)
   {
     _guessTable = request.IsAnon ? db.AnonUserGuesses : db.Guesses;
+    if (request.IsCustomGame)
+    {
+      if (await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId) is not CustomGame customGame)
+      {
+        return new ProcessingError("Custom game not found", 404);
+      }
+
+      _targetMovie = await tmdbRepository.GetMovieById(customGame.TargetMovieId);
+    }
+    else
+    {
+      _targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
+    }
     
     return null;
   }
@@ -42,6 +57,11 @@ public class GuessMovieHandler(
       return userCannotGuessErr;
     }
 
+    if (request.IsCustomGame && await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId) is null)
+    {
+      return new RequestValidationError("Custom game not found", 404);
+    }
+
     return null;
   }
 
@@ -52,8 +72,8 @@ public class GuessMovieHandler(
     var userGuesses = _guessTable!
       .Where(x => x.GameId == request.GameId && x.UserId == request.UserId)
       .OrderBy(x => x.SequenceId)!;
-    MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
-    bool hasWon = targetMovie != null && userGuesses.Any(x => x.GuessMediaId == targetMovie.Id);
+
+    bool hasWon = _targetMovie is not null && userGuesses.Any(x => x.GuessMediaId == _targetMovie!.Id);
 
     if (userGuesses.Count() >= request.GameLength || hasWon)
     {
@@ -65,7 +85,7 @@ public class GuessMovieHandler(
 
   public async Task<GuessDto?> Handle(GuessMovieRequest request)
   {
-    GuessDto? guessDto = await GuessMovieInternal(request.GuessId, request.GameId);
+    GuessDto? guessDto = await GuessMovieInternal(request.GuessId);
 
     UserGuess? x = _guessTable!.FirstOrDefault(
         x => x.GuessMediaId == request.GuessId && x.GameId == request.GameId && x.UserId == request.UserId
@@ -99,7 +119,7 @@ public class GuessMovieHandler(
     return guessDto;
   }
 
-  private async Task<GuessDto?> GuessMovieInternal(int id, string date)
+  private async Task<GuessDto?> GuessMovieInternal(int id)
   {
     MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
 
@@ -108,14 +128,7 @@ public class GuessMovieHandler(
       return null;
     }
 
-    MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(date);
-
-    if (targetMovie is null)
-    {
-      return null;
-    }
-
-    GuessDto? guessDto = guessRepository.Guess(guessMovie, targetMovie);
+    GuessDto? guessDto = guessRepository.Guess(guessMovie, _targetMovie!);
 
     if (guessDto is null)
     {

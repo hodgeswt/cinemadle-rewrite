@@ -113,88 +113,11 @@ public class CustomGamesController(
     [HttpGet("{customGameId}/guess/{movieId}")]
     public async Task<ActionResult> GuessMovieCustomGame(string customGameId, int movieId)
     {
-        logger.LogDebug("+GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-            return new UnauthorizedResult();
-        }
+        var o = await mediator.Dispatch<GuessMovieRequest, GuessDto?>(
+            new GuessMovieRequest(false, GetUserId(), customGameId, movieId, _config.GameLength, true)
+        );
 
-        try
-        {
-            // Verify custom game exists and get target movie
-            CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Custom game not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Get the guess movie
-            MovieDto? guessMovie = await tmdbRepo.GetMovieById(movieId);
-            if (guessMovie is null)
-            {
-                logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Guess movie not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Get the target movie
-            MovieDto? targetMovie = await tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId}): Target movie not found", customGameId, movieId);
-                return new NotFoundResult();
-            }
-
-            // Create guess DTO
-            GuessDto? guessDto = guessRepo.Guess(guessMovie, targetMovie);
-            if (guessDto is null)
-            {
-                logger.LogError("GuessMovieCustomGame: unable to create guess DTO");
-                logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-                return new StatusCodeResult(500);
-            }
-
-            // Check if this guess already exists
-            UserGuess? existingGuess = db.Guesses.FirstOrDefault(
-                x => x.GuessMediaId == movieId && x.GameId == customGameId && x.UserId == userId
-            );
-
-            // If not, save the guess
-            if (existingGuess is null)
-            {
-                int seqNo = (db.Guesses.Where(
-                    x => x.GameId == customGameId && x.UserId == userId
-                )
-                .OrderByDescending(x => x.SequenceId)
-                .FirstOrDefault()?.SequenceId ?? 0) + 1;
-
-                db.Guesses.Add(new UserGuess
-                {
-                    GameId = customGameId,
-                    UserId = userId,
-                    GuessMediaId = movieId,
-                    SequenceId = seqNo,
-                    Inserted = DateTime.Now,
-                });
-
-                await db.SaveChangesAsync();
-
-                // Invalidate hints cache after new guess
-                hintRepo.InvalidateHints(userId, customGameId);
-            }
-
-            logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-            return new OkObjectResult(guessDto);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GuessMovieCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GuessMovieCustomGame({customGameId}, {movieId})", customGameId, movieId);
-
-            return new StatusCodeResult(500);
-        }
+        return new MediatorResponseHandler<GuessDto?>(o).Handle();
     }
 
     [Authorize]
