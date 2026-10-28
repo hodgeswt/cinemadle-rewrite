@@ -2,6 +2,7 @@ using Cinemadle.Database;
 using Cinemadle.Datamodel.Domain;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinemadle.Controllers.Handlers;
 
@@ -9,7 +10,8 @@ public record GetGameSummaryRequest(
   bool IsAnon,
   string UserId,
   string GameId,
-  int GameLength
+  int GameLength,
+  bool IsCustomGame
 ) : RequestWithUser(IsAnon, UserId);
 public class GetGameSummaryHandler(
   ITmdbRepository tmdbRepository,
@@ -19,6 +21,7 @@ public class GetGameSummaryHandler(
 {
   private GuessDto?[]? _guessDtos = null;
   private IEnumerable<UserGuess>? _userGuesses = null;
+  private MovieDto? _targetMovie = null;
 
   public async Task<ProcessingError?> PreValidate(GetGameSummaryRequest request)
   {
@@ -30,6 +33,20 @@ public class GetGameSummaryHandler(
           x.UserId == request.UserId &&
           x.GameId == request.GameId)
         .OrderBy(x => x.SequenceId);
+
+    if (request.IsCustomGame)
+    {
+      if (await db.CustomGames.FirstOrDefaultAsync(x => x.Id == request.GameId) is not CustomGame customGame)
+      {
+        return new ProcessingError("Custom game not found", 404);
+      }
+
+      _targetMovie = await tmdbRepository.GetMovieById(customGame.TargetMovieId);
+    }
+    else
+    {
+      _targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
+    }
     
     return null;
   }
@@ -49,12 +66,9 @@ public class GetGameSummaryHandler(
     return null;
   }
 
-  private async Task<RequestValidationError?> UserCanGetSummary(
-    GetGameSummaryRequest request
-  )
+  private async Task<RequestValidationError?> UserCanGetSummary(GetGameSummaryRequest request)
   {
-    MovieDto? targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
-    bool hasWon = targetMovie != null && _userGuesses!.Any(x => x.GuessMediaId == targetMovie.Id);
+    bool hasWon = _userGuesses!.Any(x => x.GuessMediaId == _targetMovie!.Id);
 
     if (_userGuesses!.Count() < request.GameLength && !hasWon)
     {
@@ -71,7 +85,8 @@ public class GetGameSummaryHandler(
       x => string.Join("", x!.Fields.Select(x => MapColorToEmoji(x.Value.Color)))
     ) ?? [];
 
-    gameSummary = gameSummary.Append($"cinemadle {request.GameId}").Append("play at https://cinemadle.com");
+    string url = request.IsCustomGame ? $"https://cinemadle.com/customGame/{request.GameId}" : "https://cinemadle.com";
+    gameSummary = gameSummary.Append($"cinemadle {request.GameId}").Append($"play at {url}");
 
     return new GameSummaryDto
     {
@@ -82,18 +97,14 @@ public class GetGameSummaryHandler(
   public async Task<ProcessingError?> PreProcess(GetGameSummaryRequest request)
   {
     var guessIds = _userGuesses!.Select(x => x.GuessMediaId);
-    var targetMovie = await tmdbRepository.GetTargetMovie(request.GameId);
-    if (targetMovie is null)
-    {
-      return new ProcessingError("Unable to find target movie");
-    }
 
     // sequential: TmdbRepository shares a scoped DbContext, which is not thread-safe
     var dtos = new List<GuessDto?>();
     foreach (var id in guessIds)
     {
-      dtos.Add(await GuessMovieInternal(id, targetMovie));
+      dtos.Add(await GuessMovieInternal(id));
     }
+
     _guessDtos = [.. dtos];
 
     if (_guessDtos is null || _guessDtos.Any(x => x is null))
@@ -104,7 +115,7 @@ public class GetGameSummaryHandler(
     return null;
   }
 
-  private async Task<GuessDto?> GuessMovieInternal(int id, MovieDto targetMovie)
+  private async Task<GuessDto?> GuessMovieInternal(int id)
   {
       MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
 
@@ -113,7 +124,7 @@ public class GetGameSummaryHandler(
           return null;
       }
 
-      GuessDto? guessDto = guessRepository.Guess(guessMovie, targetMovie);
+      GuessDto? guessDto = guessRepository.Guess(guessMovie, _targetMovie!);
 
       if (guessDto is null)
       {

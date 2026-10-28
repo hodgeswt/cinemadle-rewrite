@@ -124,86 +124,10 @@ public class CustomGamesController(
     [HttpGet("{customGameId}/gameSummary")]
     public async Task<ActionResult> GetGameSummaryCustomGame(string customGameId)
     {
-        logger.LogDebug("+GetGameSummaryCustomGame({customGameId})", customGameId);
-        string? userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-            return new UnauthorizedResult();
-        }
-
-        try
-        {
-            // Verify custom game exists
-            CustomGame? customGame = await db.CustomGames.FirstOrDefaultAsync(x => x.Id == customGameId);
-            if (customGame is null)
-            {
-                logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Custom game not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            IEnumerable<UserGuess> userGuesses = db.Guesses.Where(
-                x => x.UserId == userId && x.GameId == customGameId
-            ).OrderBy(x => x.SequenceId);
-
-            // Get target movie for the custom game
-            MovieDto? targetMovie = await tmdbRepo.GetMovieById(customGame.TargetMovieId);
-            if (targetMovie is null)
-            {
-                logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Target movie not found", customGameId);
-                return new NotFoundResult();
-            }
-
-            // Check if user has won
-            bool hasWon = userGuesses.Any(x => x.GuessMediaId == customGame.TargetMovieId);
-
-            // Allow summary if user has completed the game OR won
-            if (userGuesses.Count() < _config.GameLength && !hasWon)
-            {
-                logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): User tried summary gen on guess {guess}", customGameId, userGuesses.Count());
-                logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-                return new NotFoundResult();
-            }
-
-            // Generate summary using the existing logic
-            var guessDtos = await Task.WhenAll(userGuesses.Select(async x =>
-            {
-                MovieDto? guessMovie = await tmdbRepo.GetMovieById(x.GuessMediaId);
-                if (guessMovie is null) return null;
-                return guessRepo.Guess(guessMovie, targetMovie);
-            }));
-
-            if (guessDtos is null || !guessDtos.All(x => x is not null))
-            {
-                logger.LogDebug("-GetGameSummaryCustomGame({customGameId}): Unable to make guess data", customGameId);
-                return new NotFoundResult();
-            }
-
-            List<string> gameSummary = [];
-            foreach (GuessDto? guessDto in guessDtos)
-            {
-                if (guessDto is null)
-                {
-                    return new NotFoundResult();
-                }
-
-                gameSummary.Add(string.Join("", guessDto.Fields.Select(x => MapColorToEmoji(x.Value.Color))));
-            }
-
-            gameSummary.Add($"play at https://cinemadle.com/customGame/{customGameId}");
-
-            logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-            return new OkObjectResult(new GameSummaryDto
-            {
-                Summary = gameSummary
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("GetGameSummaryCustomGame Exception. Message: {message}, StackTrace: {stackTrace}, InnerException: {innerException}", ex.Message, ex.StackTrace, ex.InnerException?.Message);
-            logger.LogDebug("-GetGameSummaryCustomGame({customGameId})", customGameId);
-
-            return new StatusCodeResult(500);
-        }
+        var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
+            new GetGameSummaryRequest(false, GetUserId(), customGameId, _config.GameLength, true)
+        );
+        
+        return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
     }
 }

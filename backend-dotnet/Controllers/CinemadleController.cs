@@ -48,7 +48,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-      new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength)
+      new GetGameSummaryRequest(true, userId.ToString(), date, _config.GameLength, false)
     );
     return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
   }
@@ -61,7 +61,7 @@ public class CinemadleController(
   )
   {
     var o = await mediator.Dispatch<GetGameSummaryRequest, GameSummaryDto>(
-      new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength)
+      new GetGameSummaryRequest(false, GetUserId(), date, _config.GameLength, false)
     );
     return new MediatorResponseHandler<GameSummaryDto>(o).Handle();
   }
