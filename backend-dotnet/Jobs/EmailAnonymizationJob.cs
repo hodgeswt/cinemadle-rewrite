@@ -26,6 +26,8 @@ public class EmailAnonymizationJob(IdentityContext identityContext, DatabaseCont
     public ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("EmailAnonymizationJob Started");
+        logger.LogInformation("EmailAnonymizationJob skipping");
+        return ValueTask.CompletedTask;
 
         if (dbContext.OneTimeJobs.Any(x => x.Completed && x.JobName == JobName))
         {

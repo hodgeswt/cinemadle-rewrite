@@ -10,7 +10,7 @@ namespace Cinemadle.UnitTest;
 
 public class EmailAnonymizationUnitTests
 {
-    [Theory]
+    [Theory(Skip = "Not enabled until user accounts are removed")]
     [InlineData("test@example.com", "973dfe463ec85785f5f95af5ba3906eedb2d931c24e69824a89ea65dba4e813b")]
     [InlineData("example@example.com", "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66")]
     [InlineData("", "")]
@@ -21,7 +21,7 @@ public class EmailAnonymizationUnitTests
         Assert.Equal(expected, result);
     }
 
-    [Theory]
+    [Theory(Skip = "Not enabled until user accounts are removed")]
     [InlineData(new[] {
         "test@example.com", "example@example.com", ""
     }, new[] {
@@ -53,7 +53,7 @@ public class EmailAnonymizationUnitTests
         Assert.True(jobStatus);
     }
     
-    [Fact]
+    [Fact(Skip = "Not enabled until user accounts are removed")]
     public async Task DbAnonymizationTestDoesNotRunWhenAlreadyCompleted()
     {
         using var db = CinemadleMocks.GetDatabaseContext();
