@@ -107,30 +107,33 @@
                 >
                     {#if category.key === 'genre' && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as genre}
-                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
+                            {#each hints.knownValues as genre, i}
+                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
                                     ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
+                                    data-testid={`hints-display-card-${category.key}-pill-${i}`}>
                                     {genre}
                                 </span>
                             {/each}
                         </div>
                     {:else if category.key === 'cast' && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as actor}
-                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
+                            {#each hints.knownValues as actor, i}
+                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
                                     ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
+                                    data-testid={`hints-display-card-${category.key}-pill-${i}`}>
                                     {actor}
                                 </span>
                             {/each}
                         </div>
                     {:else if category.key === 'creatives' && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as creative}
-                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
+                            {#each hints.knownValues as creative, i}
+                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
                                     ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
+                                    data-testid={`hints-display-card-${category.key}-pill-${i}`}>
                                     {creative}
                                 </span>
                             {/each}

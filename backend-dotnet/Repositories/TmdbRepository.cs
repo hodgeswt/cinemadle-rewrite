@@ -137,6 +137,10 @@ public class TmdbRepository : ITmdbRepository
 
         c.Dispose();
 
+        // I'm hardcoding these because I want them in there
+        movies["Raiders of the Lost Ark"] = 85;
+        movies["One Cut of the Dead"] = 513434;
+
         var o = movies.ToDictionary();
 
         _cache.Set(_getMovieListCacheKey, o);

@@ -150,6 +150,71 @@ describe('home page', () => {
                 .should('be.visible')
                 .should('have.text', 'Shrek 2');
         });
+
+        it('should show the answer if you lose', () => {
+            makeGuess('Shrek 2');
+            makeGuess('Shrek');
+            makeGuess('Shrek the Third');
+            makeGuess('The Avengers');
+            makeGuess('Avengers: Endgame');
+            makeGuess('Avengers: Age of Ultron');
+            makeGuess('Avengers: Infinity War');
+            makeGuess('Iron Man');
+            makeGuess('Iron Man 2');
+            makeGuess('Iron Man 3');
+
+            cy.getByDataTestId('hints-display-header')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Raiders of the Lost Ark!');
+
+            // TODO: i'd like these to not be ranges
+            cy.getByDataTestId('hints-display-card-year-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '1985 – 1985');
+
+            cy.getByDataTestId('hints-display-card-boxOffice-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '$390M – $390M');
+
+            cy.getByDataTestId('hints-display-card-rating-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'PG');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Adventure');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Action');
+
+            cy.getByDataTestId('hints-display-card-creatives-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Director: Steven Spielberg');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Harrison Ford');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Karen Allen');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-2')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Paul Freeman');
+        });
+
     });
 
     describe('logged in', () => {
