@@ -50,11 +50,7 @@
         throw new Error(prev.error!);
       }
 
-      for (const g of prev.data!.filter((x) =>
-        $guessStore.guesses.includes(x),
-      )) {
-        $guessStore.guesses.push(g);
-      }
+      guessStore.update((s) => ({ ...s, guesses: [...prev.data!] }));
 
       if ($userStore.loggedIn) {
         // Fetch hints asynchronously (non-blocking)
@@ -65,10 +61,10 @@
         hintsStore.fetchHintsAnon(anonUserId ?? "");
       }
 
-      game.loading = false;
+      game.gameLoading = false;
     } catch (e) {
       openError("Unable to contact server.");
-      game.loading = false;
+      game.gameLoading = false;
     }
   });
 

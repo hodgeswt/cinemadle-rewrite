@@ -5,21 +5,30 @@
     import PageWrapper from "$lib/ui/PageWrapper.svelte";
     import Game from "$lib/business/game/Game.svelte";
     import { isoDateNoTime } from "$lib/util";
+    import { getGameState } from "$lib/business/game/Game.state.svelte";
+    import Header from "$lib/ui/Header.svelte";
+
+    let gameId = $state(isoDateNoTime());
 
     let guessService = (): IGuessService => Container.it().GuessService;
     let serverDown = $state(false);
+    let game = $derived(getGameState(gameId));
 
     onMount(async () => {
+        game.parentLoading = true;
         try {
             serverDown = !(await healthcheck());
         } catch (e) {
             serverDown = true;
         }
+
+        game.parentLoading = false;
     });
 </script>
 
 <PageWrapper>
     {#if serverDown}
+        <Header showDate={true} lose={false} />
         <h2
             class="mb-4 text-2xl font-semibold leading-none tracking-tight"
             data-testid="serverdown-text"

@@ -8,7 +8,7 @@ import { isoDateNoTime } from "./util";
 
 import { userStore } from "$lib/stores";
 
-export const PING_LIMIT = 10;
+export const PING_LIMIT = 3;
 
 export async function ping(): Promise<boolean> {
     const data = await get("healthz", null, null, undefined, true);
@@ -16,17 +16,17 @@ export async function ping(): Promise<boolean> {
     return data.ok
 }
 
-export async function healthcheck(limit?: number): Promise<boolean> {
+export async function healthcheck(): Promise<boolean> {
     let alive = await ping();
     let healthPing = 0;
-    let l = limit ?? 3;
-    while (!alive && healthPing < l) {
+    while (!alive) {
         if (healthPing === PING_LIMIT) {
+            console.error('failed');
             return false;
         }
         alive = await ping();
         healthPing += 1;
-        await new Promise((x) => setTimeout(x, 1000));
+        await new Promise((x) => setTimeout(x, 300));
     }
 
     return true;

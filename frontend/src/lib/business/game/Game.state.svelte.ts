@@ -1,4 +1,4 @@
-import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
+import type { GuessDomain } from "$lib/domain";
 import { getAnswer } from "$lib/middleware";
 import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
@@ -11,12 +11,13 @@ import type { IGuessService } from "$lib/services/IGuessService";
 class GameState {
     readonly LIMIT = 10;
 
-
     guessInput = $state("");
     errorMessage = $state("");
     shareData = $state([] as string[]);
     searchOpen = $state(false);
-    loading = $state(true);
+    gameLoading = $state(true);
+    parentLoading = $state(true);
+    loading = $derived(this.gameLoading || this.parentLoading);
     guessServicePing = $state(0);
     answer = $state(null as GuessDomain | null);
     dialogs: GameDialogs | undefined = $state();
