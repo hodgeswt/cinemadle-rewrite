@@ -79,6 +79,18 @@ public class GuessRepository : IGuessRepository
         }
     }
 
+    public async Task<GuessDto?> GuessById(int id, MovieDto target, ITmdbRepository tmdbRepository)
+    {
+        MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
+
+        if (guessMovie is null)
+        {
+            return null;
+        }
+
+        return Guess(guessMovie, target);
+    }
+    
     public GuessDto Guess(MovieDto guess, MovieDto target)
     {
         string cacheKey = string.Format(_guessCacheKeyTemplate, guess.Id, target.Id);
@@ -178,11 +190,15 @@ public class GuessRepository : IGuessRepository
                 Color = "green",
                 Direction = 0,
                 Modifiers = [],
-                Values = new List<string> { target.Year },
+                Values = [target.Year],
             });
         }
 
-        var currentGuess = new GuessDto { Fields = fields };
+        var currentGuess = new GuessDto
+        {
+            Fields = fields,
+            Title = guess.Title
+        };
 
         // Cache the result
         _cache.Set(cacheKey, currentGuess);

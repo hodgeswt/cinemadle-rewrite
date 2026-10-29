@@ -23,11 +23,6 @@ describe('home page', () => {
             cy.getByDataTestId('cinemadle-date').should('have.text', isoDateNoTime());
         });
 
-        it('should have log in link', () => {
-            cy.getByDataTestId('login-page-link').should('exist');
-            cy.getByDataTestId('login-page-link').should('have.text', 'log in');
-        });
-
         it('should render a guess', () => {
             makeGuess('Shrek 2');
             
@@ -74,13 +69,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.invoke('text').should(text => {
-                    if (text.includes('Conrad Vernon')) {
-                        expect(text).to.contain('Director: Conrad Vernon');
-                    } else {
-                        expect(text).to.contain('Director: Andrew Adamson');
-                    }
-                });
+                creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
 
@@ -92,6 +81,16 @@ describe('home page', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
         });
 
+        it('should keep guess count decremented after refresh', () => {
+            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
+            
+            makeGuess('Shrek 2');
+
+            cy.reload();
+
+            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
+        });
+
         it('should remove guess from suggested', () => {
             makeGuess('Shrek 2');
 
@@ -99,9 +98,18 @@ describe('home page', () => {
             cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
         });
 
+        it('should remove guess from suggested after a refresh', () => {
+            makeGuess('Shrek 2');
+
+            cy.reload();
+
+            cy.getByDataTestId('guess-input').type('Shrek');
+            cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
+        });
+
         it('should let you win and show the share sheet', () => {
-            cy.unrigMovie();
             cy.rigMovie('808');
+            cy.reload();
 
             makeGuess('Shrek 2');
             makeGuess('Shrek');
@@ -116,7 +124,7 @@ describe('home page', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟨🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 
@@ -136,6 +144,70 @@ describe('home page', () => {
                 .should('be.visible')
                 .should('have.text', 'Shrek 2');
         });
+
+        it('should show the answer if you lose', () => {
+            makeGuess('Shrek 2');
+            makeGuess('Shrek');
+            makeGuess('Shrek the Third');
+            makeGuess('The Avengers');
+            makeGuess('Avengers: Endgame');
+            makeGuess('Avengers: Age of Ultron');
+            makeGuess('Avengers: Infinity War');
+            makeGuess('Iron Man');
+            makeGuess('Iron Man 2');
+            makeGuess('Iron Man 3');
+
+            cy.getByDataTestId('hints-display-header')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Raiders of the Lost Ark!');
+
+            cy.getByDataTestId('hints-display-card-year-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '1981');
+
+            cy.getByDataTestId('hints-display-card-boxOffice-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '$390M');
+
+            cy.getByDataTestId('hints-display-card-rating-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'PG');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Adventure');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Action');
+
+            cy.getByDataTestId('hints-display-card-creatives-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Director: Steven Spielberg');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Harrison Ford');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Karen Allen');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-2')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Paul Freeman');
+        });
+
     });
 
     describe('logged in', () => {
@@ -189,13 +261,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.invoke('text').should(text => {
-                    if (text.includes('Conrad Vernon')) {
-                        expect(text).to.contain('Director: Conrad Vernon');
-                    } else {
-                        expect(text).to.contain('Director: Andrew Adamson');
-                    }
-                });
+                creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
 
@@ -215,8 +281,8 @@ describe('home page', () => {
         });
 
         it('should let you win and show the share sheet', () => {
-            cy.unrigMovie();
             cy.rigMovie('808');
+            cy.reload();
 
             makeGuess('Shrek 2');
             makeGuess('Shrek');
@@ -231,7 +297,7 @@ describe('home page', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟨🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 
@@ -251,6 +317,20 @@ describe('home page', () => {
                 .should('be.visible')
                 .should('have.text', 'Shrek 2');
         });
+
+        it('should show a visual clue', () => {
+            const titles = ['Shrek', 'Shrek 2', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
+
+            for (const title of titles) {
+                makeGuess(title);
+            }
+
+            cy.getByDataTestId('visualclue-button').should('have.text', 'view visual clue');
+            cy.getByDataTestId('visualclue-button').click();
+
+            cy.getByDataTestId('visualclue-image').should('exist');
+            cy.getByDataTestId('visualclue-image', {timeout: 10000}).should('be.visible');
+        })
     });
 
 });

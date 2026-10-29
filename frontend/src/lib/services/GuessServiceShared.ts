@@ -1,9 +1,8 @@
 import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
-import type { GameSummaryDto, ImageDto } from "$lib/dto";
+import type { GameSummaryDto, GuessDto, ImageDto } from "$lib/dto";
 import Logger from "$lib/logger";
-import { getPossibleMovies, loadPreviousGuesses } from "$lib/middleware";
+import { getPossibleMovies } from "$lib/middleware";
 import { type Result } from "$lib/result";
-import { guessStore } from "$lib/stores";
 import type { IGuessService } from "./IGuessService";
 
 export abstract class GuessServiceShared implements IGuessService {
@@ -14,18 +13,21 @@ export abstract class GuessServiceShared implements IGuessService {
     static unableToLoadGameSummaryError = "unable to load game summary.";
 
     private _initialized;
-    protected _possibleGuesses: PossibleMediaDomain = {};
     protected _guesses: string[] = [];
 
+    protected _possibleGuessTitles: string[] = [];
+    protected _possibleGuesses: PossibleMediaDomain = {};
+
     constructor() {
-        guessStore.subscribe(x => this._possibleGuesses = x.possibleGuesses ?? {});
-        guessStore.subscribe(x => this._guesses = x.guesses.map(x => x.title));
         this._initialized = false;
     }
 
     possibleGuesses(): PossibleMediaDomain {
-        Logger.log("GuessServiceShared.possibleGuesses()");
         return this._possibleGuesses;
+    }
+
+    possibleGuessTitles(): string[] {
+        return this._possibleGuessTitles;
     }
 
     abstract guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;
@@ -47,8 +49,10 @@ export abstract class GuessServiceShared implements IGuessService {
 
         if (result.ok) {
             Logger.log("GuessServiceShared.initialize(): initialized");
-            Logger.log("GuessServiceShared.initialize(): possible guesses: {0}", result.data!);
-            guessStore.update(s => ({ ...s, possibleGuesses: result.data! }));
+
+            this._possibleGuesses = result.data!;
+            this._possibleGuessTitles = Object.keys(result.data!);
+
             this._initialized = true;
         }
 

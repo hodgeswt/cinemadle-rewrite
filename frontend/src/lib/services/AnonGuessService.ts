@@ -1,5 +1,5 @@
 import type { GuessDomain } from "$lib/domain";
-import { get } from "$lib/middleware";
+import { get, loadAnonPreviousGuesses } from "$lib/middleware";
 import { err, ok, type Result } from "$lib/result";
 import { isoDateNoTime } from "$lib/util";
 import type { IGuessService } from "./IGuessService";
@@ -7,7 +7,6 @@ import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
 import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
-import { guessStore } from "$lib/stores";
 
 export class AnonGuessService extends GuessServiceShared implements IGuessService {
     private readonly anonUserIdKey = 'anonUserId';
@@ -123,21 +122,12 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
             return err(AnonGuessService.unableToGetPreviousError);
         }
 
-        let prev = await get('/guesses/anon', {date: isoDateNoTime(), userId: anonUserId })
-
-        let o: GuessDomain[] = [] as GuessDomain[];
+        let prev = await loadAnonPreviousGuesses(anonUserId);
 
         if (prev.ok) {
-            const d = JSON.parse(prev.data!);
-            for (const id of d) {
-                const g = await this.guess(`${id}`, true);
-
-                if (g.ok) {
-                    o.push(g.data!);
-                }
-            }
-
-            return ok(o);
+            const dtos = prev.data!;
+            const domains = dtos.map(GuessDtoToDomain).filter(x => x.ok).map(x => x.data!);
+            return ok(domains);
         }
 
         return err("Unable to load previous guesses. Try again later.");
@@ -175,14 +165,10 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         if (result.ok) {
             try {
                 let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto, title);
+                let domain = GuessDtoToDomain(dto);
 
                 if (domain.ok) {
                     Logger.log("GuessService.svelte.ts: good title {0}", title);
-                    if (!this._guesses.includes(title)) {
-                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
-
-                    }
                     return ok(domain.data as GuessDomain);
                 } else {
                     Logger.log("GuessService.svelte.ts: bad data", title);

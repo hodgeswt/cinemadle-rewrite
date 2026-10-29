@@ -68,7 +68,10 @@ function createHintsStore() {
                 
                 if (result.ok && result.data) {
                     const hints = result.data;
-                    storeHints(hints);
+                    // only the daily game's hints are persisted
+                    if (!customGameId) {
+                        storeHints(hints);
+                    }
                     set({ hints, loading: false, error: null });
                 } else {
                     update(s => ({ ...s, loading: false, error: result.error ?? 'Failed to fetch hints' }));
@@ -105,7 +108,12 @@ function createHintsStore() {
             }
             set({ hints: null, loading: false, error: null });
         },
-        
+
+        // clears in-memory hints without touching the persisted daily hints
+        clear(): void {
+            set({ hints: null, loading: false, error: null });
+        },
+
         getHintsForField(fieldKey: string): HintsResponseDto[string] | null {
             const state = get({ subscribe });
             return state.hints?.[fieldKey] ?? null;

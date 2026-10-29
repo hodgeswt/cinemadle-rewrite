@@ -54,28 +54,28 @@ Cypress.Commands.add('init', () => {
         .should('not.be.disabled');
 });
 
-Cypress.Commands.add('getClipboard', () => {
-  return cy.window().then((win) => {
-    return win.navigator.clipboard.readText();
+// headless Chrome doesn't reliably allow real clipboard access, so capture writes with a stub instead.
+// must be called after cy.visit, since each visit gets a fresh window
+Cypress.Commands.add('stubClipboard', () => {
+  cy.window().then((win) => {
+    cy.stub(win.navigator.clipboard, 'writeText').as('clipboardWrite').resolves();
   });
 });
 
-Cypress.Commands.add('createCustomGame', (movieName: string) => {
-    // Newer Chromium denies clipboard access in automated runs unless granted explicitly
-    if (Cypress.isBrowser({ family: 'chromium' })) {
-        cy.wrap(
-            Cypress.automation('remote:debugger:protocol', {
-                command: 'Browser.grantPermissions',
-                params: {
-                    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
-                    origin: new URL(Cypress.config('baseUrl') as string).origin,
-                },
-            }),
-            { log: false },
-        );
-    }
+// yields the last value the app wrote to the clipboard (requires cy.stubClipboard)
+Cypress.Commands.add('getClipboard', () => {
+  return cy.get<sinon.SinonStub>('@clipboardWrite')
+    .should('have.been.called')
+    .then((stub) => {
+      const text = stub.lastCall.args[0];
+      expect(text, 'clipboard value').to.be.a('string').and.not.be.empty;
+      return text as string;
+    });
+});
 
+Cypress.Commands.add('createCustomGame', (movieName: string) => {
     cy.visit('/customCreate');
+    cy.stubClipboard();
 
     // Wait for the app to be fully loaded
     let movieInput = cy.getByDataTestId('customcreate-search-input', {timeout: 10000});
@@ -85,23 +85,21 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .type(movieName)
-        .then(() => cy.log('found movie input'));
 
-    let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
+    const suggestionId = `customcreate-suggestion-${movieName.replaceAll(' ', '-')}`.toLowerCase();
+    let dropdownItem = cy.getByDataTestId(suggestionId, {timeout: 10000});
 
     dropdownItem
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('selected shrek 2'));
 
     let customCreateTitle = cy.getByDataTestId('customcreate-selection', {timeout: 10000});
 
     customCreateTitle
         .should('exist')
         .should('be.visible')
-        .then(() => cy.log('custom create title visible'));
 
     let customCreateSubmit = cy.getByDataTestId('customcreate-submit', {timeout: 10000});
 
@@ -110,32 +108,23 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('custom create submitted'));
 
     let popupMessage = cy.getByDataTestId('success-body-text', {timeout: 10000});
     popupMessage
         .should('exist')
         .should('be.visible')
         .should('have.text', 'share this link with your friends to let them play your custom game')
-        .then(() => cy.log('popup found'));
 
-    let positiveButton = cy.getByDataTestId('success-copy-button');
-    let negativeButton = cy.getByDataTestId('success-close-button');
-
-    negativeButton
+    cy.getByDataTestId('success-close-button')
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .then(() => cy.log('negative button disabled'));
 
-    
-
-    positiveButton
+    cy.getByDataTestId('success-copy-button')
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('positive button clicked'));
 
     return cy.getClipboard();
 });

@@ -292,7 +292,7 @@ public class CustomGamesControllerUnitTests
     }
 
     [Fact]
-    public async Task GetPastGuessesCustomGame_Success_ReturnsGuessedMovieIds()
+    public async Task GetPastGuessesCustomGame_Success_ReturnsGuesses()
     {
         var userId = "test-user-id";
         var customGameId = Guid.NewGuid().ToString();
@@ -327,15 +327,38 @@ public class CustomGamesControllerUnitTests
 
         await db.SaveChangesAsync();
 
+        var targetMovie = new MovieDto
+        {
+            Id = targetMovieId,
+            Title = "Target Movie",
+            Genres = ["Drama"],
+            Cast = [],
+            Creatives = [],
+            BoxOffice = 5000000,
+            Year = "2021",
+            Rating = Rating.R
+        };
+
+        var tmdbRepoMock = new Mock<ITmdbRepository>();
+        tmdbRepoMock.Setup(x => x.GetMovieById(targetMovieId)).ReturnsAsync(targetMovie);
+
+        var guessRepoMock = new Mock<IGuessRepository>();
+        guessRepoMock.Setup(x => x.GuessById(It.IsAny<int>(), It.IsAny<MovieDto>(), It.IsAny<ITmdbRepository>()))
+            .ReturnsAsync((int id, MovieDto _, ITmdbRepository _) => new GuessDto
+            {
+                Title = $"Movie {id}",
+                Fields = []
+            });
+
         var controller = UnitTestAssist.CreateInstanceWithMocks<CustomGamesController>(
             UnitTestAssist.GetLogger<CustomGamesController>(),
             CinemadleMocks.GetMockedConfigRepository(),
-            CinemadleMocks.GetMockedTmdbRepository().Object,
-            CinemadleMocks.GetMockedGuessRepository().Object,
+            tmdbRepoMock.Object,
+            guessRepoMock.Object,
             CinemadleMocks.GetMockedHintRepository().Object,
             CinemadleMocks.GetMockedFeatureFlagRepository().Object,
             db,
-            new Mediator(new AssemblyDiscoverHandlersProvider(db))
+            new Mediator(new AssemblyDiscoverHandlersProvider(tmdbRepoMock.Object, db, guessRepoMock.Object))
         );
 
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -349,11 +372,8 @@ public class CustomGamesControllerUnitTests
         var result = await controller.GetPastGuessesCustomGame(customGameId);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var guesses = Assert.IsAssignableFrom<IEnumerable<int>>(okResult.Value);
-        var guessList = guesses.ToList();
-        Assert.Equal(2, guessList.Count);
-        Assert.Contains(100, guessList);
-        Assert.Contains(200, guessList);
+        var guesses = Assert.IsAssignableFrom<IEnumerable<GuessDto>>(okResult.Value);
+        Assert.Equal(["Movie 100", "Movie 200"], guesses.Select(x => x.Title));
     }
 
     [Fact]
@@ -419,6 +439,7 @@ public class CustomGamesControllerUnitTests
 
         var expectedGuessDto = new GuessDto
         {
+            Title = "Guess Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "red", Direction = 0, Values = ["Guess Movie"], Modifiers = [] }
@@ -440,8 +461,8 @@ public class CustomGamesControllerUnitTests
         tmdbRepoMock.Setup(x => x.GetMovieById(targetMovieId)).ReturnsAsync(targetMovie);
 
         var guessRepoMock = new Mock<IGuessRepository>();
-        guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
-            .Returns(expectedGuessDto);
+        guessRepoMock.Setup(x => x.GuessById(It.IsAny<int>(), It.IsAny<MovieDto>(), It.IsAny<ITmdbRepository>()))
+            .ReturnsAsync(expectedGuessDto);
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CustomGamesController>(
             UnitTestAssist.GetLogger<CustomGamesController>(),
@@ -540,6 +561,7 @@ public class CustomGamesControllerUnitTests
 
         var guessDto = new GuessDto
         {
+            Title = "Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] },
@@ -712,6 +734,7 @@ public class CustomGamesControllerUnitTests
 
         var guessDto = new GuessDto
         {
+            Title = "Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] }

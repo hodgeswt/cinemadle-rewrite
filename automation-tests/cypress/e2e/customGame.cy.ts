@@ -89,7 +89,7 @@ describe('custom game', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.className.should('contain', 'bg-gradient-to-br from-gray-200 to-gray-300');
+                creatives.className.should('contain', 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]');
                 creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
@@ -123,7 +123,7 @@ describe('custom game', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟩🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 
@@ -142,6 +142,97 @@ describe('custom game', () => {
                 .should('exist')
                 .should('be.visible')
                 .should('have.text', 'The Avengers');
+        });
+
+        it('should show the answer if you lose', () => {
+            cy.createCustomGame('Raiders of the Lost Ark').then((copiedUrl) => {
+              let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
+              path = path.replace("https://cinemadle.com", Cypress.expose().frontendUrl);
+              cy.log('received url', path)
+              cy.visit(path);
+            });
+
+            makeCustomGuess('Shrek 2');
+            makeCustomGuess('Shrek');
+            makeCustomGuess('Shrek the Third');
+            makeCustomGuess('The Avengers');
+            makeCustomGuess('Avengers: Endgame');
+            makeCustomGuess('Avengers: Age of Ultron');
+            makeCustomGuess('Avengers: Infinity War');
+            makeCustomGuess('Iron Man');
+            makeCustomGuess('Iron Man 2');
+            makeCustomGuess('Iron Man 3');
+
+            cy.getByDataTestId('hints-display-header')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Raiders of the Lost Ark!');
+
+            cy.getByDataTestId('hints-display-card-year-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '1981');
+
+            cy.getByDataTestId('hints-display-card-boxOffice-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '$390M');
+
+            cy.getByDataTestId('hints-display-card-rating-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'PG');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Adventure');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Action');
+
+            cy.getByDataTestId('hints-display-card-creatives-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Director: Steven Spielberg');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Harrison Ford');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Karen Allen');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-2')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Paul Freeman');
+        });
+
+         it('should show a visual clue', () => {
+            cy.createCustomGame('Raiders of the Lost Ark').then((copiedUrl) => {
+              let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
+              path = path.replace("https://cinemadle.com", Cypress.expose().frontendUrl);
+              cy.log('received url', path)
+              cy.visit(path);
+            });
+
+            const titles = ['Shrek', 'Shrek the Third', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
+
+            for (const title of titles) {
+                makeCustomGuess(title);
+            }
+
+            cy.getByDataTestId('customgame-visualclue-button').should('have.text', 'view visual clue');
+            cy.getByDataTestId('customgame-visualclue-button').click();
+
+            cy.getByDataTestId('visualclue-image').should('exist');
+            cy.getByDataTestId('visualclue-image', {timeout: 10000}).should('be.visible');
         });
     });
 

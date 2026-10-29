@@ -1,12 +1,14 @@
 import { ok, err } from "$lib/result";
 import type { Result } from "$lib/result";
 import type { GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "./domain";
-import { isLoginDto, isGameSummaryDto, isImageDto, isHintsResponseDto, type GameSummaryDto, type ImageDto, type HintsResponseDto } from "./dto";
+import { isLoginDto, isGameSummaryDto, isImageDto, isHintsResponseDto, type GameSummaryDto, type ImageDto, type HintsResponseDto, isGuessDto, type GuessDto } from "./dto";
 import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
-export const PING_LIMIT = 10;
+import { userStore } from "$lib/stores";
+
+export const PING_LIMIT = 3;
 
 export async function ping(): Promise<boolean> {
     const data = await get("healthz", null, null, undefined, true);
@@ -19,18 +21,19 @@ export async function healthcheck(): Promise<boolean> {
     let healthPing = 0;
     while (!alive) {
         if (healthPing === PING_LIMIT) {
+            console.error('failed');
             return false;
         }
         alive = await ping();
         healthPing += 1;
-        await new Promise((x) => setTimeout(x, 1000));
+        await new Promise((x) => setTimeout(x, 300));
     }
 
     return true;
 }
 
-export async function getAnswer(): Promise<Result<GuessDomain>> {
-    const data = await get(`target`, { date: isoDateNoTime() })
+export async function getAnswer(date: string): Promise<Result<GuessDomain>> {
+    const data = await get(`target`, { date: date });
 
     if (data.ok) {
         const raw = data.data!
@@ -78,6 +81,7 @@ export async function validateAndRefreshToken(userToken: string, refreshToken: s
     const data = await get("validate", null, { "Authorization": userToken });
 
     if (data.ok && data.data! === "true") {
+        userStore.refresh(userToken, refreshToken);
         return ok("");
     }
 
@@ -86,25 +90,46 @@ export async function validateAndRefreshToken(userToken: string, refreshToken: s
     if (refresh.ok) {
         const j = JSON.parse(refresh.data!)
         if (isLoginDto(j)) {
+            userStore.refresh(j.accessToken, j.refreshToken);
             return ok(refresh.data!);
         }
     }
 
+    userStore.setLoggedOut();
     return err("unable to login or refresh");
 }
 
-export async function loadPreviousGuesses(userToken: string): Promise<Result<number[]>> {
+export async function loadPreviousGuesses(userToken: string): Promise<Result<GuessDto[]>> {
     const data = await get("guesses", { date: isoDateNoTime() }, { "Authorization": userToken })
 
     if (!data.ok) {
         return err(data.error!)
     }
 
-    const raw = data.data!
-    return ok(JSON.parse(raw))
+    const parsed = JSON.parse(data.data!);
+    if (!Array.isArray(parsed) || !parsed.every(isGuessDto)) {
+        return err("Invalid custom game guesses data");
+    }
+
+    return ok(parsed as GuessDto[]);
 }
 
-export async function loadCustomGamePreviousGuesses(customGameId: string, userToken: string): Promise<Result<number[]>> {
+export async function loadAnonPreviousGuesses(anonUserId: string): Promise<Result<GuessDto[]>> {
+    const data = await get('/guesses/anon', {date: isoDateNoTime(), userId: anonUserId })
+
+    if (!data.ok) {
+        return err(data.error!)
+    }
+
+    const parsed = JSON.parse(data.data!);
+    if (!Array.isArray(parsed) || !parsed.every(isGuessDto)) {
+        return err("Invalid custom game guesses data");
+    }
+
+    return ok(parsed as GuessDto[]);
+}
+
+export async function loadCustomGamePreviousGuesses(customGameId: string, userToken: string): Promise<Result<GuessDto[]>> {
     const data = await get(`api/custom/${customGameId}/guesses`, null, { "Authorization": userToken }, undefined, true);
 
     if (!data.ok) {
@@ -113,11 +138,11 @@ export async function loadCustomGamePreviousGuesses(customGameId: string, userTo
 
     try {
         const parsed = JSON.parse(data.data!);
-        if (!Array.isArray(parsed)) {
+        if (!Array.isArray(parsed) || !parsed.every(isGuessDto)) {
             return err("Invalid custom game guesses data");
         }
 
-        return ok(parsed as number[]);
+        return ok(parsed as GuessDto[]);
     } catch (e) {
         Logger.log("loadCustomGamePreviousGuesses: failed to parse response {0}", JSON.stringify(e));
         return err("Invalid custom game guesses data");

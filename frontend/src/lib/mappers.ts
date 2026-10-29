@@ -3,12 +3,12 @@ import type { CardDomain, GuessDomain, PossibleMediaDomain, CustomGameCreateDoma
 import { isPossibleMediaDomain } from "$lib/domain";
 import { err, ok, type Result } from "$lib/result";
 
-export function GuessDtoToDomain(guess: any, title: string): Result<GuessDomain> {
+export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
     if (!isGuessDto(guess)) {
         return err("Invalid data type");
     }
     let out = {
-        title: title,
+        title: guess.title,
         cards: [],
         win: Object.values(guess.fields).every((x) => x.color === "green"),
     } as GuessDomain;

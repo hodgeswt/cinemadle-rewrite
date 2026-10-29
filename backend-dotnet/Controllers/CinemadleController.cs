@@ -121,7 +121,7 @@ public class CinemadleController(
 
     var handler =
       new MediatorResponseHandler<GetPastGuessesResponse>(o)
-      .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
+      .OnSuccess((x) => new OkObjectResult(x.PastGuesses));
 
     return handler.Handle();
   }
@@ -138,7 +138,7 @@ public class CinemadleController(
 
     var handler =
       new MediatorResponseHandler<GetPastGuessesResponse>(o)
-      .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
+      .OnSuccess((x) => new OkObjectResult(x.PastGuesses));
 
     return handler.Handle();
   }

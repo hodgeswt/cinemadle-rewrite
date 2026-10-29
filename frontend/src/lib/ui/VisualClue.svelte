@@ -12,7 +12,7 @@
     let imageData = $state("");
 
     let guessService = (): IGuessService => Container.it().GuessService;
-    const { customGameId = null } = $props<{ customGameId?: string | null }>();
+    const { customGameId = null } = $props();
 
     onMount(async () => {
         while (!guessService().isInitialized()) {

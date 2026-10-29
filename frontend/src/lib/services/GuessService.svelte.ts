@@ -9,7 +9,6 @@ import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
 import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
 import { get as sget } from 'svelte/store';
-import { guessStore } from "$lib/stores";
 
 export class GuessService extends GuessServiceShared implements IGuessService {
     constructor() {
@@ -104,12 +103,9 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         if (result.ok) {
             try {
                 let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto, title);
+                let domain = GuessDtoToDomain(dto);
 
                 if (domain.ok) {
-                    if (!this._guesses.includes(title)) {
-                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
-                    }
                     return ok(domain.data as GuessDomain);
                 } else {
                     return err(GuessService.guessError)
@@ -153,12 +149,9 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         if (result.ok) {
             try {
                 let dto = JSON.parse(result.data as string);
-                let domain = GuessDtoToDomain(dto, title);
+                let domain = GuessDtoToDomain(dto);
 
                 if (domain.ok) {
-                    if (!this._guesses.includes(title)) {
-                        guessStore.update(s => ({ ...s, guesses: [...s.guesses, domain.data as GuessDomain] }));
-                    }
                     return ok(domain.data as GuessDomain);
                 } else {
                     return err(GuessService.guessError)
@@ -181,22 +174,10 @@ export class GuessService extends GuessServiceShared implements IGuessService {
             ? await loadCustomGamePreviousGuesses(customGameId, jwt)
             : await loadPreviousGuesses(jwt);
 
-        let o: GuessDomain[] = [] as GuessDomain[];
-
         if (prev.ok) {
-            Logger.log("GuessService.getPreviousGuesses(): guesses: {0}", prev.data!);
-            for (const id of prev.data!) {
-                const guessId = `${id}`;
-                const g = customGameId
-                    ? await this.guessCustomGame(customGameId, guessId, true)
-                    : await this.guess(guessId, true);
-
-                if (g.ok) {
-                    o.push(g.data! as GuessDomain);
-                }
-            }
-
-            return ok(o);
+            const dtos = prev.data!;
+            const domains = dtos.map(GuessDtoToDomain).filter(x => x.ok).map(x => x.data!);
+            return ok(domains);
         }
 
         return err("Unable to load previous guesses. Try again later.");

@@ -137,6 +137,10 @@ public class TmdbRepository : ITmdbRepository
 
         c.Dispose();
 
+        // I'm hardcoding these because I want them in there
+        movies["Raiders of the Lost Ark"] = 85;
+        movies["One Cut of the Dead"] = 513434;
+
         var o = movies.ToDictionary();
 
         _cache.Set(_getMovieListCacheKey, o);
@@ -231,6 +235,7 @@ public class TmdbRepository : ITmdbRepository
             .Credits
             ?.Crew
             ?.Where(x => string.Equals(x.Job, "director", StringComparison.OrdinalIgnoreCase))
+            ?.OrderBy(x => x.Name)
             ?.Select(x => new PersonDto
             {
                 Name = x.Name ?? string.Empty,
@@ -242,6 +247,7 @@ public class TmdbRepository : ITmdbRepository
             .Credits
             ?.Crew
             ?.Where(x => string.Equals(x.Job, "writer", StringComparison.OrdinalIgnoreCase))
+            ?.OrderBy(x => x.Name)
             ?.Select(x => new PersonDto
             {
                 Name = x.Name ?? string.Empty,
@@ -268,10 +274,10 @@ public class TmdbRepository : ITmdbRepository
             Cast = movie.Credits
                 ?.Cast
                 ?.Take(_config.CastCount)
-                ?.Select(x => new PersonDto { Name = x.Name ?? string.Empty, Role = "Cast" }) ?? new List<PersonDto>(),
+                ?.Select(x => new PersonDto { Name = x.Name ?? string.Empty, Role = "Cast" }) ?? [],
             Genres = movie.Genres
                 ?.Take(_config.GenresCount)
-                ?.Select(x => x.Name) ?? new List<string>(),
+                ?.Select(x => x.Name) ?? [],
             Year = release?.ReleaseDate.Year.ToString() ?? "9999",
             BoxOffice = movie.Revenue,
             Creatives = creatives,

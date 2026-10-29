@@ -21,6 +21,7 @@ export type PossibleMediaDto = {
 
 export type GuessDto = {
     fields: { [key: string]: Field };
+    title: string;
 };
 
 export type Hints = {
@@ -210,7 +211,7 @@ export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
 }
 
 export function isGuessDto(obj: any): obj is GuessDto {
-    if (!hasValue(obj) || !hasValue(obj.fields)) {
+    if (!hasValue(obj) || !hasValue(obj.fields) || !hasValue(obj.title)) {
         return false;
     }
 
@@ -228,7 +229,7 @@ export function isGuessDto(obj: any): obj is GuessDto {
         }
     }
 
-    return valid;
+    return valid && typeof obj.title === "string";
 }
 
 export function isField(obj: any): obj is Field {
