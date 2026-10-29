@@ -2,7 +2,7 @@
   import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
   import HintsDisplay from "$lib/ui/HintsDisplay.svelte";
   import { flip } from "svelte/animate";
-  import { getAnswer, validateAndRefreshToken } from "$lib/middleware";
+  import { getAnswer, getCustomGameAnswer, validateAndRefreshToken } from "$lib/middleware";
   import { onMount } from "svelte";
   import { userStore, hintsStore } from "$lib/stores";
   import { toast } from "svelte-sonner";
@@ -56,7 +56,9 @@
       refreshHints();
 
       promises.push((async () => { 
-        const answer = await getAnswer(gameId, isCustomGame);
+        const answer = customGameId
+          ? await getCustomGameAnswer(customGameId, $userStore.jwt)
+          : await getAnswer(gameId);
         if (answer.error) {
           throw new Error(answer.error!);
         }

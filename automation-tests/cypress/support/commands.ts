@@ -86,7 +86,8 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('not.be.disabled')
         .type(movieName)
 
-    let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
+    const suggestionId = `customcreate-suggestion-${movieName.replaceAll(' ', '-')}`.toLowerCase();
+    let dropdownItem = cy.getByDataTestId(suggestionId, {timeout: 10000});
 
     dropdownItem
         .should('exist')

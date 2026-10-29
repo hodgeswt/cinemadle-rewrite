@@ -32,11 +32,8 @@ export async function healthcheck(): Promise<boolean> {
     return true;
 }
 
-export async function getAnswer(gameId: string, isCustomGame: boolean): Promise<Result<GuessDomain>> {
-
-    const data = isCustomGame
-        ? await get(`${gameId}/target`, null)
-        : await get(`target`, { date: gameId });
+export async function getAnswer(date: string): Promise<Result<GuessDomain>> {
+    const data = await get(`target`, { date: date });
 
     if (data.ok) {
         const raw = data.data!
