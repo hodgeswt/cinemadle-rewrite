@@ -1,6 +1,4 @@
 import type { GuessDomain } from "$lib/domain";
-import { getAnswer } from "$lib/middleware";
-import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
 import { writable } from "svelte/store";
 import { SvelteMap } from "svelte/reactivity";
@@ -24,7 +22,7 @@ class GameState {
 
     answerOpen = writable(false);
 
-    private guesses: GuessDomain[] = $state([]);
+    guesses: GuessDomain[] = $state([]);
 
     anyGuesses = $derived(this.guesses.length > 0);
     remainingGuesses = $derived(this.LIMIT - this.guesses.length);
@@ -34,7 +32,8 @@ class GameState {
 
     
     customGameAnswerTitle = $state("");
-    answerTitle = $derived(this.guesses.find(x => x.win)?.title ?? this.customGameAnswerTitle);
+    answer: GuessDomain | undefined = $state()
+    answerTitle = $derived(this.answer?.title ?? "unknown (this is a bug)");
 
     win = $derived(this.guesses.filter((x) => x.win).length > 0);
     lose = $derived(this.guesses.length >= this.LIMIT && !this.win);
@@ -53,13 +52,9 @@ class GameState {
                 .filter((_, i) => i < 10) : []
     );
 
-    noWinGuesses = $derived(this.guesses.filter(g => !g.win))
+    noWinGuesses = $derived(this.guesses.filter(g => !g.win).reverse())
 
     constructor() {
-        guessStore.subscribe((x) => {
-            this.guesses = [...x.guesses].reverse()
-        });
-
         $effect(() => {
             if (!this.lose) {
                 return;

@@ -2,12 +2,11 @@
   import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
   import HintsDisplay from "$lib/ui/HintsDisplay.svelte";
   import { flip } from "svelte/animate";
-  import { validateAndRefreshToken } from "$lib/middleware";
+  import { getAnswer, validateAndRefreshToken } from "$lib/middleware";
   import { onMount } from "svelte";
-  import { guessStore, userStore, hintsStore } from "$lib/stores";
+  import { userStore, hintsStore } from "$lib/stores";
   import { toast } from "svelte-sonner";
   import { type IGuessService } from "$lib/services";
-  import Header from "$lib/ui/Header.svelte";
   import VisualClue from "$lib/ui/VisualClue.svelte";
   import { getGameState } from "./Game.state.svelte";
   import GameOverSubheader from "./subcomponents/GameOverSubheader.svelte";
@@ -53,6 +52,15 @@
         hintsStore.fetchHintsAnon(anonUserId ?? "");
       }
 
+      promises.push((async () => { 
+        const answer = await getAnswer(gameId, isCustomGame);
+        if (answer.error) {
+          throw new Error(answer.error!);
+        }
+
+        game.answer = answer.data!;
+      })());
+
       promises.push(guessService.initialize());
       
       await Promise.allSettled(promises);
@@ -62,9 +70,9 @@
         throw new Error(prev.error!);
       }
 
-      guessStore.update((s) => ({ ...s, guesses: [...prev.data!] }));
-
+      game.guesses = prev.data!;
       game.gameLoading = false;
+      
     } catch (e) {
       openError("Unable to contact server.");
       game.gameLoading = false;
@@ -110,6 +118,8 @@
       return;
     }
 
+    game.guesses.push(result.data!);
+
     // Refresh hints after successful guess (non-blocking)
     hintsStore.invalidate();
     if ($userStore.loggedIn) {
@@ -142,8 +152,6 @@
 {#snippet visualClue()}
   <VisualClue />
 {/snippet}
-
-<Header showDate={true} lose={game.lose} />
 
 {#if !game.loading}
   {#if game.gameOver}
@@ -181,6 +189,6 @@
   <GameLoading />
 {/if}
 
-{#if !game.loading && $guessStore.guesses.length > 0}
+{#if !game.loading && game.guesses.length > 0}
   <BuyMeAPizza />
 {/if}

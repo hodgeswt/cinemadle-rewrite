@@ -47,7 +47,6 @@ public class CustomGamesController(
         return new MediatorResponseHandler<CustomGameDto?>(o).NullSuccessIs404().Handle();
     }
 
-    [Authorize]
     [HttpGet("{customGameId}/target")]
     public async Task<ActionResult> GetCustomGameTarget(string customGameId)
     {
@@ -58,7 +57,6 @@ public class CustomGamesController(
         return new MediatorResponseHandler<MovieDto?>(o).NullSuccessIs404().Handle();
     }
 
-    [Authorize]
     [HttpGet("{customGameId}/target/image")]
     public async Task<ActionResult> GetCustomGameImage(string customGameId)
     {
@@ -78,7 +76,7 @@ public class CustomGamesController(
 
         var handler =
             new MediatorResponseHandler<GetPastGuessesResponse>(o)
-            .OnSuccess((x) => new OkObjectResult(x.PastGuessMediaIds));
+            .OnSuccess((x) => new OkObjectResult(x.PastGuesses));
 
         return handler.Handle();
     }

@@ -3,6 +3,7 @@ using Cinemadle.Datamodel.Domain;
 using Cinemadle.Datamodel.DTO;
 using Cinemadle.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Stripe.Forwarding;
 
 namespace Cinemadle.Controllers.Handlers;
 
@@ -62,6 +63,11 @@ public class GuessMovieHandler(
       return new RequestValidationError("Custom game not found", 404);
     }
 
+    if (_targetMovie is null)
+    {
+      return new RequestValidationError("Unable to find target movie", 404);
+    }
+
     return null;
   }
 
@@ -73,7 +79,7 @@ public class GuessMovieHandler(
       .Where(x => x.GameId == request.GameId && x.UserId == request.UserId)
       .OrderBy(x => x.SequenceId)!;
 
-    bool hasWon = _targetMovie is not null && userGuesses.Any(x => x.GuessMediaId == _targetMovie!.Id);
+    bool hasWon = userGuesses.Any(x => x.GuessMediaId == _targetMovie!.Id);
 
     if (userGuesses.Count() >= request.GameLength || hasWon)
     {
@@ -85,7 +91,7 @@ public class GuessMovieHandler(
 
   public async Task<GuessDto?> Handle(GuessMovieRequest request)
   {
-    GuessDto? guessDto = await GuessMovieInternal(request.GuessId);
+    GuessDto? guessDto = await guessRepository.GuessById(request.GuessId, _targetMovie!, tmdbRepository);
 
     UserGuess? x = _guessTable!.FirstOrDefault(
         x => x.GuessMediaId == request.GuessId && x.GameId == request.GameId && x.UserId == request.UserId
@@ -115,25 +121,6 @@ public class GuessMovieHandler(
 
     // Invalidate hints cache after new guess
     hintRepository.InvalidateHints(request.UserId, request.GameId);
-
-    return guessDto;
-  }
-
-  private async Task<GuessDto?> GuessMovieInternal(int id)
-  {
-    MovieDto? guessMovie = await tmdbRepository.GetMovieById(id);
-
-    if (guessMovie is null)
-    {
-      return null;
-    }
-
-    GuessDto? guessDto = guessRepository.Guess(guessMovie, _targetMovie!);
-
-    if (guessDto is null)
-    {
-      return null;
-    }
 
     return guessDto;
   }

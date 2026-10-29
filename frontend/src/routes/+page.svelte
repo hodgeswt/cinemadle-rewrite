@@ -36,7 +36,9 @@
             server down. please try again later
         </h2>
     {/if}
+
     {#if !serverDown}
-        <Game gameId={isoDateNoTime()} guessService={guessService()} isCustomGame={false} />
+        <Header showDate={true} lose={game.lose} />
+        <Game {gameId} guessService={guessService()} isCustomGame={false} />
     {/if}
 </PageWrapper>

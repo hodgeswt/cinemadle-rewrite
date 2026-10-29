@@ -49,6 +49,7 @@ public class GuessRepositoryUnitTest
 
         GuessDto expected = new()
         {
+            Title = guess.Title,
             Fields = new Dictionary<string, FieldDto>()
             {
                 { "boxOffice", new FieldDto
@@ -122,6 +123,7 @@ public class GuessRepositoryUnitTest
 
         GuessDto expected = new()
         {
+            Title = guess.Title,
             Fields = new Dictionary<string, FieldDto>()
             {
                 { "boxOffice", new FieldDto
@@ -195,6 +197,7 @@ public class GuessRepositoryUnitTest
 
         GuessDto expected = new()
         {
+            Title = guess.Title,
             Fields = new Dictionary<string, FieldDto>()
             {
                 { "boxOffice", new FieldDto

@@ -175,6 +175,7 @@ public class CinemadleControllerUnitTest
 
         var expectedGuessDto = new GuessDto
         {
+            Title = guessMovie.Title,
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto
@@ -297,6 +298,7 @@ public class CinemadleControllerUnitTest
 
         var expectedGuessDto = new GuessDto
         {
+            Title = guessMovie.Title,
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto

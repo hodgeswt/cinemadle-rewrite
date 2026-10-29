@@ -419,6 +419,7 @@ public class CustomGamesControllerUnitTests
 
         var expectedGuessDto = new GuessDto
         {
+            Title = "Guess Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "red", Direction = 0, Values = ["Guess Movie"], Modifiers = [] }
@@ -540,6 +541,7 @@ public class CustomGamesControllerUnitTests
 
         var guessDto = new GuessDto
         {
+            Title = "Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] },
@@ -712,6 +714,7 @@ public class CustomGamesControllerUnitTests
 
         var guessDto = new GuessDto
         {
+            Title = "Movie",
             Fields = new Dictionary<string, FieldDto>
             {
                 ["title"] = new FieldDto { Color = "green", Direction = 0, Values = ["Movie"], Modifiers = [] }
