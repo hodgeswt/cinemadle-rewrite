@@ -69,7 +69,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.should('contain', 'Director: Conrad Vernon');
+                creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
 
@@ -124,7 +124,7 @@ describe('home page', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟨🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 
@@ -262,7 +262,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.should('contain', 'Director: Conrad Vernon');
+                creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
 
@@ -298,7 +298,7 @@ describe('home page', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟨🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 

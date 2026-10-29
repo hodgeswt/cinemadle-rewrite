@@ -89,7 +89,7 @@ describe('custom game', () => {
 
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
-                creatives.className.should('contain', 'bg-gradient-to-br from-gray-200 to-gray-300');
+                creatives.className.should('contain', 'bg-gradient-to-br from-[#00ff88] to-[#00ffcc]');
                 creatives.tiledata.should('contain', 'Director: Andrew Adamson');
             })
         });
@@ -123,7 +123,7 @@ describe('custom game', () => {
                 .should('be.visible')
                 .should($elements => {
                     const texts = $elements.map((_, el) => Cypress.$(el).text().trim()).get();
-                    expect(texts.at(0)).to.contain('⬛⬛🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
+                    expect(texts.at(0)).to.contain('⬛🟩🟩🟨🟩🟨🟩🟩🟩🟩🟩🟩');
                 });
         });
 

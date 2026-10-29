@@ -48,7 +48,14 @@
         return formatter.format(n);
     }
 
-    function getHintContent(hints: Hints | null | undefined): string {
+    function getHintContent(hints: Hints | null | undefined, category: string): string {
+        if (game.lose || game.win) {
+            const isBoxOffice = category === "boxOffice"
+            const fixedCategory =  isBoxOffice ? "box office" : category;
+            const mapper = (x: string) => isBoxOffice ? formatNumber(x) : x;
+            return game.answer?.cards?.find(x => x.title == fixedCategory)?.data?.map(mapper).join(", ") ?? "";
+        }
+
         if (!hints) return "?";
 
         if (hints.knownValues && hints.knownValues.length > 0) {
@@ -90,7 +97,7 @@
     <div class="grid grid-cols-2 gap-3 md:gap-6">
         {#each hintCategories as category, _}
             {@const hints = getHintsForKey(category.key)}
-            {@const content = getHintContent(hints)}
+            {@const content = getHintContent(hints, category.key)}
             <div 
                 class="space-y-1 md:space-y-2"
                 data-testid={`hints-display-card-${category.key}`}
