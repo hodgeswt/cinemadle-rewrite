@@ -54,37 +54,28 @@ Cypress.Commands.add('init', () => {
         .should('not.be.disabled');
 });
 
-// clipboard writes are async and the app doesn't await them, so poll until the clipboard has content
-Cypress.Commands.add('getClipboard', () => {
-  const read = (attempt: number): Cypress.Chainable<string> =>
-    cy.window({ log: false })
-      .then((win) => win.navigator.clipboard.readText())
-      .then((text) => {
-        if (text || attempt >= 20) {
-          return cy.wrap(text, { log: false });
-        }
-        return cy.wait(250, { log: false }).then(() => read(attempt + 1));
-      });
+// headless Chrome doesn't reliably allow real clipboard access, so capture writes with a stub instead.
+// must be called after cy.visit, since each visit gets a fresh window
+Cypress.Commands.add('stubClipboard', () => {
+  cy.window().then((win) => {
+    cy.stub(win.navigator.clipboard, 'writeText').as('clipboardWrite').resolves();
+  });
+});
 
-  return read(0);
+// yields the last value the app wrote to the clipboard (requires cy.stubClipboard)
+Cypress.Commands.add('getClipboard', () => {
+  return cy.get<sinon.SinonStub>('@clipboardWrite')
+    .should('have.been.called')
+    .then((stub) => {
+      const text = stub.lastCall.args[0];
+      expect(text, 'clipboard value').to.be.a('string').and.not.be.empty;
+      return text as string;
+    });
 });
 
 Cypress.Commands.add('createCustomGame', (movieName: string) => {
-    // Newer Chromium denies clipboard access in automated runs unless granted explicitly
-    if (Cypress.isBrowser({ family: 'chromium' })) {
-        cy.wrap(
-            Cypress.automation('remote:debugger:protocol', {
-                command: 'Browser.grantPermissions',
-                params: {
-                    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
-                    origin: new URL(Cypress.config('baseUrl') as string).origin,
-                },
-            }),
-            { log: false },
-        );
-    }
-
     cy.visit('/customCreate');
+    cy.stubClipboard();
 
     // Wait for the app to be fully loaded
     let movieInput = cy.getByDataTestId('customcreate-search-input', {timeout: 10000});

@@ -5,6 +5,7 @@ declare namespace Cypress {
     maybeGetByDataTestId(dataTestId: string, options?: Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>): Chainable<JQuery<HTMLElement>>;
     customTask(task: string): Cypress.Chainable<Chai.Assertion>;
     createCustomGame(movieName: string): Chainable<string>;
+    stubClipboard(): void;
     getClipboard(): Chainable<string>;
     init(): void;
     rigMovie(id?: string): void;
