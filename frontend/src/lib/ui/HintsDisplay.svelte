@@ -77,18 +77,18 @@
     data-testid="hints-display"
 >
     <h3 
-        class="{game.gameOver && game.answer!.title ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'} font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
+        class="{game.gameOver && game.answerTitle ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'} font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
         data-testid="hints-display-header"
     >
-        {#if game.gameOver && game.answer!.title}
-            {game.answer!.title}!
+        {#if game.gameOver && game.answerTitle}
+            {game.answerTitle}!
         {:else}
             You're looking for a movie like...
         {/if}
     </h3>
     
     <div class="grid grid-cols-2 gap-3 md:gap-6">
-        {#each hintCategories as category, i}
+        {#each hintCategories as category, _}
             {@const hints = getHintsForKey(category.key)}
             {@const content = getHintContent(hints)}
             <div 

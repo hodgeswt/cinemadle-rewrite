@@ -55,7 +55,6 @@ export abstract class GuessServiceShared implements IGuessService {
 
         if (result.ok) {
             Logger.log("GuessServiceShared.initialize(): initialized");
-            Logger.log("GuessServiceShared.initialize(): possible guesses: {0}", result.data!);
             guessStore.update(s => ({ ...s, possibleGuesses: result.data! }));
             this._initialized = true;
         }

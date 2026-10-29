@@ -2,7 +2,6 @@ import type { GuessDomain } from "$lib/domain";
 import { getAnswer } from "$lib/middleware";
 import { guessStore } from "$lib/stores";
 import { find } from "$lib/fuzzy";
-import { untrack } from "svelte";
 import { writable } from "svelte/store";
 import { SvelteMap } from "svelte/reactivity";
 import GameDialogs from "./subcomponents/GameDialogs.svelte";
@@ -19,7 +18,6 @@ class GameState {
     parentLoading = $state(true);
     loading = $derived(this.gameLoading || this.parentLoading);
     guessServicePing = $state(0);
-    answer = $state(null as GuessDomain | null);
     dialogs: GameDialogs | undefined = $state();
 
     isCustomGame = $state(false);
@@ -33,6 +31,10 @@ class GameState {
     visualClueEligible = $derived(this.guesses.length >= 6);
 
     guessService: IGuessService | undefined = $state();
+
+    
+    customGameAnswerTitle = $state("");
+    answerTitle = $derived(this.guesses.find(x => x.win)?.title ?? this.customGameAnswerTitle);
 
     win = $derived(this.guesses.filter((x) => x.win).length > 0);
     lose = $derived(this.guesses.length >= this.LIMIT && !this.win);
@@ -62,15 +64,6 @@ class GameState {
             if (!this.lose) {
                 return;
             }
-
-            untrack(async () => {
-                let a = await getAnswer();
-
-                if (a.ok) {
-                    this.answer = a.data!;
-                    return;
-                }
-            });
         });
     }
 };

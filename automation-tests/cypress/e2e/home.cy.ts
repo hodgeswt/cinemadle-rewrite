@@ -87,8 +87,27 @@ describe('home page', () => {
             cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
         });
 
+        it('should keep guess count decremented after refresh', () => {
+            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 10 remaining')
+            
+            makeGuess('Shrek 2');
+
+            cy.reload();
+
+            cy.getByDataTestId('guess-input').should('have.attr', 'placeholder', 'Guess... 9 remaining')
+        });
+
         it('should remove guess from suggested', () => {
             makeGuess('Shrek 2');
+
+            cy.getByDataTestId('guess-input').type('Shrek');
+            cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');
+        });
+
+        it('should remove guess from suggested after a refresh', () => {
+            makeGuess('Shrek 2');
+
+            cy.reload();
 
             cy.getByDataTestId('guess-input').type('Shrek');
             cy.getByDataTestId('guess-Shrek-2-button').should('not.exist');

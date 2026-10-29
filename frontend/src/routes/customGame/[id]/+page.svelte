@@ -27,11 +27,13 @@
     import Dialog from "$lib/ui/Dialog.svelte";
     import { CustomGameState } from "./page.state.svelte";
     import { get } from "svelte/store";
+    import { getGameState } from "$lib/business/game/Game.state.svelte";
 
     let { data }: { data: { id: string } } = $props();
 
     const customGameId = data.id;
     const pageState = new CustomGameState(customGameId);
+    const game = getGameState(customGameId);
 
     let guessService = (): IGuessService => Container.it().GuessService;
 
@@ -70,14 +72,17 @@
                 );
             }
 
-            const verification = await getCustomGame(customGameId, get(userStore).jwt);
+            const verification = await getCustomGame(
+                customGameId,
+                get(userStore).jwt,
+            );
             if (!verification.ok) {
-                pageState.errorMessage = "custom game unavailable. please check your link.";
+                pageState.errorMessage =
+                    "custom game unavailable. please check your link.";
                 pageState.errorOpen.set(true);
                 pageState.loading = false;
                 return;
             }
-
 
             pageState.visualClueCount = -1;
 
@@ -95,13 +100,23 @@
 
             const prev = await guessService().getPreviousGuesses(customGameId);
             if (!prev.ok) {
-                Logger.log("customGame/+page.svelte.onMount: failed previous guesses {0}", prev.error);
+                Logger.log(
+                    "customGame/+page.svelte.onMount: failed previous guesses {0}",
+                    prev.error,
+                );
                 throw new Error(prev.error!);
             }
 
             for (const g of prev.data!) {
                 if (!get(guessStore).guesses.includes(g)) {
-                    guessStore.update((s) => ({ ...s, guesses: [...s.guesses, g] }));
+                    guessStore.update((s) => ({
+                        ...s,
+                        guesses: [...s.guesses, g],
+                    }));
+                }
+
+                if (g.win) {
+                    game.customGameAnswerTitle = g.title;
                 }
             }
 
@@ -110,7 +125,10 @@
 
             pageState.loading = false;
         } catch (e) {
-            Logger.log("customGame/+page.svelte.onMount: caught error {0}", JSON.stringify(e));
+            Logger.log(
+                "customGame/+page.svelte.onMount: caught error {0}",
+                JSON.stringify(e),
+            );
             pageState.errorMessage = "Unable to contact server.";
             pageState.errorOpen.set(true);
             pageState.loading = false;
@@ -164,6 +182,10 @@
         if (!result.ok) {
             pageState.errorMessage = result.error!;
             pageState.errorOpen.set(true);
+
+            if (result.data!.win) {
+                game.customGameAnswerTitle = result.data!.title;
+            }
         } else {
             // Refresh hints after successful guess (non-blocking)
             hintsStore.invalidate();
@@ -194,11 +216,10 @@
         makeGuess(pageState.guessInput);
         pageState.guessInput = "";
     }
-
 </script>
 
 <PageWrapper>
-    <Header showDate={true} customGameId={customGameId} lose={pageState.lose} />
+    <Header showDate={true} {customGameId} lose={pageState.lose} />
     {#if pageState.win}
         <div class="flex items-center mb-4">
             <h2
@@ -252,7 +273,8 @@
                     size="icon"
                     onclick={handleGuess}
                     class="relative -z-1000"
-                    disabled={pageState.done || pageState.guessInput.trim() === ""}
+                    disabled={pageState.done ||
+                        pageState.guessInput.trim() === ""}
                     data-testid="customgame-submit-button"
                 >
                     <Search />
@@ -262,7 +284,11 @@
 
         {#if pageState.filteredGuesses.length > 0}
             <ul
-                class="mt-1 {$isDarkMode ? 'bg-gray-900' : 'bg-white'} {$isDarkMode ? 'border-gray-700' : 'border-gray-300'} border rounded shadow-xl absolute z-[9999999]"
+                class="mt-1 {$isDarkMode
+                    ? 'bg-gray-900'
+                    : 'bg-white'} {$isDarkMode
+                    ? 'border-gray-700'
+                    : 'border-gray-300'} border rounded shadow-xl absolute z-[9999999]"
             >
                 {#each pageState.filteredGuesses as possibleGuess}
                     <li class="p-2 text-lg">
@@ -283,25 +309,63 @@
             {#if $guessStore.guesses.length >= 6}
                 <div
                     class="mb-4 p-4 {$isDarkMode
-                        ? (pageState.lose ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800' : pageState.win ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800' : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800')
-                        : (pageState.lose ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' : pageState.win ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200')} rounded-lg border {$isDarkMode
-                        ? (pageState.lose ? 'border-red-800' : pageState.win ? 'border-green-800' : 'border-indigo-800')
-                        : (pageState.lose ? 'border-red-200' : pageState.win ? 'border-green-200' : 'border-indigo-200')}"
+                        ? pageState.lose
+                            ? 'bg-gradient-to-r from-red-600 to-red-800 border-red-800'
+                            : pageState.win
+                              ? 'bg-gradient-to-r from-green-600 to-green-800 border-green-800'
+                              : 'bg-gradient-to-r from-indigo-600 to-purple-800 border-indigo-800'
+                        : pageState.lose
+                          ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+                          : pageState.win
+                            ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
+                            : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'} rounded-lg border {$isDarkMode
+                        ? pageState.lose
+                            ? 'border-red-800'
+                            : pageState.win
+                              ? 'border-green-800'
+                              : 'border-indigo-800'
+                        : pageState.lose
+                          ? 'border-red-200'
+                          : pageState.win
+                            ? 'border-green-200'
+                            : 'border-indigo-200'}"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <Info class={$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : pageState.win ? 'text-green-600' : 'text-indigo-600')} />
+                            <Info
+                                class={$isDarkMode
+                                    ? "text-white"
+                                    : pageState.lose
+                                      ? "text-red-600"
+                                      : pageState.win
+                                        ? "text-green-600"
+                                        : "text-indigo-600"}
+                            />
                             <span
-                                class="text-sm {$isDarkMode ? 'text-white' : (pageState.lose ? 'text-red-600' : pageState.win ? 'text-green-400' : 'text-indigo-400')}"
+                                class="text-sm {$isDarkMode
+                                    ? 'text-white'
+                                    : pageState.lose
+                                      ? 'text-red-600'
+                                      : pageState.win
+                                        ? 'text-green-400'
+                                        : 'text-indigo-400'}"
                                 data-testid="customgame-hint-text"
-                                >{pageState.lose ? 'needed a hint?' : pageState.win ? 'needed a hint?' : 'need a hint?'}</span
+                                >{pageState.lose
+                                    ? "needed a hint?"
+                                    : pageState.win
+                                      ? "needed a hint?"
+                                      : "need a hint?"}</span
                             >
                         </div>
                         <Button
                             onclick={showVisualClue}
                             variant="secondary"
                             size="sm"
-                            class="{pageState.lose ? 'bg-red-600 hover:bg-red-700' : pageState.win ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
+                            class="{pageState.lose
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : pageState.win
+                                  ? 'bg-green-600 hover:bg-green-700'
+                                  : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
                             data-testid="customgame-visualclue-button"
                         >
                             view visual clue
@@ -312,28 +376,46 @@
         {/if}
 
         {#if $guessStore.guesses.length > 0}
-            <HintsDisplay 
-                gameOver={pageState.win || pageState.lose} 
-                movieTitle={pageState.win ? $guessStore.guesses.find(g => g.win)?.title : pageState.answer?.title}
-                isLoss={pageState.lose}
-            />
+            <HintsDisplay gameId={customGameId} />
         {/if}
 
-        <Dialog open={pageState.errorOpen} title="uh-oh!" id="customgame-error" confirmButton="ok">
+        <Dialog
+            open={pageState.errorOpen}
+            title="uh-oh!"
+            id="customgame-error"
+            confirmButton="ok"
+        >
             {pageState.errorMessage}
         </Dialog>
 
-        <Dialog open={pageState.shareOpen} title="your results" id="customgame-results" confirmButton="close" cancelButton="share" cancelCallback={() => deviceShare()}>
+        <Dialog
+            open={pageState.shareOpen}
+            title="your results"
+            id="customgame-results"
+            confirmButton="close"
+            cancelButton="share"
+            cancelCallback={() => deviceShare()}
+        >
             {#each pageState.shareData as line}
                 <div class="leading-none">{line}</div>
             {/each}
         </Dialog>
 
-        <Dialog open={pageState.visualClueOpen} title="visual clue" id="customgame-visualclue" confirmButton="ok">
-            <VisualClue customGameId={customGameId} />
+        <Dialog
+            open={pageState.visualClueOpen}
+            title="visual clue"
+            id="customgame-visualclue"
+            confirmButton="ok"
+        >
+            <VisualClue {customGameId} />
         </Dialog>
 
-        <Dialog open={pageState.answerOpen} title="the answer is..." id="customgame-answer" confirmButton="ok">
+        <Dialog
+            open={pageState.answerOpen}
+            title="the answer is..."
+            id="customgame-answer"
+            confirmButton="ok"
+        >
             {#if pageState.answer !== null}
                 <Guess props={pageState.answer} />
             {:else}
@@ -342,7 +424,9 @@
         </Dialog>
 
         <div class="guesses z-10">
-            {#each [...$guessStore.guesses].filter(g => !g.win).reverse() as guess, i (guess)}
+            {#each [...$guessStore.guesses]
+                .filter((g) => !g.win)
+                .reverse() as guess, i (guess)}
                 <div animate:flip={{ duration: 1000 }}>
                     <Guess props={guess} index={i} />
                 </div>
@@ -360,7 +444,10 @@
     {/if}
 
     {#if pageState.serverDown}
-        <h2 class="mb-4 text-2xl font-semibold leading-none tracking-tight" data-testid="customgame-serverdown-text">
+        <h2
+            class="mb-4 text-2xl font-semibold leading-none tracking-tight"
+            data-testid="customgame-serverdown-text"
+        >
             server down. please try again later
         </h2>
     {/if}
