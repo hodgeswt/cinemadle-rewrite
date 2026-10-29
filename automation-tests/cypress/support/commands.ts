@@ -85,7 +85,6 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .type(movieName)
-        .then(() => cy.log('found movie input'));
 
     let dropdownItem = cy.getByDataTestId('customcreate-suggestion-shrek-2', {timeout: 10000});
 
@@ -94,14 +93,12 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('selected shrek 2'));
 
     let customCreateTitle = cy.getByDataTestId('customcreate-selection', {timeout: 10000});
 
     customCreateTitle
         .should('exist')
         .should('be.visible')
-        .then(() => cy.log('custom create title visible'));
 
     let customCreateSubmit = cy.getByDataTestId('customcreate-submit', {timeout: 10000});
 
@@ -110,14 +107,12 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('custom create submitted'));
 
     let popupMessage = cy.getByDataTestId('success-body-text', {timeout: 10000});
     popupMessage
         .should('exist')
         .should('be.visible')
         .should('have.text', 'share this link with your friends to let them play your custom game')
-        .then(() => cy.log('popup found'));
 
     let positiveButton = cy.getByDataTestId('success-copy-button');
     let negativeButton = cy.getByDataTestId('success-close-button');
@@ -126,7 +121,6 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
-        .then(() => cy.log('negative button disabled'));
 
     
 
@@ -135,7 +129,6 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('not.be.disabled')
         .click()
-        .then(() => cy.log('positive button clicked'));
 
     return cy.getClipboard();
 });
