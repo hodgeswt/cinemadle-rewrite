@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Guess from "$lib/ui/Guess.svelte";
   import BuyMeAPizza from "$lib/ui/BuyMeAPizza.svelte";
   import HintsDisplay from "$lib/ui/HintsDisplay.svelte";
   import { flip } from "svelte/animate";
@@ -17,6 +16,7 @@
   import VisualClueOption from "./subcomponents/VisualClueOption.svelte";
   import InputBox from "./subcomponents/InputBox.svelte";
   import SearchResults from "./subcomponents/SearchResults.svelte";
+  import Guess from "./subcomponents/Guess.svelte";
 
   type PropsType = {
     gameId: string;
@@ -43,9 +43,19 @@
       game.guessService = guessService;
       game.isCustomGame = isCustomGame;
 
+      let promises = [];
+
       if ($userStore.loggedIn) {
-        await validateAndRefreshToken($userStore.jwt, $userStore.refreshToken);
+        promises.push(validateAndRefreshToken($userStore.jwt, $userStore.refreshToken));
+        hintsStore.fetchHints($userStore.jwt);
+      } else {
+        const anonUserId = localStorage.getItem("anonUserId");
+        hintsStore.fetchHintsAnon(anonUserId ?? "");
       }
+
+      promises.push(guessService.initialize());
+      
+      await Promise.allSettled(promises);
 
       const prev = await guessService.getPreviousGuesses();
       if (!prev.ok) {
@@ -53,15 +63,6 @@
       }
 
       guessStore.update((s) => ({ ...s, guesses: [...prev.data!] }));
-
-      if ($userStore.loggedIn) {
-        // Fetch hints asynchronously (non-blocking)
-        hintsStore.fetchHints($userStore.jwt);
-      } else {
-        // Anonymous user - get their anon ID from localStorage
-        const anonUserId = localStorage.getItem("anonUserId");
-        hintsStore.fetchHintsAnon(anonUserId ?? "");
-      }
 
       game.gameLoading = false;
     } catch (e) {
@@ -168,9 +169,9 @@
   <GameDialogs bind:this={game.dialogs} gameId={gameId} />
 
   <div class="guesses z-10">
-    {#each game.noWinGuesses as guess, i (guess)}
+    {#each game.noWinGuesses as _, i (_)}
       <div animate:flip={{ duration: 1000 }}>
-        <Guess props={guess} index={i} />
+        <Guess {gameId} index={i} />
       </div>
     {/each}
   </div>
