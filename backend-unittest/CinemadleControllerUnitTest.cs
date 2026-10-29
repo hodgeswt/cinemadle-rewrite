@@ -223,8 +223,8 @@ public class CinemadleControllerUnitTest
             .ReturnsAsync(guessMovie);
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync(targetMovie);
-        guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
-            .Returns(expectedGuessDto);
+        guessRepoMock.Setup(x => x.GuessById(It.IsAny<int>(), It.IsAny<MovieDto>(), It.IsAny<ITmdbRepository>()))
+            .ReturnsAsync(expectedGuessDto);
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
@@ -329,8 +329,8 @@ public class CinemadleControllerUnitTest
             .ReturnsAsync(guessMovie);
         tmdbRepoMock.Setup(x => x.GetTargetMovie(date))
             .ReturnsAsync(targetMovie);
-        guessRepoMock.Setup(x => x.Guess(It.IsAny<MovieDto>(), It.IsAny<MovieDto>()))
-            .Returns(expectedGuessDto);
+        guessRepoMock.Setup(x => x.GuessById(It.IsAny<int>(), It.IsAny<MovieDto>(), It.IsAny<ITmdbRepository>()))
+            .ReturnsAsync(expectedGuessDto);
 
         var controller = UnitTestAssist.CreateInstanceWithMocks<CinemadleController>(
             UnitTestAssist.GetLogger<CinemadleController>(),
