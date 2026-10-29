@@ -124,7 +124,7 @@
                     class="text-lg md:text-lg font-semibold {$isDarkMode ? (game.lose ? 'text-red-400' : 'text-green-400') : (game.lose ? 'text-red-600' : 'text-green-600')}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
-                    {#if ['genre', 'cast', 'creatives'].includes(category.key) && hints?.knownValues}
+                    {#if ['genre', 'cast', 'creatives'].includes(category.key)}
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each knownValues as genre, i}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
