@@ -72,7 +72,7 @@
         return "?";
     }
 
-    function getHintsKnownValues(hints: Hints | null | undefined, category: string): string[] {
+    function getHintsKnownValues(hints: Hints | null | undefined, category: string): string[] | undefined {
         if (game.lose || game.win) {
             const isBoxOffice = category === "boxOffice"
             const fixedCategory =  isBoxOffice ? "box office" : category;
@@ -80,7 +80,7 @@
             return game.answer?.cards?.find(x => x.title == fixedCategory)?.data?.map(mapper) ?? [];
         }
 
-        return hints?.knownValues ?? []
+        return hints?.knownValues
     }
 
     function getHintsForKey(key: string): Hints | null | undefined {
@@ -114,7 +114,7 @@
                 class="space-y-1 md:space-y-2"
                 data-testid={`hints-display-card-${category.key}`}
             >
-                <div 
+                <div
                     class="text-xs md:text-xs font-bold tracking-wide {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}"
                     data-testid={`hints-display-card-${category.key}-label`}
                 >
@@ -124,7 +124,7 @@
                     class="text-lg md:text-lg font-semibold {$isDarkMode ? (game.lose ? 'text-red-400' : 'text-green-400') : (game.lose ? 'text-red-600' : 'text-green-600')}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
-                    {#if ['genre', 'cast', 'creatives'].includes(category.key)}
+                    {#if ['genre', 'cast', 'creatives'].includes(category.key) && knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each knownValues as genre, i}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode

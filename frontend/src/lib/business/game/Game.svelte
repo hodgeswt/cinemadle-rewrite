@@ -47,11 +47,13 @@
 
       if ($userStore.loggedIn) {
         promises.push(validateAndRefreshToken($userStore.jwt, $userStore.refreshToken));
-        hintsStore.fetchHints($userStore.jwt);
-      } else {
-        const anonUserId = localStorage.getItem("anonUserId");
-        hintsStore.fetchHintsAnon(anonUserId ?? "");
       }
+
+      // the store may be holding cached daily hints; don't show them for a custom game
+      if (customGameId) {
+        hintsStore.clear();
+      }
+      refreshHints();
 
       promises.push((async () => { 
         const answer = await getAnswer(gameId, isCustomGame);
@@ -124,9 +126,17 @@
     game.guesses.push(result.data!);
 
     // Refresh hints after successful guess (non-blocking)
-    hintsStore.invalidate();
+    if (customGameId) {
+      hintsStore.clear();
+    } else {
+      hintsStore.invalidate();
+    }
+    refreshHints();
+  }
+
+  function refreshHints(): void {
     if ($userStore.loggedIn) {
-      hintsStore.fetchHints($userStore.jwt);
+      hintsStore.fetchHints($userStore.jwt, customGameId);
     } else {
       const anonUserId = localStorage.getItem("anonUserId");
       hintsStore.fetchHintsAnon(anonUserId ?? "");
@@ -153,7 +163,7 @@
 {/snippet}
 
 {#snippet visualClue()}
-  <VisualClue />
+  <VisualClue {customGameId} />
 {/snippet}
 
 {#if !game.loading}
