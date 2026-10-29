@@ -8,6 +8,8 @@
 
     let game = getGameState(gameId);
 
+    let dataTestIdPrefix = $derived(game.isCustomGame ? "customgame-" : "");
+
 </script>
 
 <div
@@ -53,7 +55,7 @@
             : game.win
               ? 'text-green-400'
               : 'text-indigo-400'}"
-        data-testid="hint-text"
+        data-testid={`${dataTestIdPrefix}hint-text`}
         >{game.lose
           ? "needed a hint?"
           : game.win
@@ -70,7 +72,7 @@
         : game.win
           ? 'bg-green-600 hover:bg-green-700'
           : 'bg-indigo-600 hover:bg-indigo-700'} text-white"
-      data-testid="visualclue-button"
+      data-testid={`${dataTestIdPrefix}visualclue-button`}
     >
       view visual clue
     </Button>

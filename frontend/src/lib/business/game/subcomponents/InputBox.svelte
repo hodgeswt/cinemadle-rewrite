@@ -18,6 +18,7 @@
     }
 
     let game = getGameState(gameId);
+    let dataTestIdPrefix = $derived(game.isCustomGame ? "customgame-" : "");
 
 </script>
 
@@ -29,7 +30,7 @@
     onchange={guessChange}
     class="flex-1 text-base"
     disabled={game.done}
-    data-testid="guess-input"
+    data-testid={`${dataTestIdPrefix}guess-input`}
   />
 
   <Button
@@ -38,7 +39,7 @@
     onclick={handleGuess}
     class="relative -z-1000"
     disabled={game.done || game.guessInput.trim() === ""}
-    data-testid="submit-button"
+    data-testid={`${dataTestIdPrefix}submit-button`}
   >
     <Search />
   </Button>

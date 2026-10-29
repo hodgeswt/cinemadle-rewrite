@@ -5,6 +5,7 @@
   let { gameId, guessMadeCallback } = $props();
 
   let game = getGameState(gameId);
+  let dataTestIdPrefix = $derived(game.isCustomGame ? "customgame-" : "");
 </script>
 
 <ul
@@ -19,7 +20,7 @@
           game.guessInput = "";
           guessMadeCallback(possibleGuess);
         }}
-        data-testid={`guess-${possibleGuess.replaceAll(" ", "-")}-button`}
+        data-testid={`${dataTestIdPrefix}guess-${possibleGuess.replaceAll(" ", "-")}-button`}
       >
         {possibleGuess}
       </button>

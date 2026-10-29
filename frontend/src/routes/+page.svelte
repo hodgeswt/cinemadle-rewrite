@@ -37,6 +37,6 @@
         </h2>
     {/if}
     {#if !serverDown}
-        <Game gameId={isoDateNoTime()} guessService={guessService()} />
+        <Game gameId={isoDateNoTime()} guessService={guessService()} isCustomGame={false} />
     {/if}
 </PageWrapper>

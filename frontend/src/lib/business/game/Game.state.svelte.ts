@@ -22,6 +22,8 @@ class GameState {
     answer = $state(null as GuessDomain | null);
     dialogs: GameDialogs | undefined = $state();
 
+    isCustomGame = $state(false);
+
     answerOpen = writable(false);
 
     private guesses: GuessDomain[] = $state([]);
@@ -76,4 +78,4 @@ class GameState {
 const gameStates = new SvelteMap<string, GameState>();
 
 export const getGameState = (id: string) => gameStates.getOrInsert(id, new GameState());
-export const removeGameState = (id: string) => (() => gameStates.delete(id))();
+export const clearGameStates = () => (() => gameStates.clear())();

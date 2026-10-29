@@ -21,9 +21,10 @@
   type PropsType = {
     gameId: string;
     guessService: IGuessService;
+    isCustomGame: boolean;
   };
 
-  let { gameId, guessService }: PropsType = $props();
+  let { gameId, guessService, isCustomGame }: PropsType = $props();
 
   const game = getGameState(gameId);
 
@@ -40,6 +41,7 @@
   onMount(async () => {
     try {
       game.guessService = guessService;
+      game.isCustomGame = isCustomGame;
 
       if ($userStore.loggedIn) {
         await validateAndRefreshToken($userStore.jwt, $userStore.refreshToken);
@@ -90,10 +92,12 @@
       return;
     }
 
+    const url = isCustomGame ? `https://cinemadle.com/customGame/${gameId}` : "https://cinemadle.com";
+
     navigator.share({
       title: "cinemadle",
       text: shareData,
-      url: "https://cinemadle.com",
+      url: url,
     });
   }
 
@@ -161,7 +165,7 @@
     <HintsDisplay {gameId} />
   {/if}
 
-  <GameDialogs bind:this={game.dialogs} />
+  <GameDialogs bind:this={game.dialogs} gameId={gameId} />
 
   <div class="guesses z-10">
     {#each game.noWinGuesses as guess, i (guess)}
@@ -176,6 +180,6 @@
   <GameLoading />
 {/if}
 
-{#if $guessStore.guesses.length > 0}
+{#if !game.loading && $guessStore.guesses.length > 0}
   <BuyMeAPizza />
 {/if}

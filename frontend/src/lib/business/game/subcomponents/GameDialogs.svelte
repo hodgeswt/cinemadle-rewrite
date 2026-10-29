@@ -3,6 +3,7 @@
   import type { Snippet } from "svelte";
   import type { NullFunc, OpenDialogRequest } from "../GameTypes";
   import { writable, type Writable } from "svelte/store";
+  import { getGameState } from "../Game.state.svelte";
 
   let dialogId: string = $state("");
   let titleText: string = $state("");
@@ -12,9 +13,11 @@
   let cancelCallback: NullFunc | undefined = $state();
 
   let dialogOpen: Writable<boolean> = writable(false);
+  let { gameId } = $props();
+  let game = getGameState(gameId);
 
   export const open = (request: OpenDialogRequest) => {
-    dialogId = request.dialogId;
+    dialogId = `${game.isCustomGame ? "customgame-" : ""}${request.dialogId}`;
     titleText = request.titleText;
     body = request.body;
     confirmButtonText = request.confirmButtonText ?? "ok";
@@ -26,7 +29,7 @@
 
   export const close = () => {
     dialogOpen.set(false);
-  }
+  };
 </script>
 
 <Dialog
@@ -35,7 +38,7 @@
   id={dialogId}
   confirmButton={confirmButtonText}
   cancelButton={cancelButtonText}
-  cancelCallback={cancelCallback}
+  {cancelCallback}
 >
   {#if body}
     {@render body()}
