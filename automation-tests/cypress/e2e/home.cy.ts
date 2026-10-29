@@ -319,8 +319,6 @@ describe('home page', () => {
         });
 
         it('should show a visual clue', () => {
-            logIn({initialize: true});
-
             const titles = ['Shrek', 'Shrek 2', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
 
             for (const title of titles) {

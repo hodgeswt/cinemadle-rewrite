@@ -145,8 +145,12 @@ describe('custom game', () => {
         });
 
         it('should show the answer if you lose', () => {
-            cy.rigMovie('85');
-            cy.reload();
+            cy.createCustomGame('Raiders of the Lost Ark').then((copiedUrl) => {
+              let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
+              path = path.replace("https://cinemadle.com", Cypress.expose().frontendUrl);
+              cy.log('received url', path)
+              cy.visit(path);
+            });
 
             makeCustomGuess('Shrek 2');
             makeCustomGuess('Shrek');
@@ -211,8 +215,12 @@ describe('custom game', () => {
         });
 
          it('should show a visual clue', () => {
-            cy.rigMovie('85');
-            logIn({initialize: true});
+            cy.createCustomGame('Raiders of the Lost Ark').then((copiedUrl) => {
+              let path = new URL(String(copiedUrl)).pathname + new URL(String(copiedUrl)).search;
+              path = path.replace("https://cinemadle.com", Cypress.expose().frontendUrl);
+              cy.log('received url', path)
+              cy.visit(path);
+            });
 
             const titles = ['Shrek', 'Shrek the Third', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
 
