@@ -143,6 +143,89 @@ describe('custom game', () => {
                 .should('be.visible')
                 .should('have.text', 'The Avengers');
         });
+
+        it('should show the answer if you lose', () => {
+            cy.rigMovie('85');
+            cy.reload();
+
+            makeCustomGuess('Shrek 2');
+            makeCustomGuess('Shrek');
+            makeCustomGuess('Shrek the Third');
+            makeCustomGuess('The Avengers');
+            makeCustomGuess('Avengers: Endgame');
+            makeCustomGuess('Avengers: Age of Ultron');
+            makeCustomGuess('Avengers: Infinity War');
+            makeCustomGuess('Iron Man');
+            makeCustomGuess('Iron Man 2');
+            makeCustomGuess('Iron Man 3');
+
+            cy.getByDataTestId('hints-display-header')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Raiders of the Lost Ark!');
+
+            cy.getByDataTestId('hints-display-card-year-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '1981');
+
+            cy.getByDataTestId('hints-display-card-boxOffice-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', '$390M');
+
+            cy.getByDataTestId('hints-display-card-rating-content')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'PG');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Adventure');
+
+            cy.getByDataTestId('hints-display-card-genre-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Action');
+
+            cy.getByDataTestId('hints-display-card-creatives-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Director: Steven Spielberg');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-0')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Harrison Ford');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-1')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Karen Allen');
+
+            cy.getByDataTestId('hints-display-card-cast-pill-2')
+                .should('exist')
+                .should('be.visible')
+                .should('have.text', 'Paul Freeman');
+        });
+
+         it('should show a visual clue', () => {
+            cy.rigMovie('85');
+            logIn({initialize: true});
+
+            const titles = ['Shrek', 'Shrek the Third', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
+
+            for (const title of titles) {
+                makeCustomGuess(title);
+            }
+
+            cy.getByDataTestId('visualclue-button').should('have.text', 'view visual clue');
+            cy.getByDataTestId('visualclue-button').click();
+
+            cy.getByDataTestId('visualclue-image').should('exist');
+            cy.getByDataTestId('visualclue-image', {timeout: 10000}).should('be.visible');
+        });
     });
 
 });

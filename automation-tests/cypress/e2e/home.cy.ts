@@ -317,6 +317,22 @@ describe('home page', () => {
                 .should('be.visible')
                 .should('have.text', 'Shrek 2');
         });
+
+        it('should show a visual clue', () => {
+            logIn({initialize: true});
+
+            const titles = ['Shrek', 'Shrek 2', 'Shrek Forever After', 'John Wick', 'The Avengers', 'Iron Man'];
+
+            for (const title of titles) {
+                makeGuess(title);
+            }
+
+            cy.getByDataTestId('visualclue-button').should('have.text', 'view visual clue');
+            cy.getByDataTestId('visualclue-button').click();
+
+            cy.getByDataTestId('visualclue-image').should('exist');
+            cy.getByDataTestId('visualclue-image', {timeout: 10000}).should('be.visible');
+        })
     });
 
 });
