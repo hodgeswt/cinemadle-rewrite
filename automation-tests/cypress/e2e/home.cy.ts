@@ -69,13 +69,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.invoke('text').should(text => {
-                    if (text.includes('Conrad Vernon')) {
-                        expect(text).to.contain('Director: Conrad Vernon');
-                    } else {
-                        expect(text).to.contain('Director: Andrew Adamson');
-                    }
-                });
+                creatives.tiledata.should('contain', 'Director: Conrad Vernon');
             })
         });
 
@@ -114,8 +108,8 @@ describe('home page', () => {
         });
 
         it('should let you win and show the share sheet', () => {
-            cy.unrigMovie();
             cy.rigMovie('808');
+            cy.reload();
 
             makeGuess('Shrek 2');
             makeGuess('Shrek');
@@ -268,13 +262,7 @@ describe('home page', () => {
             getGuessCard(0, 'CREATIVES').then((creatives) => {
                 creatives.name.should('have.text', 'CREATIVES');
                 creatives.className.should('contain', 'to-gray-300');
-                creatives.tiledata.invoke('text').should(text => {
-                    if (text.includes('Conrad Vernon')) {
-                        expect(text).to.contain('Director: Conrad Vernon');
-                    } else {
-                        expect(text).to.contain('Director: Andrew Adamson');
-                    }
-                });
+                creatives.tiledata.should('contain', 'Director: Conrad Vernon');
             })
         });
 
@@ -294,8 +282,8 @@ describe('home page', () => {
         });
 
         it('should let you win and show the share sheet', () => {
-            cy.unrigMovie();
             cy.rigMovie('808');
+            cy.reload();
 
             makeGuess('Shrek 2');
             makeGuess('Shrek');
