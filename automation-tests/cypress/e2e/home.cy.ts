@@ -23,11 +23,6 @@ describe('home page', () => {
             cy.getByDataTestId('cinemadle-date').should('have.text', isoDateNoTime());
         });
 
-        it('should have log in link', () => {
-            cy.getByDataTestId('login-page-link').should('exist');
-            cy.getByDataTestId('login-page-link').should('have.text', 'log in');
-        });
-
         it('should render a guess', () => {
             makeGuess('Shrek 2');
             

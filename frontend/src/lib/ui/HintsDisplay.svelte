@@ -1,15 +1,13 @@
 <script lang="ts">
+    import { getGameState } from "$lib/business/game/Game.state.svelte";
     import type { Hints } from "$lib/dto";
     import { hintsStore } from "$lib/stores";
     import { isDarkMode } from "$lib/stores/theme";
 
-    interface Props {
-        gameOver?: boolean;
-        movieTitle?: string;
-        isLoss?: boolean;
-    }
 
-    let { gameOver = false, movieTitle = '', isLoss = false }: Props = $props();
+    let { gameId } = $props();
+    let game = getGameState(gameId);
+
 
     // Ordered list of hint categories to match the screenshot layout
     const hintCategories = [
@@ -74,16 +72,16 @@
 
 <div 
     class="mb-4 p-4 md:p-6 rounded-xl border-2 {$isDarkMode 
-        ? (isLoss ? 'bg-slate-800/50 border-red-500/60' : 'bg-slate-800/50 border-green-500/60')
-        : (isLoss ? 'bg-slate-50 border-red-500' : 'bg-slate-50 border-green-500')}"
+        ? (game.lose ? 'bg-slate-800/50 border-red-500/60' : 'bg-slate-800/50 border-green-500/60')
+        : (game.lose ? 'bg-slate-50 border-red-500' : 'bg-slate-50 border-green-500')}"
     data-testid="hints-display"
 >
     <h3 
-        class="{gameOver && movieTitle ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'} font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
+        class="{game.gameOver && game.answer!.title ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'} font-semibold mb-4 md:mb-6 flex items-center gap-2 md:gap-3 {$isDarkMode ? 'text-white' : 'text-slate-800'}"
         data-testid="hints-display-header"
     >
-        {#if gameOver && movieTitle}
-            {movieTitle}!
+        {#if game.gameOver && game.answer!.title}
+            {game.answer!.title}!
         {:else}
             You're looking for a movie like...
         {/if}
@@ -104,15 +102,15 @@
                     {category.label}
                 </div>
                 <div 
-                    class="text-lg md:text-lg font-semibold {$isDarkMode ? (isLoss ? 'text-red-400' : 'text-green-400') : (isLoss ? 'text-red-600' : 'text-green-600')}"
+                    class="text-lg md:text-lg font-semibold {$isDarkMode ? (game.lose ? 'text-red-400' : 'text-green-400') : (game.lose ? 'text-red-600' : 'text-green-600')}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
                     {#if category.key === 'genre' && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each hints.knownValues as genre}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
-                                    ? (isLoss ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (isLoss ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
                                     {genre}
                                 </span>
                             {/each}
@@ -121,8 +119,8 @@
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each hints.knownValues as actor}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
-                                    ? (isLoss ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (isLoss ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
                                     {actor}
                                 </span>
                             {/each}
@@ -131,8 +129,8 @@
                         <div class="flex flex-wrap gap-1 md:gap-2">
                             {#each hints.knownValues as creative}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode 
-                                    ? (isLoss ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (isLoss ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
+                                    ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
+                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}">
                                     {creative}
                                 </span>
                             {/each}

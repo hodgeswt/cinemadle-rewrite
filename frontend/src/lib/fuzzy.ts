@@ -1,21 +1,29 @@
 import Fuse from "fuse.js"
 
-export const find = (input: string, data: string[]): string[] => {
+const opts = {
+    includeScore: false,
+    threshold: 0.3,
+    distance: 80,
+    ignoreDiacritics: true,
+    minMatchCharLength: 1,
+    keys: ["name"]
+}
+
+const memo: Map<string, string[]> = new Map<string, string[]>();
+
+export const find = (input: string, data: string[], gameId?: string): string[] => {
+    const mk = `${input}${gameId}`;
+    if (gameId && memo.has(mk)) {
+        return memo.get(mk)!;
+    } 
+
     if (input === "" || input === undefined || data === undefined || data.length === 0) {
         return [] as string[]
     }
 
-    const opts = {
-        includeScore: false,
-        threshold: 0.3,
-        distance: 80,
-        ignoreDiacritics: true,
-        minMatchCharLength: 3,
-        keys: ["name"]
-    }
-
     const fuse = new Fuse(data, opts)
-    const results = fuse.search(input)
-
-    return results.map(x => x.item)
+    const results = fuse.search(input).map(x => x.item)
+    memo.set(mk, results);
+    
+    return results;
 }

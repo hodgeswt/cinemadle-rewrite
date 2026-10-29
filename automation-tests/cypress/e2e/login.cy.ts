@@ -14,7 +14,7 @@ describe('login page', () => {
   });
 
   it('renders the whole form', () => {
-    cy.getByDataTestId('login-page-link').click();
+    goToPage('log in');
 
     cy.getByDataTestId('page-title').should('have.text', 'log in');
     cy.getByDataTestId('email-input').should('exist');

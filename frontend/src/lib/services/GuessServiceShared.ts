@@ -16,16 +16,24 @@ export abstract class GuessServiceShared implements IGuessService {
     private _initialized;
     protected _possibleGuesses: PossibleMediaDomain = {};
     protected _guesses: string[] = [];
+    protected _possibleGuessTitles: string[] = [];
 
     constructor() {
-        guessStore.subscribe(x => this._possibleGuesses = x.possibleGuesses ?? {});
+        guessStore.subscribe(x => {
+            this._possibleGuesses = x.possibleGuesses ?? {};
+            this._possibleGuessTitles = Object.keys(x.possibleGuesses ?? {});
+        });
+
         guessStore.subscribe(x => this._guesses = x.guesses.map(x => x.title));
         this._initialized = false;
     }
 
     possibleGuesses(): PossibleMediaDomain {
-        Logger.log("GuessServiceShared.possibleGuesses()");
         return this._possibleGuesses;
+    }
+
+    possibleGuessTitles(): string[] {
+        return this._possibleGuessTitles;
     }
 
     abstract guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;

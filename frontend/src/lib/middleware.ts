@@ -6,6 +6,8 @@ import Logger from "./logger";
 import { MediaDtoToGuessDomain, PossibleMediaDtoToDomain, CustomGameCreateDomainToDto, CustomGameDtoToDomain } from "./mappers";
 import { isoDateNoTime } from "./util";
 
+import { userStore } from "$lib/stores";
+
 export const PING_LIMIT = 10;
 
 export async function ping(): Promise<boolean> {
@@ -14,10 +16,11 @@ export async function ping(): Promise<boolean> {
     return data.ok
 }
 
-export async function healthcheck(): Promise<boolean> {
+export async function healthcheck(limit?: number): Promise<boolean> {
     let alive = await ping();
     let healthPing = 0;
-    while (!alive) {
+    let l = limit ?? 3;
+    while (!alive && healthPing < l) {
         if (healthPing === PING_LIMIT) {
             return false;
         }
@@ -78,6 +81,7 @@ export async function validateAndRefreshToken(userToken: string, refreshToken: s
     const data = await get("validate", null, { "Authorization": userToken });
 
     if (data.ok && data.data! === "true") {
+        userStore.refresh(userToken, refreshToken);
         return ok("");
     }
 
@@ -86,10 +90,12 @@ export async function validateAndRefreshToken(userToken: string, refreshToken: s
     if (refresh.ok) {
         const j = JSON.parse(refresh.data!)
         if (isLoginDto(j)) {
+            userStore.refresh(j.accessToken, j.refreshToken);
             return ok(refresh.data!);
         }
     }
 
+    userStore.setLoggedOut();
     return err("unable to login or refresh");
 }
 

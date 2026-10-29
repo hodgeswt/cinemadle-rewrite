@@ -57,6 +57,15 @@ const createUserStore = () => {
 
     return {
         subscribe,
+        refresh: (jwt: string, refreshToken: string) => {
+            guessStore.update(s => ({ ...s, guesses: [] }));
+            return update(user => ({
+                ...user,
+                jwt,
+                loggedIn: true,
+                refreshToken,
+            }));
+        },
         setLoggedIn: (email: string, jwt: string, refreshToken: string) => {
             guessStore.update(s => ({ ...s, guesses: [] }));
             return update(user => ({
