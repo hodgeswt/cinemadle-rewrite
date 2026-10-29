@@ -127,8 +127,8 @@
 	function resolveSelection(title?: string): { id: number | null; title: string | null } {
 		const t = title ? title : selectedMovieTitle;
 
-		if (selectedMovieTitle && possibleMovies[selectedMovieTitle] !== undefined) {
-			return { id: possibleMovies[selectedMovieTitle], title: selectedMovieTitle };
+		if (t && possibleMovies[t] !== undefined) {
+			return { id: possibleMovies[t], title: t };
 		}
 
 		const trimmed = movieSearch.trim();

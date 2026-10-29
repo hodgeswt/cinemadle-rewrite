@@ -26,6 +26,7 @@
   let { gameId, guessService, isCustomGame }: PropsType = $props();
 
   const game = getGameState(gameId);
+  const customGameId = isCustomGame ? gameId : undefined;
 
   const openError = (message: string) => {
     game.errorMessage = message;
@@ -65,7 +66,7 @@
       
       await Promise.allSettled(promises);
 
-      const prev = await guessService.getPreviousGuesses();
+      const prev = await guessService.getPreviousGuesses(customGameId);
       if (!prev.ok) {
         throw new Error(prev.error!);
       }
@@ -80,7 +81,7 @@
   });
 
   async function showShareSheet(_event: Event): Promise<void> {
-    const result = await guessService.getGameSummary();
+    const result = await guessService.getGameSummary(customGameId);
     game.shareData = !result.ok ? [result.error!] : result.data!.summary;
     game.dialogs?.open({
       titleText: "your results",
@@ -111,7 +112,9 @@
   }
 
   async function makeGuess(guess: string): Promise<void> {
-    let result = await guessService.guess(guess);
+    let result = customGameId
+      ? await guessService.guessCustomGame(customGameId, guess)
+      : await guessService.guess(guess);
 
     if (!result.ok) {
       openError(result.error!);

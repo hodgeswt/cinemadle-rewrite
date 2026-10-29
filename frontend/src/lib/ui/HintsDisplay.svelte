@@ -72,6 +72,17 @@
         return "?";
     }
 
+    function getHintsKnownValues(hints: Hints | null | undefined, category: string): string[] {
+        if (game.lose || game.win) {
+            const isBoxOffice = category === "boxOffice"
+            const fixedCategory =  isBoxOffice ? "box office" : category;
+            const mapper = (x: string) => isBoxOffice ? formatNumber(x) : x;
+            return game.answer?.cards?.find(x => x.title == fixedCategory)?.data?.map(mapper) ?? [];
+        }
+
+        return hints?.knownValues ?? []
+    }
+
     function getHintsForKey(key: string): Hints | null | undefined {
         return $hintsStore.hints?.[key];
     }
@@ -98,6 +109,7 @@
         {#each hintCategories as category, _}
             {@const hints = getHintsForKey(category.key)}
             {@const content = getHintContent(hints, category.key)}
+            {@const knownValues = getHintsKnownValues(hints, category.key)}
             <div 
                 class="space-y-1 md:space-y-2"
                 data-testid={`hints-display-card-${category.key}`}
@@ -112,36 +124,14 @@
                     class="text-lg md:text-lg font-semibold {$isDarkMode ? (game.lose ? 'text-red-400' : 'text-green-400') : (game.lose ? 'text-red-600' : 'text-green-600')}"
                     data-testid={`hints-display-card-${category.key}-content`}
                 >
-                    {#if category.key === 'genre' && hints?.knownValues}
+                    {#if ['genre', 'cast', 'creatives'].includes(category.key) && hints?.knownValues}
                         <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as genre, i}
+                            {#each knownValues as genre, i}
                                 <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
                                     ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
                                     : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
                                     data-testid={`hints-display-card-${category.key}-pill-${i}`}>
                                     {genre}
-                                </span>
-                            {/each}
-                        </div>
-                    {:else if category.key === 'cast' && hints?.knownValues}
-                        <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as actor, i}
-                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
-                                    ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
-                                    data-testid={`hints-display-card-${category.key}-pill-${i}`}>
-                                    {actor}
-                                </span>
-                            {/each}
-                        </div>
-                    {:else if category.key === 'creatives' && hints?.knownValues}
-                        <div class="flex flex-wrap gap-1 md:gap-2">
-                            {#each hints.knownValues as creative, i}
-                                <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-lg md:text-sm {$isDarkMode
-                                    ? (game.lose ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-green-500/20 border border-green-500/40 text-green-300')
-                                    : (game.lose ? 'bg-red-100 border border-red-300 text-red-700' : 'bg-green-100 border border-green-300 text-green-700')}"
-                                    data-testid={`hints-display-card-${category.key}-pill-${i}`}>
-                                    {creative}
                                 </span>
                             {/each}
                         </div>
