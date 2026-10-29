@@ -54,10 +54,19 @@ Cypress.Commands.add('init', () => {
         .should('not.be.disabled');
 });
 
+// clipboard writes are async and the app doesn't await them, so poll until the clipboard has content
 Cypress.Commands.add('getClipboard', () => {
-  return cy.window().then((win) => {
-    return win.navigator.clipboard.readText();
-  });
+  const read = (attempt: number): Cypress.Chainable<string> =>
+    cy.window({ log: false })
+      .then((win) => win.navigator.clipboard.readText())
+      .then((text) => {
+        if (text || attempt >= 20) {
+          return cy.wrap(text, { log: false });
+        }
+        return cy.wait(250, { log: false }).then(() => read(attempt + 1));
+      });
+
+  return read(0);
 });
 
 Cypress.Commands.add('createCustomGame', (movieName: string) => {
