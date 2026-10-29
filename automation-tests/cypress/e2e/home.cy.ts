@@ -162,16 +162,15 @@ describe('home page', () => {
                 .should('be.visible')
                 .should('have.text', 'Raiders of the Lost Ark!');
 
-            // TODO: i'd like these to not be ranges
             cy.getByDataTestId('hints-display-card-year-content')
                 .should('exist')
                 .should('be.visible')
-                .should('have.text', '1985 – 1985');
+                .should('have.text', '1981');
 
             cy.getByDataTestId('hints-display-card-boxOffice-content')
                 .should('exist')
                 .should('be.visible')
-                .should('have.text', '$390M – $390M');
+                .should('have.text', '$390M');
 
             cy.getByDataTestId('hints-display-card-rating-content')
                 .should('exist')

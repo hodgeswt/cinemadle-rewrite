@@ -119,11 +119,14 @@
 		}
 
 		const randomTitle = titles[Math.floor(Math.random() * titles.length)];
-		selectMovie(randomTitle);
-		filteredMovies = topSuggestions();
+		const d = resolveSelection(randomTitle);
+
+		customSubmit(d.id!, d.title!);
 	}
 
-	function resolveSelection(): { id: number | null; title: string | null } {
+	function resolveSelection(title?: string): { id: number | null; title: string | null } {
+		const t = title ? title : selectedMovieTitle;
+
 		if (selectedMovieTitle && possibleMovies[selectedMovieTitle] !== undefined) {
 			return { id: possibleMovies[selectedMovieTitle], title: selectedMovieTitle };
 		}
@@ -171,18 +174,8 @@
 		return "unable to create custom game. try again later.";
 	}
 
-	async function submitCustomGame(event: SubmitEvent): Promise<void> {
-		event.preventDefault();
-
+	async function customSubmit(id: number, title: string): Promise<void> {
 		shareLink = "";
-		const { id, title } = resolveSelection();
-
-		if (id === null || title === null) {
-			errorMessage = "select a movie from the list before continuing.";
-			openError.set(true);
-			return;
-		}
-
 		creating = true;
 
 		const result = await createCustomGame(id, $userStore.jwt);
@@ -202,6 +195,20 @@
 		selectedMovieTitle = "";
 		movieSearch = "";
 		filteredMovies = topSuggestions();
+	}
+
+	async function submitCustomGame(event: SubmitEvent): Promise<void> {
+		event.preventDefault();
+
+		const { id, title } = resolveSelection();
+
+		if (id === null || title === null) {
+			errorMessage = "select a movie from the list before continuing.";
+			openError.set(true);
+			return;
+		}
+
+		customSubmit(id, title);
 	}
 
 	function closeDialog(): void {
