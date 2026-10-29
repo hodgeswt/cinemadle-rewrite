@@ -115,17 +115,12 @@ Cypress.Commands.add('createCustomGame', (movieName: string) => {
         .should('be.visible')
         .should('have.text', 'share this link with your friends to let them play your custom game')
 
-    let positiveButton = cy.getByDataTestId('success-copy-button');
-    let negativeButton = cy.getByDataTestId('success-close-button');
-
-    negativeButton
+    cy.getByDataTestId('success-close-button')
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
 
-    
-
-    positiveButton
+    cy.getByDataTestId('success-copy-button')
         .should('exist')
         .should('be.visible')
         .should('not.be.disabled')
