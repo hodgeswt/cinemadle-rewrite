@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { activate } from "./activator.ts";
 import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq } from "./types.test.ts";
 
-describe("primitive activation", () => {
+describe("activation", () => {
   describe("of a valid", () => {
     it("boolean", () => {
       const x = { someBool: true };
@@ -68,6 +68,22 @@ describe("primitive activation", () => {
       assert.strictEqual(r.ok, true);
       assert.strictEqual(r.data!.some?.someNumber, undefined);
     });
+
+    it("list", () => {
+      const x = { someBoolList: [ true, false ] };
+      const r = activate(TestBoolNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someBoolList, x.someBoolList);
+    });
+
+    it("complex list", () => {
+      const x = { someList: [{ someNumber: 999 }] };
+      const r = activate(TestComplexNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someList, x.someList);
+    });
   });
 
   describe("of an invalid", () => {
@@ -123,6 +139,20 @@ describe("primitive activation", () => {
     it("missing complex type", () => {
       const x = {};
       const r = activate(TestComplex, x);
+
+      assert.strictEqual(r.ok, false);
+    });
+
+    it("list", () => {
+      const x = { someBoolList: [ true, "999" ] };
+      const r = activate(TestBoolNoReq, x);
+
+      assert.strictEqual(r.ok, false);
+    });
+
+    it("complex list", () => {
+      const x = { someList: [{ someNumber: true }] };
+      const r = activate(TestComplexNoReq, x);
 
       assert.strictEqual(r.ok, false);
     });
