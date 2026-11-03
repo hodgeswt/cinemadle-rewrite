@@ -77,48 +77,63 @@ describe("primitive activation", () => {
   describe("of a valid", () => {
     it("boolean", () => {
       const x = { someBool: true };
-      assert.strictEqual((activate(TestBool, x) as unknown as TestBool).someBool, x.someBool);
+      const r = activate(TestBool, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someBool, x.someBool);
     });
 
     it("string", () => {
       const x = { someString: "asdf" };
-      assert.strictEqual((activate(TestString, x) as unknown as TestString).someString, x.someString);
+      const r = activate(TestString, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someString, x.someString);
     });
 
     it("number", () => {
       const x = { someNumber: 1235 };
-      assert.strictEqual((activate(TestNumber, x) as unknown as TestNumber).someNumber, x.someNumber);
+      const r = activate(TestNumber, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someNumber, x.someNumber);
     });
   });
 
   describe("of an invalid", () => {
     it("boolean", () => {
       const x = { someBool: "asdf" };
-      assert.strictEqual((activate(TestBool, x) as ValidationErr[]).length, 1);
+      const r = activate(TestBool, x);
+
+      assert.strictEqual(r.ok, false)
     });
 
     it("string", () => {
       const x = { someString: 1234 };
-      assert.strictEqual((activate(TestString, x) as ValidationErr[]).length, 1);
+      const r = activate(TestString, x);
+
+      assert.strictEqual(r.ok, false)
     });
 
     it("number", () => {
       const x = { someNumber: "asdf" };
-      assert.strictEqual((activate(TestNumber, x) as ValidationErr[]).length, 1);
+      const r = activate(TestNumber, x);
+
+      assert.strictEqual(r.ok, false);
     });
   });
 
   describe("of an absent", () => {
     it("boolean", () => {
-      assert.strictEqual((activate(TestBool, {}) as ValidationErr[]).length, 1);
+      assert.strictEqual(activate(TestBool, {}).ok, false);
     });
 
     it("string", () => {
-      assert.strictEqual((activate(TestString, {}) as ValidationErr[]).length, 1);
+      assert.strictEqual(activate(TestString, {}).ok, false);
     });
 
     it("number", () => {
-      assert.strictEqual((activate(TestNumber, {}) as ValidationErr[]).length, 1);
+      assert.strictEqual(activate(TestNumber, {}).ok, false);
     });
   });
 });
