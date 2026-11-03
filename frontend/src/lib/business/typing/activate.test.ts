@@ -106,9 +106,23 @@ describe("primitive activation", () => {
       assert.strictEqual(r.ok, false);
     });
 
-    it("missing string", () => {
+    it("missing number", () => {
       const x = {};
       const r = activate(TestNumber, x);
+
+      assert.strictEqual(r.ok, false);
+    });
+
+    it("complex type", () => {
+      const x = { some: { someNumber: "asdf" } };
+      const r = activate(TestComplex, x);
+
+      assert.strictEqual(r.ok, false);
+    });
+
+    it("missing complex type", () => {
+      const x = {};
+      const r = activate(TestComplex, x);
 
       assert.strictEqual(r.ok, false);
     });
