@@ -9,6 +9,67 @@ export type ValidationErrCallback = (err: ValidationErr) => void;
 
 const noopErr = (_err: ValidationErr) => { };
 
+function ValidateField(val: any, k: string, v: DataTypeOpts, err: ValidationErrCallback): boolean {
+  let toValidate = [val];
+  if (v.isList) {
+    if (!Array.isArray(val)) {
+      err(`Expected property ${k} on obj to be a list`);
+      return false;
+    }
+
+    toValidate = val;
+  }
+
+  const errs: ValidationErr[] = [];
+  const getAll = (err: ValidationErr) => {
+    errs.push(err);
+  }
+
+  let invalid;
+  if (isTPrimitive(v.dataType)) {
+    invalid = (i: any) => !getValidator(v.dataType as TPrimitive)(i, getAll);
+  } else {
+    invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll);
+  }
+
+  if (!v.isMap) {
+    const invalidItems = toValidate.filter(invalid);
+    if (invalidItems.length > 0) {
+      err(`property ${k} failed validation: ${errs.join(',')}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  let ok = true;
+  for (const item of toValidate) {
+    if (typeof item !== "object") {
+      err(`expected obj to be a map`);
+      ok = false;
+      continue;
+    }
+
+    for (const [mapKey, mapVal] of Object.entries(item)) {
+      if (v.isMapList && !Array.isArray(mapVal)) {
+        err(`map ${k}'s key ${mapKey} was expected to be a list of Map<string, T>`);
+        ok = false;
+        continue;
+      }
+
+      const items = v.isMapList ? mapVal as any[] : [ mapVal ];
+      const invalidItems = items.filter(invalid);
+
+      if (invalidItems.length > 0) {
+        err(`map ${k}'s key ${mapKey} failed validation: ${errs.join(',')}`);
+        ok = false;
+        continue;
+      }
+    }
+  }
+
+  return ok;
+}
 
 export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is C {
   const err = errCallback ? errCallback : noopErr;
@@ -33,63 +94,7 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
     }
 
     const val = obj[k];
-
-    let toValidate = [val];
-    if (v.isList) {
-      if (!Array.isArray(val)) {
-        err(`Expected property ${k} on obj to be a list`);
-        ok = false;
-        continue;
-      }
-
-      toValidate = val;
-    }
-
-    const errs: ValidationErr[] = [];
-    const getAll = (err: ValidationErr) => {
-      errs.push(err);
-    }
-
-    let invalid;
-    if (isTPrimitive(v.dataType)) {
-      invalid = (i: any) => !getValidator(v.dataType as TPrimitive)(i, getAll);
-    } else {
-      invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll);
-    }
-
-    if (!v.isMap) {
-      const invalidItems = toValidate.filter(invalid);
-      if (invalidItems.length > 0) {
-        err(`property ${k} failed validation: ${errs.join(',')}`);
-        ok = false;
-      }
-
-      continue;
-    }
-
-    for (const item of toValidate) {
-      if (typeof item !== "object") {
-        err(`expected obj to be a map`);
-        ok = false;
-        continue;
-      }
-
-      for (const [mapKey, mapVal] of Object.entries(item)) {
-        if (v.isMapList && !Array.isArray(mapVal)) {
-          err(`map ${k}'s key ${mapKey} was expected to be a list of Map<string, T>`);
-          ok = false;
-          continue;
-        }
-
-        const items = v.isMapList ? mapVal as any[] : [ mapVal ];
-        const invalidItems = items.filter(invalid);
-        
-        if (invalidItems.length > 0) {
-          err(`map ${k}'s key ${mapKey} failed validation: ${errs.join(',')}`);
-          ok = false;
-        }
-      }
-    }
+    ok = ok && ValidateField(val, k, v, err);
   }
 
   return ok;
