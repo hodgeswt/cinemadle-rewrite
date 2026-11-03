@@ -238,5 +238,30 @@ describe("activation", () => {
 
       assert.strictEqual(r.ok, false);
     });
+
+    it("map", () => {
+      const x = { some: { 'item1': { someNumber: true } } };
+      const y = { somePrimitive: { 'item1': 9, 'item2': "10" } };
+
+      const r1 = activate(TestMap, x);
+      const r2 = activate(TestMapNoReq, y);
+
+      assert.strictEqual(r1.ok, false);
+      assert.strictEqual(r2.ok, false);
+    });
+
+    it("map list", () => {
+      const x = { some: { 'item1': [{ someNumber: true }] } };
+      const y = { somePrimitive: { 'item1': [9], 'item2': [true] } };
+      const z = { someList: [{ 'item1': [{ someNumber: 9 }] }, { 'item1': [{ someNumber: "10" }] }] };
+
+      const r1 = activate(TestMapList, x);
+      const r2 = activate(TestMapListNoReq, y);
+      const r3 = activate(TestMapListNoReq, z);
+
+      assert.strictEqual(r1.ok, false);
+      assert.strictEqual(r2.ok, false);
+      assert.strictEqual(r3.ok, false);
+    });
   });
 });
