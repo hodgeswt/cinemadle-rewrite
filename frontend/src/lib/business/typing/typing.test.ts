@@ -43,6 +43,19 @@ class TestNumberNoReq {
   someNumberList: number[] = [];
 }
 
+class TestComplex {
+  @DataType({ dataType: TestNumber, required: true })
+  some: TestNumber = new TestNumber();
+}
+
+class TestComplexNoReq {
+  @DataType({ dataType: TestNumber })
+  some: TestNumber = new TestNumber();
+
+  @DataType({ dataType: TestNumber, isList: true })
+  someList: TestNumber[] = [];
+}
+
 let currentErrs: ValidationErr[] = [];
 const errLog = (err: ValidationErr) => currentErrs.push(err);
 const errs = () => currentErrs.join(', ');
@@ -238,4 +251,67 @@ describe("primitive validation", () => {
       })
     });
   })
+});
+
+describe("complex validation", () => {
+  beforeEach(() => currentErrs = []);
+
+  it("handles a valid child", () => {
+    const x = {
+      some: {
+        someNumber: 9
+      }
+    };
+
+    assert.strictEqual(Validate(TestComplex, x, errLog), true, errs());
+  });
+
+  it("handles a valid child list", () => {
+    const x = {
+      someList: [{
+        someNumber: 9
+      }]
+    };
+
+    assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
+  });
+
+  it("handles a valid absent child", () => {
+    const x = {};
+
+    assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
+  });
+
+  it("handles a child with an empty list", () => {
+    const x = { someList: [] };
+
+    assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
+  });
+
+  it("handles an invalid child", () => {
+    const x = {
+      some: {
+        someNumber: "asdf"
+      }
+    };
+
+    assert.strictEqual(Validate(TestComplex, x, errLog), false, errs());
+  });
+
+  it("handles an invalid child list", () => {
+    const x = {
+      someList: [
+        { someNumber: "asdf" },
+        { someNumber: 9 }
+      ]
+    };
+
+    assert.strictEqual(Validate(TestComplexNoReq, x, errLog), false, errs());
+  });
+
+  it("handles an invalid absent child", () => {
+    const x = {};
+
+    assert.strictEqual(Validate(TestComplex, x, errLog), false, errs());
+  });
 });
