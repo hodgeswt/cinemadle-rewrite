@@ -9,66 +9,86 @@ export type ValidationErrCallback = (err: ValidationErr) => void;
 
 const noopErr = (_err: ValidationErr) => { };
 
-function ValidateField(val: any, k: string, v: DataTypeOpts, err: ValidationErrCallback): boolean {
+class FieldValidationContext {
+  readonly fieldName: string;
+  readonly fieldType: DataTypeOpts;
+  
+  readonly isInvalid: (i: any) => boolean;
+
+  private _valid: boolean;
+  private readonly _errors: ValidationErr[];
+
+  constructor(fieldName: string, fieldType: DataTypeOpts) {
+    this.fieldName = fieldName;
+    this.fieldType = fieldType;
+    
+    const validator = getValidator(fieldType.dataType);
+    this.isInvalid = (x: any) => !validator(x, this.addError);
+
+    this._valid = true;
+    this._errors = [];
+  }
+
+  public errors(): string {
+    return `${this.fieldName} failed validation: ${this._errors.join(', ')}`;
+  }
+
+  public addError(err: ValidationErr): void {
+    this._errors.push(err);
+    this._valid = false;
+  }
+
+  public isValid(): boolean {
+    return this._valid;
+  }
+
+}
+
+function ValidateMap(toValidate: any[], ctx: FieldValidationContext): void {
+  for (const item of toValidate) {
+    if (typeof item !== "object") {
+      ctx.addError(`expected obj to be a map`);
+      continue;
+    }
+
+    for (const [mapKey, mapVal] of Object.entries(item)) {
+      if (ctx.fieldType.isMapList && !Array.isArray(mapVal)) {
+        ctx.addError(`map key ${mapKey} was expected to be a list of Map<string, T>`);
+        continue;
+      }
+
+      const items = ctx.fieldType.isMapList ? mapVal as any[] : [mapVal];
+      const invalidItems = items.filter(ctx.isInvalid);
+
+      if (invalidItems.length > 0) {
+        ctx.addError(`map key ${mapKey} failed validation: ${ctx.errors()}`);
+        continue;
+      }
+    }
+  }
+}
+
+function ValidateField(val: any, ctx: FieldValidationContext): void {
   let toValidate = [val];
-  if (v.isList) {
+  if (ctx.fieldType.isList) {
     if (!Array.isArray(val)) {
-      err(`Expected property ${k} on obj to be a list`);
-      return false;
+      ctx.addError('Expected property to be a list');
+      return;
     }
 
     toValidate = val;
   }
 
-  const errs: ValidationErr[] = [];
-  const getAll = (err: ValidationErr) => {
-    errs.push(err);
+  if (ctx.fieldType.isMap) {
+    ValidateMap(toValidate, ctx);
+    return;
   }
 
-  let invalid;
-  if (isTPrimitive(v.dataType)) {
-    invalid = (i: any) => !getValidator(v.dataType as TPrimitive)(i, getAll);
-  } else {
-    invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll);
-  }
-
-  if (!v.isMap) {
-    const invalidItems = toValidate.filter(invalid);
-    if (invalidItems.length > 0) {
-      err(`property ${k} failed validation: ${errs.join(',')}`);
-      return false;
+  toValidate.forEach((x, i) => {
+    if (ctx.isInvalid(x)) {
+      ctx.addError(`item ${i} failed validation`);
     }
-
-    return true;
-  }
-
-  let ok = true;
-  for (const item of toValidate) {
-    if (typeof item !== "object") {
-      err(`expected obj to be a map`);
-      ok = false;
-      continue;
-    }
-
-    for (const [mapKey, mapVal] of Object.entries(item)) {
-      if (v.isMapList && !Array.isArray(mapVal)) {
-        err(`map ${k}'s key ${mapKey} was expected to be a list of Map<string, T>`);
-        ok = false;
-        continue;
-      }
-
-      const items = v.isMapList ? mapVal as any[] : [ mapVal ];
-      const invalidItems = items.filter(invalid);
-
-      if (invalidItems.length > 0) {
-        err(`map ${k}'s key ${mapKey} failed validation: ${errs.join(',')}`);
-        ok = false;
-        continue;
-      }
-    }
-  }
-
-  return ok;
+  });
 }
 
 export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is C {
@@ -84,23 +104,37 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
   let ok = true;
 
   for (const [k, v] of fieldsToValidate.entries()) {
+    const ctx = new FieldValidationContext(k, v);
+
     if (!(k in obj)) {
       if (v.required) {
-        err(`Expected absent property ${k} to be present on obj`);
-        ok = false;
+        ctx.addError(`Absent required property ${k}`);
       }
-
-      continue;
+    } else {
+      ValidateField(obj[k], ctx);
     }
 
-    const val = obj[k];
-    ok = ok && ValidateField(val, k, v, err);
+    if (!ctx.isValid) {
+      err(ctx.errors());
+    }
+    ok = ok && ctx.isValid();
   }
 
   return ok;
 }
 
-function getValidator(type: TPrimitive): ValidationFunc {
+function getValidator(dataType: Ctor | TPrimitive): ValidationFunc {
+  let validator: ValidationFunc;
+  if (isTPrimitive(dataType)) {
+    validator = (i: any): boolean => getPrimitiveValidator(dataType as TPrimitive)(i);
+  } else {
+    validator = (i: any): boolean => Validate(dataType as Ctor, i);
+  }
+
+  return validator;
+}
+
+function getPrimitiveValidator(type: TPrimitive): ValidationFunc {
   switch (type) {
     case 'string':
       return validateString
