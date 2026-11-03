@@ -1,8 +1,7 @@
 import { describe, it } from "node:test";
 import assert from 'node:assert';
 import { activate } from "./activator.ts";
-import { TestBool, TestBoolNoReq, TestString, TestNumber } from "./types.test.ts";
-import { TestStringNoReq, TestNumberNoReq } from './types.test';
+import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq } from "./types.test.ts";
 
 describe("primitive activation", () => {
   describe("of a valid", () => {
@@ -15,7 +14,7 @@ describe("primitive activation", () => {
     });
 
     it("missing boolean", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestBoolNoReq, x);
 
       assert.strictEqual(r.ok, true);
@@ -31,7 +30,7 @@ describe("primitive activation", () => {
     });
 
     it("missing string", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestStringNoReq, x);
 
       assert.strictEqual(r.ok, true);
@@ -47,11 +46,27 @@ describe("primitive activation", () => {
     });
 
     it("missing number", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestNumberNoReq, x);
 
       assert.strictEqual(r.ok, true);
       assert.strictEqual(r.data!.someNumber, undefined);
+    });
+
+    it("complex type", () => {
+      const x = { some: { someNumber: 1234 } };
+      const r = activate(TestComplex, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.some.someNumber, x.some.someNumber);
+    });
+
+    it("missing complex type", () => {
+      const x = {};
+      const r = activate(TestComplexNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.some?.someNumber, undefined);
     });
   });
 
@@ -64,7 +79,7 @@ describe("primitive activation", () => {
     });
 
     it("missing boolean", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestBool, x);
 
       assert.strictEqual(r.ok, false);
@@ -78,7 +93,7 @@ describe("primitive activation", () => {
     });
 
     it("missing string", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestString, x);
 
       assert.strictEqual(r.ok, false);
@@ -92,7 +107,7 @@ describe("primitive activation", () => {
     });
 
     it("missing string", () => {
-      const x = { };
+      const x = {};
       const r = activate(TestNumber, x);
 
       assert.strictEqual(r.ok, false);
