@@ -1,4 +1,4 @@
-import { hasValue } from "./util";
+import { hasValue } from "./util.ts";
 
 export type PossibleMediaDomain = {
     [key: string]: number;

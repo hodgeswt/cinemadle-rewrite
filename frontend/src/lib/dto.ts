@@ -1,8 +1,18 @@
-import { isArray, isDictionary, hasValue } from "$lib/util";
+import { isArray, isDictionary, hasValue } from "$lib/util.ts";
+import { DataType } from "./business/typing/datatype.ts";
 
 export type SignUpErrorDto = {
     errors: { [key: string]: string[] }
 }
+
+export class SignUpErrorDto2 {
+    @DataType({ dataType: 'string', isMap: true, isMapList: true })
+    readonly errors: Map<string, string[]>;
+
+    constructor(errors: Map<string, string[]>) {
+        this.errors = errors;
+    }
+};
 
 export type ImageDto = {
     imageData: string,
