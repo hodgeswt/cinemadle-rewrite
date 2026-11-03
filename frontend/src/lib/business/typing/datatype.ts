@@ -23,6 +23,12 @@ export interface DataTypeOpts {
 
   /** Is this field a list of this type? */
   isList?: boolean
+
+  /** Is this field a Map<string, this type>? */
+  isMap?: boolean
+
+  /** Is this field a Map<string, Array<this type>>? (requires isMap = true) */
+  isMapList?: boolean
 }
 
 /**

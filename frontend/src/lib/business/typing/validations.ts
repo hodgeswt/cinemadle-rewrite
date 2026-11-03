@@ -7,7 +7,7 @@ type ValidationFunc = (obj: unknown, errCallback?: ValidationErrCallback) => boo
 export type ValidationErr = string;
 export type ValidationErrCallback = (err: ValidationErr) => void;
 
-const noopErr = (_err: ValidationErr) => {};
+const noopErr = (_err: ValidationErr) => { };
 
 
 export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is C {
@@ -57,11 +57,38 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
       invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll);
     }
 
-    const invalidItems = toValidate.filter(invalid);
-    if (invalidItems.length > 0) {
-      err(`property ${k} failed validation: ${errs.join(',')}`);
-      ok = false;
+    if (!v.isMap) {
+      const invalidItems = toValidate.filter(invalid);
+      if (invalidItems.length > 0) {
+        err(`property ${k} failed validation: ${errs.join(',')}`);
+        ok = false;
+      }
+
       continue;
+    }
+
+    for (const item of toValidate) {
+      if (typeof item !== "object") {
+        err(`expected obj to be a map`);
+        ok = false;
+        continue;
+      }
+
+      for (const [mapKey, mapVal] of Object.entries(item)) {
+        if (v.isMapList && !Array.isArray(mapVal)) {
+          err(`map ${k}'s key ${mapKey} was expected to be a list of Map<string, T>`);
+          ok = false;
+          continue;
+        }
+
+        const items = v.isMapList ? mapVal as any[] : [ mapVal ];
+        const invalidItems = items.filter(invalid);
+        
+        if (invalidItems.length > 0) {
+          err(`map ${k}'s key ${mapKey} failed validation: ${errs.join(',')}`);
+          ok = false;
+        }
+      }
     }
   }
 

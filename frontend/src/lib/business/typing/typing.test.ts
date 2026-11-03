@@ -56,6 +56,23 @@ class TestComplexNoReq {
   someList: TestNumber[] = [];
 }
 
+class TestMap {
+  @DataType({ dataType: TestNumber, required: true, isMap: true })
+  some: Map<string, TestNumber> = new Map<string, TestNumber>();
+}
+
+class TestMapNoReq {
+  @DataType({ dataType: TestNumber, isMap: true })
+  some: Map<string, TestNumber> = new Map<string, TestNumber>();
+
+  @DataType({ dataType: 'number', isMap: true })
+  somePrimitive: Map<string, number> = new Map<string, number>();
+
+  @DataType({ dataType: TestNumber, isList: true, isMap: true })
+  someList: Map<string, TestNumber>[] = [];
+}
+
+
 let currentErrs: ValidationErr[] = [];
 const errLog = (err: ValidationErr) => currentErrs.push(err);
 const errs = () => currentErrs.join(', ');
@@ -251,6 +268,49 @@ describe("primitive validation", () => {
       })
     });
   })
+});
+
+describe("map validation", () => {
+  beforeEach(() => currentErrs = []);
+
+  it("handles a valid map", () => {
+    const x = {
+      some: {
+        'item1': { someNumber: 9 },
+        'item2': { someNumber: 9 }
+      }
+    };
+
+    const y = {
+      somePrimitive: {
+        'item1': 9,
+        'item2': 10,
+      }
+    }
+
+    assert.strictEqual(Validate(TestMap, x, errLog), true, errs());
+    assert.strictEqual(Validate(TestMapNoReq, y, errLog), true, errs());
+  });
+
+  it("handles an invalid map", () => {
+    const x = {
+      some: {
+        'item1': { someNumber: 'asdf' },
+        'item2': { someNumber: 9 }
+      }
+    };
+
+    const y = {
+      somePrimitive: {
+        'item1': 'asdf',
+        'item2': 10,
+      }
+    }
+
+    assert.strictEqual(Validate(TestMap, x, errLog), false, errs());
+    assert.strictEqual(Validate(TestMapNoReq, y, errLog), false, errs());
+
+  });
 });
 
 describe("complex validation", () => {
