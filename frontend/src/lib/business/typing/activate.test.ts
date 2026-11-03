@@ -1,77 +1,8 @@
-import { DataType } from "./datatype.ts";
-import { Validate } from "./validations.ts";
-import { describe, it, beforeEach } from "node:test";
-import { type ValidationErr } from './validations.ts';
+import { describe, it } from "node:test";
 import assert from 'node:assert';
 import { activate } from "./activator.ts";
-
-class TestBool {
-  @DataType({ dataType: 'boolean', required: true })
-  someBool: boolean = false;
-}
-
-class TestBoolNoReq {
-  @DataType({ dataType: 'boolean' })
-  someBool: boolean = false;
-
-  @DataType({ dataType: 'boolean', isList: true })
-  someBoolList: boolean[] = [];
-}
-
-class TestString {
-  @DataType({ dataType: 'string', required: true })
-  someString: string = "";
-}
-
-class TestStringNoReq {
-  @DataType({ dataType: 'string' })
-  someString: string = "";
-
-  @DataType({ dataType: 'string', isList: true })
-  someStringList: string[] = [];
-}
-
-class TestNumber {
-  @DataType({ dataType: 'number', required: true })
-  someNumber: number = 0;
-}
-
-class TestNumberNoReq {
-  @DataType({ dataType: 'number' })
-  someNumber: number = 0;
-
-  @DataType({ dataType: 'number', isList: true })
-  someNumberList: number[] = [];
-}
-
-class TestComplex {
-  @DataType({ dataType: TestNumber, required: true })
-  some: TestNumber = new TestNumber();
-}
-
-class TestComplexNoReq {
-  @DataType({ dataType: TestNumber })
-  some: TestNumber = new TestNumber();
-
-  @DataType({ dataType: TestNumber, isList: true })
-  someList: TestNumber[] = [];
-}
-
-class TestMap {
-  @DataType({ dataType: TestNumber, required: true, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
-}
-
-class TestMapNoReq {
-  @DataType({ dataType: TestNumber, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
-
-  @DataType({ dataType: 'number', isMap: true })
-  somePrimitive: Map<string, number> = new Map<string, number>();
-
-  @DataType({ dataType: TestNumber, isList: true, isMap: true })
-  someList: Map<string, TestNumber>[] = [];
-}
+import { TestBool, TestBoolNoReq, TestString, TestNumber } from "./types.test.ts";
+import { TestStringNoReq, TestNumberNoReq } from './types.test';
 
 describe("primitive activation", () => {
   describe("of a valid", () => {
@@ -83,6 +14,14 @@ describe("primitive activation", () => {
       assert.strictEqual(r.data!.someBool, x.someBool);
     });
 
+    it("missing boolean", () => {
+      const x = { };
+      const r = activate(TestBoolNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someBool, undefined);
+    });
+
     it("string", () => {
       const x = { someString: "asdf" };
       const r = activate(TestString, x);
@@ -91,12 +30,28 @@ describe("primitive activation", () => {
       assert.strictEqual(r.data!.someString, x.someString);
     });
 
+    it("missing string", () => {
+      const x = { };
+      const r = activate(TestStringNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someString, undefined);
+    });
+
     it("number", () => {
       const x = { someNumber: 1235 };
       const r = activate(TestNumber, x);
 
       assert.strictEqual(r.ok, true);
       assert.strictEqual(r.data!.someNumber, x.someNumber);
+    });
+
+    it("missing number", () => {
+      const x = { };
+      const r = activate(TestNumberNoReq, x);
+
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.data!.someNumber, undefined);
     });
   });
 
@@ -108,11 +63,25 @@ describe("primitive activation", () => {
       assert.strictEqual(r.ok, false)
     });
 
+    it("missing boolean", () => {
+      const x = { };
+      const r = activate(TestBool, x);
+
+      assert.strictEqual(r.ok, false);
+    });
+
     it("string", () => {
       const x = { someString: 1234 };
       const r = activate(TestString, x);
 
       assert.strictEqual(r.ok, false)
+    });
+
+    it("missing string", () => {
+      const x = { };
+      const r = activate(TestString, x);
+
+      assert.strictEqual(r.ok, false);
     });
 
     it("number", () => {
@@ -121,19 +90,12 @@ describe("primitive activation", () => {
 
       assert.strictEqual(r.ok, false);
     });
-  });
 
-  describe("of an absent", () => {
-    it("boolean", () => {
-      assert.strictEqual(activate(TestBool, {}).ok, false);
-    });
+    it("missing string", () => {
+      const x = { };
+      const r = activate(TestNumber, x);
 
-    it("string", () => {
-      assert.strictEqual(activate(TestString, {}).ok, false);
-    });
-
-    it("number", () => {
-      assert.strictEqual(activate(TestNumber, {}).ok, false);
+      assert.strictEqual(r.ok, false);
     });
   });
 });

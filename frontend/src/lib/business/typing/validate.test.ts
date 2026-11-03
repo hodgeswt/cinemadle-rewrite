@@ -1,76 +1,8 @@
-import { DataType } from "./datatype.ts";
 import { Validate } from "./validations.ts";
 import { describe, it, beforeEach } from "node:test";
 import { type ValidationErr } from './validations.ts';
+import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestComplex, TestComplexNoReq, TestNumberNoReq, TestMap, TestMapNoReq } from "./types.test.ts";
 import assert from 'node:assert';
-
-class TestBool {
-  @DataType({ dataType: 'boolean', required: true })
-  someBool: boolean = false;
-}
-
-class TestBoolNoReq {
-  @DataType({ dataType: 'boolean' })
-  someBool: boolean = false;
-
-  @DataType({ dataType: 'boolean', isList: true })
-  someBoolList: boolean[] = [];
-}
-
-class TestString {
-  @DataType({ dataType: 'string', required: true })
-  someString: string = "";
-}
-
-class TestStringNoReq {
-  @DataType({ dataType: 'string' })
-  someString: string = "";
-
-  @DataType({ dataType: 'string', isList: true })
-  someStringList: string[] = [];
-}
-
-class TestNumber {
-  @DataType({ dataType: 'number', required: true })
-  someNumber: number = 0;
-}
-
-class TestNumberNoReq {
-  @DataType({ dataType: 'number' })
-  someNumber: number = 0;
-
-  @DataType({ dataType: 'number', isList: true })
-  someNumberList: number[] = [];
-}
-
-class TestComplex {
-  @DataType({ dataType: TestNumber, required: true })
-  some: TestNumber = new TestNumber();
-}
-
-class TestComplexNoReq {
-  @DataType({ dataType: TestNumber })
-  some: TestNumber = new TestNumber();
-
-  @DataType({ dataType: TestNumber, isList: true })
-  someList: TestNumber[] = [];
-}
-
-class TestMap {
-  @DataType({ dataType: TestNumber, required: true, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
-}
-
-class TestMapNoReq {
-  @DataType({ dataType: TestNumber, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
-
-  @DataType({ dataType: 'number', isMap: true })
-  somePrimitive: Map<string, number> = new Map<string, number>();
-
-  @DataType({ dataType: TestNumber, isList: true, isMap: true })
-  someList: Map<string, TestNumber>[] = [];
-}
 
 
 let currentErrs: ValidationErr[] = [];
@@ -313,10 +245,10 @@ describe("map validation", () => {
   });
 });
 
-describe("complex validation", () => {
+describe("complex validation handles", () => {
   beforeEach(() => currentErrs = []);
 
-  it("handles a valid child", () => {
+  it("a valid child", () => {
     const x = {
       some: {
         someNumber: 9
@@ -326,7 +258,7 @@ describe("complex validation", () => {
     assert.strictEqual(Validate(TestComplex, x, errLog), true, errs());
   });
 
-  it("handles a valid child list", () => {
+  it("a valid child list", () => {
     const x = {
       someList: [{
         someNumber: 9
@@ -336,19 +268,19 @@ describe("complex validation", () => {
     assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
   });
 
-  it("handles a valid absent child", () => {
+  it("a valid absent child", () => {
     const x = {};
 
     assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
   });
 
-  it("handles a child with an empty list", () => {
+  it("a child with an empty list", () => {
     const x = { someList: [] };
 
     assert.strictEqual(Validate(TestComplexNoReq, x, errLog), true, errs());
   });
 
-  it("handles an invalid child", () => {
+  it("an invalid child", () => {
     const x = {
       some: {
         someNumber: "asdf"
@@ -358,7 +290,7 @@ describe("complex validation", () => {
     assert.strictEqual(Validate(TestComplex, x, errLog), false, errs());
   });
 
-  it("handles an invalid child list", () => {
+  it("an invalid child list", () => {
     const x = {
       someList: [
         { someNumber: "asdf" },
@@ -369,7 +301,7 @@ describe("complex validation", () => {
     assert.strictEqual(Validate(TestComplexNoReq, x, errLog), false, errs());
   });
 
-  it("handles an invalid absent child", () => {
+  it("an invalid absent child", () => {
     const x = {};
 
     assert.strictEqual(Validate(TestComplex, x, errLog), false, errs());
