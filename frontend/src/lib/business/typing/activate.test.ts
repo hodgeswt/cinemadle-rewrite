@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from 'node:assert';
 import { activate } from "./activator.ts";
-import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq } from "./types.test.ts";
+import { TestMap, TestMapNoReq, TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq } from "./types.test.ts";
 
 describe("activation", () => {
   describe("of a valid", () => {
@@ -70,7 +70,7 @@ describe("activation", () => {
     });
 
     it("list", () => {
-      const x = { someBoolList: [ true, false ] };
+      const x = { someBoolList: [true, false] };
       const r = activate(TestBoolNoReq, x);
 
       assert.strictEqual(r.ok, true);
@@ -83,6 +83,36 @@ describe("activation", () => {
 
       assert.strictEqual(r.ok, true);
       assert.strictEqual(r.data!.someList, x.someList);
+    });
+
+    it("map", () => {
+      const x = {
+        some: {
+          'item1': { someNumber: 9 },
+          'item2': { someNumber: 9 }
+        }
+      };
+
+      const y = {
+        somePrimitive: {
+          'item1': 9,
+          'item2': 10,
+        }
+      }
+
+      const r1 = activate(TestMap, x);
+      const r2 = activate(TestMapNoReq, y);
+
+      assert.strictEqual(r1.ok, true);
+      assert.strictEqual(r2.ok, true);
+
+      for (const [key, value] of Object.entries(x.some)) {
+        assert.strictEqual(r1.data!.some[key], value);
+      }
+
+      for (const [key, value] of Object.entries(y.somePrimitive)) {
+        assert.strictEqual(r2.data!.somePrimitive![key], value);
+      }
     });
   });
 
@@ -144,7 +174,7 @@ describe("activation", () => {
     });
 
     it("list", () => {
-      const x = { someBoolList: [ true, "999" ] };
+      const x = { someBoolList: [true, "999"] };
       const r = activate(TestBoolNoReq, x);
 
       assert.strictEqual(r.ok, false);

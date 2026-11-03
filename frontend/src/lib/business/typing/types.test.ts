@@ -54,16 +54,16 @@ export class TestComplexNoReq {
 
 export class TestMap {
   @DataType({ dataType: TestNumber, required: true, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
+  some: Record<string, TestNumber> = {};
 }
 
 export class TestMapNoReq {
   @DataType({ dataType: TestNumber, isMap: true })
-  some: Map<string, TestNumber> = new Map<string, TestNumber>();
+  some: Record<string, TestNumber> = {};
 
   @DataType({ dataType: 'number', isMap: true })
-  somePrimitive?: Map<string, number> | undefined = new Map<string, number>();
+  somePrimitive?: Record<string, number> | undefined =  {};
 
   @DataType({ dataType: TestNumber, isList: true, isMap: true })
-  someList?: Map<string, TestNumber>[] | undefined = [];
+  someList?: Record<string, TestNumber>[] | undefined = [];
 }
