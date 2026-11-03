@@ -23,7 +23,7 @@ class FieldValidationContext {
     this.fieldType = fieldType;
     
     const validator = getValidator(fieldType.dataType);
-    this.isInvalid = (x: any) => !validator(x, this.addError);
+    this.isInvalid = (x: any) => !validator(x, (e) => this.addError(e));
 
     this._valid = true;
     this._errors = [];
@@ -114,9 +114,10 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
       ValidateField(obj[k], ctx);
     }
 
-    if (!ctx.isValid) {
+    if (!ctx.isValid()) {
       err(ctx.errors());
     }
+
     ok = ok && ctx.isValid();
   }
 
