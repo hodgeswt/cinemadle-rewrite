@@ -67,3 +67,19 @@ export class TestMapNoReq {
   @DataType({ dataType: TestNumber, isList: true, isMap: true })
   someList?: Record<string, TestNumber>[] | undefined = [];
 }
+
+export class TestMapList {
+  @DataType({ dataType: TestNumber, required: true, isMap: true, isMapList: true })
+  some: Record<string, TestNumber[]> = {};
+}
+
+export class TestMapListNoReq {
+  @DataType({ dataType: TestNumber, isMap: true, isMapList: true })
+  some: Record<string, TestNumber[]> = {};
+
+  @DataType({ dataType: 'number', isMap: true, isMapList: true})
+  somePrimitive?: Record<string, number[]> | undefined =  {};
+
+  @DataType({ dataType: TestNumber, isList: true, isMap: true, isMapList: true})
+  someList?: Record<string, TestNumber[]>[] | undefined = [];
+}

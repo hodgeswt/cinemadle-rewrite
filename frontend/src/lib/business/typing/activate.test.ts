@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from 'node:assert';
 import { activate } from "./activator.ts";
-import { TestMap, TestMapNoReq, TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq } from "./types.test.ts";
+import { TestMap, TestMapNoReq, TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq, TestMapList, TestMapListNoReq } from "./types.test.ts";
 
 describe("activation", () => {
   describe("of a valid", () => {
@@ -113,6 +113,58 @@ describe("activation", () => {
       for (const [key, value] of Object.entries(y.somePrimitive)) {
         assert.strictEqual(r2.data!.somePrimitive![key], value);
       }
+    });
+
+    it("map list", () => {
+      const x = {
+        some: {
+          'item1': [{ someNumber: 9 }],
+          'item2': [{ someNumber: 9 }]
+        }
+      };
+
+      const y = {
+        somePrimitive: {
+          'item1': [9],
+          'item2': [10],
+        }
+      }
+
+      const z = {
+        someList: [
+          {
+            'item1': [{ someNumber: 9 }],
+            'item2': [{ someNumber: 10 }],
+          },
+          {
+            'item1': [{ someNumber: 9 }],
+            'item2': [{ someNumber: 10 }]
+          }
+        ]
+      }
+
+      const r1 = activate(TestMapList, x);
+      const r2 = activate(TestMapListNoReq, y);
+      const r3 = activate(TestMapListNoReq, z);
+
+      assert.strictEqual(r1.ok, true);
+      assert.strictEqual(r2.ok, true);
+      assert.strictEqual(r3.ok, true);
+
+      for (const [key, value] of Object.entries(x.some)) {
+        assert.strictEqual(r1.data!.some[key], value);
+      }
+
+      for (const [key, value] of Object.entries(y.somePrimitive)) {
+        assert.strictEqual(r2.data!.somePrimitive![key], value);
+      }
+
+      assert.strictEqual(r3.data!.someList!.length, z.someList.length);
+      z.someList.forEach((item, i) => {
+        for (const [key, value] of Object.entries(item)) {
+          assert.deepStrictEqual(r3.data!.someList![i][key], value);
+        }
+      });
     });
   });
 
