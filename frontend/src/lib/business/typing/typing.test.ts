@@ -44,7 +44,7 @@ class TestNumberNoReq {
 }
 
 let currentErrs: ValidationErr[] = [];
-const errLog = (err: ValidationErr) => { currentErrs.push(err); console.log(err); };
+const errLog = (err: ValidationErr) => currentErrs.push(err);
 const errs = () => currentErrs.join(', ');
 
 describe("primitive validation", () => {
@@ -160,7 +160,35 @@ describe("primitive validation", () => {
       it("number", () => {
         assert.strictEqual(Validate(TestNumber, {}, errLog), false, errs());
       });
-    })
+    });
+
+    describe("list of", () => {
+      beforeEach(() => currentErrs = []);
+
+      it("booleans", () => {
+        assert.strictEqual(
+          Validate(TestBoolNoReq, { someBoolList: ["asdf", true, 1234, {}] }, errLog),
+          false,
+          errs()
+        );
+      });
+
+      it("strings", () => {
+        assert.strictEqual(
+          Validate(TestStringNoReq, { someStringList: ["asdf", true, 1234, {}] }, errLog),
+          false,
+          errs()
+        );
+      });
+
+      it("numbers", () => {
+        assert.strictEqual(
+          Validate(TestNumberNoReq, { someNumberList: ["asdf", true, 1234, {}] }, errLog),
+          false,
+          errs()
+        );
+      });
+    });
 
     it("boolean", () => {
       [

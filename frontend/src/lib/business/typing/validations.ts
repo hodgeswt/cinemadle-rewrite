@@ -20,14 +20,16 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
   const objMetadata = (ctor as any)[Symbol.metadata]
   const fieldsToValidate: Map<string, DataTypeOpts> = objMetadata?.[dataTypeMetaKey] ?? [];
 
+  let ok = true;
+
   for (const [k, v] of fieldsToValidate.entries()) {
     if (!(k in obj)) {
       if (v.required) {
         err(`Expected absent property ${k} to be present on obj`);
-        return false;
+        ok = false;
       }
 
-      return true;
+      continue;
     }
 
     const val = obj[k];
@@ -36,32 +38,34 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
     if (v.isList) {
       if (!Array.isArray(val)) {
         err(`Expected property ${k} on obj to be a list`);
-        return false;
+        ok = false;
+        continue;
       }
+
       toValidate = val;
     }
-
-    let invalid;
 
     const errs: ValidationErr[] = [];
     const getAll = (err: ValidationErr) => {
       errs.push(err);
     }
 
+    let invalid;
     if (isTPrimitive(v.dataType)) {
       invalid = (i: any) => !getValidator(v.dataType as TPrimitive)(i, getAll);
     } else {
-      invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll)
+      invalid = (i: any) => !Validate(v.dataType as Ctor, i, getAll);
     }
 
     const invalidItems = toValidate.filter(invalid);
     if (invalidItems.length > 0) {
-      err(`property ${k} failed validation: ${errs.join(',')}`)
-      return false;
+      err(`property ${k} failed validation: ${errs.join(',')}`);
+      ok = false;
+      continue;
     }
   }
 
-  return true;
+  return ok;
 }
 
 function getValidator(type: TPrimitive): ValidationFunc {
