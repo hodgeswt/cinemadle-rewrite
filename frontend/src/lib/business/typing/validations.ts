@@ -91,7 +91,7 @@ function ValidateField(val: any, ctx: FieldValidationContext): void {
   });
 }
 
-export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is C {
+export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is InstanceType<C> {
   const err = errCallback ? errCallback : noopErr;
   if (typeof obj !== "object" || obj === null || obj === undefined) {
     err("expected obj to be non-null");
