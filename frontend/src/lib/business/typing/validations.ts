@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import type { Ctor, DataTypeOpts, TPrimitive } from "./datatype.ts";
+import type { Ctor, InternalDataTypeOpts, TPrimitive } from "./datatype.ts";
 import { dataTypeMetaKey, isTPrimitive } from './datatype.ts';
 
 type ValidationFunc = (obj: unknown, errCallback?: ValidationErrCallback) => boolean;
@@ -11,14 +11,14 @@ const noopErr = (_err: ValidationErr) => { };
 
 class FieldValidationContext {
   readonly fieldName: string;
-  readonly fieldType: DataTypeOpts;
+  readonly fieldType: InternalDataTypeOpts;
   
   readonly isInvalid: (i: any) => boolean;
 
   private _valid: boolean;
   private readonly _errors: ValidationErr[];
 
-  constructor(fieldName: string, fieldType: DataTypeOpts) {
+  constructor(fieldName: string, fieldType: InternalDataTypeOpts) {
     this.fieldName = fieldName;
     this.fieldType = fieldType;
     
@@ -99,7 +99,7 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
   }
 
   const objMetadata = (ctor as any)[Symbol.metadata]
-  const fieldsToValidate: Map<string, DataTypeOpts> = objMetadata?.[dataTypeMetaKey] ?? [];
+  const fieldsToValidate: Map<string, InternalDataTypeOpts> = objMetadata?.[dataTypeMetaKey] ?? [];
 
   let ok = true;
 
@@ -107,7 +107,7 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
     const ctx = new FieldValidationContext(k, v);
 
     if (!(k in obj)) {
-      if (v.required) {
+      if (v.optional !== true) {
         ctx.addError(`Absent required property ${k}`);
       }
     } else {

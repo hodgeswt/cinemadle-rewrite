@@ -1,85 +1,85 @@
 import { DataType } from "./datatype.ts";
 
 export class TestBool {
-  @DataType({ dataType: 'boolean', required: true })
+  @DataType('boolean')
   someBool: boolean = false;
 }
 
 export class TestBoolNoReq {
-  @DataType({ dataType: 'boolean' })
+  @DataType('boolean', { optional: true })
   someBool?: boolean | undefined = false;
 
-  @DataType({ dataType: 'boolean', isList: true })
+  @DataType('boolean', { isList: true, optional: true })
   someBoolList?: boolean[] | undefined = [];
 }
 
 export class TestString {
-  @DataType({ dataType: 'string', required: true })
+  @DataType('string')
   someString: string = "";
 }
 
 export class TestStringNoReq {
-  @DataType({ dataType: 'string' })
+  @DataType('string', { optional: true })
   someString?: string | undefined = "";
 
-  @DataType({ dataType: 'string', isList: true })
+  @DataType('string', { isList: true, optional: true })
   someStringList?: string[] | undefined = [];
 }
 
 export class TestNumber {
-  @DataType({ dataType: 'number', required: true })
+  @DataType('number')
   someNumber: number = 0;
 }
 
 export class TestNumberNoReq {
-  @DataType({ dataType: 'number' })
+  @DataType('number', { optional: true })
   someNumber?: number | undefined = 0;
 
-  @DataType({ dataType: 'number', isList: true })
+  @DataType('number', { isList: true, optional: true })
   someNumberList?: number[] | undefined = [];
 }
 
 export class TestComplex {
-  @DataType({ dataType: TestNumber, required: true })
+  @DataType(TestNumber)
   some: TestNumber = new TestNumber();
 }
 
 export class TestComplexNoReq {
-  @DataType({ dataType: TestNumber })
+  @DataType(TestNumber, { optional: true })
   some?: TestNumber | undefined = new TestNumber();
 
-  @DataType({ dataType: TestNumber, isList: true })
+  @DataType(TestNumber, { isList: true, optional: true })
   someList?: TestNumber[] | undefined = [];
 }
 
 export class TestMap {
-  @DataType({ dataType: TestNumber, required: true, isMap: true })
+  @DataType(TestNumber, { isMap: true })
   some: Record<string, TestNumber> = {};
 }
 
 export class TestMapNoReq {
-  @DataType({ dataType: TestNumber, isMap: true })
+  @DataType(TestNumber, { isMap: true, optional: true })
   some: Record<string, TestNumber> = {};
 
-  @DataType({ dataType: 'number', isMap: true })
+  @DataType('number', { isMap: true, optional: true })
   somePrimitive?: Record<string, number> | undefined =  {};
 
-  @DataType({ dataType: TestNumber, isList: true, isMap: true })
+  @DataType(TestNumber, { isList: true, isMap: true, optional: true })
   someList?: Record<string, TestNumber>[] | undefined = [];
 }
 
 export class TestMapList {
-  @DataType({ dataType: TestNumber, required: true, isMap: true, isMapList: true })
+  @DataType(TestNumber, { isMap: true, isMapList: true })
   some: Record<string, TestNumber[]> = {};
 }
 
 export class TestMapListNoReq {
-  @DataType({ dataType: TestNumber, isMap: true, isMapList: true })
+  @DataType(TestNumber, { isMap: true, isMapList: true, optional: true })
   some: Record<string, TestNumber[]> = {};
 
-  @DataType({ dataType: 'number', isMap: true, isMapList: true})
+  @DataType('number', { isMap: true, isMapList: true, optional: true })
   somePrimitive?: Record<string, number[]> | undefined =  {};
 
-  @DataType({ dataType: TestNumber, isList: true, isMap: true, isMapList: true})
+  @DataType(TestNumber, { isList: true, isMap: true, isMapList: true, optional: true })
   someList?: Record<string, TestNumber[]>[] | undefined = [];
 }

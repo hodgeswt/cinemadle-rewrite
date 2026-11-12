@@ -12,14 +12,28 @@ export function isTPrimitive(obj: unknown): obj is TPrimitive {
 
 export const dataTypeMetaKey = Symbol('dataType');
 
-type DataTypeMap = Map<string | symbol, DataTypeOpts>;
+type DataTypeMap = Map<string | symbol, InternalDataTypeOpts>;
 
 export interface DataTypeOpts {
+  /** Is this field required for the object to be valid? */
+  optional?: boolean
+
+  /** Is this field a list of this type? */
+  isList?: boolean
+
+  /** Is this field a Map<string, this type>? */
+  isMap?: boolean
+
+  /** Is this field a Map<string, Array<this type>>? (requires isMap = true) */
+  isMapList?: boolean
+}
+
+export interface InternalDataTypeOpts {
   /** Type of field */
   dataType: TPrimitive | Ctor
 
   /** Is this field required for the object to be valid? */
-  required?: boolean
+  optional?: boolean
 
   /** Is this field a list of this type? */
   isList?: boolean
@@ -40,7 +54,7 @@ export interface DataTypeOpts {
  * @param opts Configures the data type of the field
  * @returns Decorator
  */
-export function DataType(opts: DataTypeOpts) {
+export function DataType(dataType: TPrimitive | Ctor, opts?: DataTypeOpts) {
   return function <This, Value>(
     _value: undefined,
     context: ClassFieldDecoratorContext<This, Value>
@@ -55,6 +69,6 @@ export function DataType(opts: DataTypeOpts) {
       meta[dataTypeMetaKey] = d;
     }
 
-    d.set(context.name, opts);
+    d.set(context.name, { dataType, ... opts });
   }
 }
