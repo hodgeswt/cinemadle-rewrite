@@ -26,6 +26,9 @@ export interface DataTypeOpts {
 
   /** Is this field a Map<string, Array<this type>>? (requires isMap = true) */
   isMapList?: boolean
+
+  /** Is this a proxy for a type that has no properties? */
+  isSelf?: boolean
 }
 
 export interface InternalDataTypeOpts {
@@ -43,6 +46,9 @@ export interface InternalDataTypeOpts {
 
   /** Is this field a Map<string, Array<this type>>? (requires isMap = true) */
   isMapList?: boolean
+
+  /** Is this a proxy for a type that has no properties? */
+  isSelf?: boolean
 }
 
 /**

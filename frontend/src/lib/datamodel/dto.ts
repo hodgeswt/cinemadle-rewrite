@@ -1,6 +1,6 @@
 import { hasValue } from "$lib/util.ts";
-import { DataType } from "../business/typing/datatype.ts";
-import { Validate } from "../business/typing/validations.ts";
+import { DataType } from "$lib/business/typing/datatype.ts";
+import { Validate } from "$lib/business/typing/validations.ts";
 
 export class SignUpErrorDto {
   @DataType('string', { isMap: true, isMapList: true })
@@ -44,6 +44,9 @@ export class Hints {
 export class Field {
   @DataType('string')
   color!: string;
+
+  @DataType('string', {isList: true})
+  values!: string[];
 
   @DataType("number")
   direction!: number;
@@ -120,19 +123,12 @@ export class CustomGameDto {
   targetMovieId!: number;
 }
 
-export type PossibleMediaDto = Map<string, number>;
-export type HintsResponseDto = Map<string, Hints>;
-
-// deno-lint-ignore no-explicit-any
-export function isPossibleMediaDto(obj: any): obj is PossibleMediaDto {
-  if (!hasValue(obj) || typeof obj !== 'object') return false;
-
-  return Object.keys(obj).find(key => typeof obj[key] !== 'number')?.length === 0
+export class PossibleMediaDto {
+  @DataType('number', { isMap: true, isSelf: true })
+  self!: Map<string, number>;
 }
 
-// deno-lint-ignore no-explicit-any
-export function isHintsResponseDto(obj: any): obj is HintsResponseDto {
-  if (!hasValue(obj)) return false;
-
-  return Object.keys(obj).find(key => !Validate(Hints, obj[key]))?.length === 0
+export class HintsResponseDto {
+  @DataType(Hints, { isMap: true, isSelf: true })
+  self!: Map<string, Hints>;
 }

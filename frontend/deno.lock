@@ -14,7 +14,7 @@
     "npm:cmdk-sv@^0.0.19": "0.0.19_svelte@5.38.1",
     "npm:fuse.js@^7.1.0": "7.1.0",
     "npm:lucide-svelte@0.482": "0.482.0_svelte@5.38.1",
-    "npm:svelte-check@4": "4.3.1_svelte@5.38.1_typescript@7.0.2",
+    "npm:svelte-check@^4.7.8": "4.7.8_svelte@5.38.1_typescript@7.0.2",
     "npm:svelte-sonner@^1.0.5": "1.0.5_svelte@5.38.1",
     "npm:svelte@5": "5.38.1_acorn@8.15.0",
     "npm:tailwind-merge@^3.0.2": "3.0.2",
@@ -405,6 +405,9 @@
         "vite"
       ],
       "bin": true
+    },
+    "@sveltejs/load-config@0.2.3": {
+      "integrity": "sha512-VT3qmUb8pRV2QrZjd8iAmtg8lf4W0TIjZbvXtz5MKei/q96teWZgGJyyidJzOjzZzvdq616eSRVeMYIQChUTAQ=="
     },
     "@sveltejs/vite-plugin-svelte-inspector@4.0.1_@sveltejs+vite-plugin-svelte@5.1.1_svelte@5.38.1_vite@6.3.5_@types+node@26.6.6": {
       "integrity": "sha512-J/Nmb2Q2y7mck2hyCX4ckVHcR5tu2J+MtBEQqpDrrgELZ2uvraQcK/ioCV61AqkdXFgriksOKIceDcQmqnGhVw==",
@@ -1246,10 +1249,11 @@
     "supports-preserve-symlinks-flag@1.0.0": {
       "integrity": "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="
     },
-    "svelte-check@4.3.1_svelte@5.38.1_typescript@7.0.2": {
-      "integrity": "sha512-lkh8gff5gpHLjxIV+IaApMxQhTGnir2pNUAqcNgeKkvK5bT/30Ey/nzBxNLDlkztCH4dP7PixkMt9SWEKFPBWg==",
+    "svelte-check@4.7.8_svelte@5.38.1_typescript@7.0.2": {
+      "integrity": "sha512-laZ49GFHZ3b0z2PWinJWL0syehc/PTR8aHaUaTiBkWJ+4Y38nhxjmXsSz7CbGa3VdKopViVbrBH3bGNqIAI0bQ==",
       "dependencies": [
         "@jridgewell/trace-mapping",
+        "@sveltejs/load-config",
         "chokidar@4.0.3",
         "fdir",
         "picocolors",
@@ -1480,7 +1484,7 @@
         "npm:cmdk-sv@^0.0.19",
         "npm:fuse.js@^7.1.0",
         "npm:lucide-svelte@0.482",
-        "npm:svelte-check@4",
+        "npm:svelte-check@^4.7.8",
         "npm:svelte-sonner@^1.0.5",
         "npm:svelte@5",
         "npm:tailwind-merge@^3.0.2",

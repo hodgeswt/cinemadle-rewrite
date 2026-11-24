@@ -10,7 +10,7 @@
     "sourceMap": true,
     "strict": true,
     "moduleResolution": "bundler",
-    "module": "esnext",
+    "module": "es2022",
     "paths": {
         "$lib":["./src/lib"],
         "$lib/*":["./src/lib/*"]

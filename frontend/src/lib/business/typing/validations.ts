@@ -93,7 +93,7 @@ function ValidateField(val: any, ctx: FieldValidationContext): void {
 
 export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: ValidationErrCallback): obj is InstanceType<C> {
   const err = errCallback ? errCallback : noopErr;
-  if (typeof obj !== "object" || obj === null || obj === undefined) {
+  if (obj === null || obj === undefined) {
     err("expected obj to be non-null");
     return false;
   }
@@ -101,13 +101,32 @@ export function Validate<C extends Ctor>(ctor: C, obj: any, errCallback?: Valida
   const objMetadata = (ctor as any)[Symbol.metadata]
   const fieldsToValidate: Map<string, InternalDataTypeOpts> = objMetadata?.[dataTypeMetaKey] ?? [];
 
+  const selfProp = fieldsToValidate.entries().find(([_, v]) => v.isSelf === true)
+  if (selfProp) {
+    const [k, v] = selfProp;
+    const ctx = new FieldValidationContext(k, v);
+
+    ValidateField(obj, ctx);
+    if (!ctx.isValid()) {
+      err(ctx.errors());
+      return false;
+    } 
+
+    return true;
+  }
+
+  if (!(obj instanceof Object)) {
+    err("expected obj to be object");
+    return false;
+  }
+
   let ok = true;
 
   for (const [k, v] of fieldsToValidate.entries()) {
     const ctx = new FieldValidationContext(k, v);
 
     if (!(k in obj)) {
-      if (v.optional !== true) {
+      if (!v.optional) {
         ctx.addError(`Absent required property ${k}`);
       }
     } else {

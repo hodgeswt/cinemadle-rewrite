@@ -1,10 +1,25 @@
 import { describe, it } from "node:test";
 import assert from 'node:assert';
 import { activate } from "./activator.ts";
-import { TestMap, TestMapNoReq, TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq, TestMapList, TestMapListNoReq } from "./types.test.ts";
+import { TestMap, TestMapNoReq, TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestNumberNoReq, TestComplex, TestComplexNoReq, TestMapList, TestMapListNoReq, TestSelf } from "./types.test.ts";
 
 describe("activation", () => {
   describe("of a valid", () => {
+    it("self", () => {
+      const t = true;
+      const f = false;
+
+      const ta = activate(TestSelf, t);
+      const fa = activate(TestSelf, f);
+
+      assert.strictEqual(ta.ok, true);
+      assert.strictEqual(fa.ok, true);
+
+      assert.strictEqual(ta.data!.self, t);
+      assert.strictEqual(fa.data!.self, f);
+
+    });
+
     it("boolean", () => {
       const x = { someBool: true };
       const r = activate(TestBool, x);

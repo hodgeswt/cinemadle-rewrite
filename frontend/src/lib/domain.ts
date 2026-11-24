@@ -1,8 +1,9 @@
-import { hasValue } from "./util.ts";
+import { DataType } from "$lib/business/typing/datatype.ts";
 
-export type PossibleMediaDomain = {
-    [key: string]: number;
-}
+export class PossibleMediaDomain {
+    @DataType('number', { isMap: true })
+    self!: Map<string, number>;
+} 
 
 export type GuessDomain = {
     title: string;
@@ -15,7 +16,7 @@ export type CardDomain = {
     title: string;
     data: string[];
     direction: number;
-    modifiers: { [key: string]: string[] };
+    modifiers: Map<string, string[]>
 };
 
 export enum FeatureFlags {
@@ -28,18 +29,4 @@ export type CustomGameCreateDomain = {
 export type CustomGameDomain = {
     id: string;
     targetMovieId: number;
-}
-
-export function isPossibleMediaDomain(obj: any): obj is PossibleMediaDomain {
-    if (!hasValue(obj)) {
-        return false;
-    }
-
-    for (const key in obj) {
-        if (typeof key !== 'string' || typeof obj[key] !== 'number') {
-            return false
-        }
-    }
-
-    return true
 }

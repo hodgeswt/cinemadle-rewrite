@@ -7,8 +7,9 @@ import { userStore } from "$lib/stores";
 import { GuessDtoToDomain } from "$lib/mappers";
 import { GuessServiceShared } from "./GuessServiceShared";
 import Logger from "$lib/logger";
-import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
+import { GameSummaryDto, ImageDto } from "$lib/datamodel/dto.ts";
 import { get as sget } from 'svelte/store';
+import { Validate } from "../business/typing/validations.ts";
 
 export class GuessService extends GuessServiceShared implements IGuessService {
     constructor() {
@@ -39,7 +40,7 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         }
 
         const data = JSON.parse(result.data!);
-        if (!isGameSummaryDto(data)) {
+        if (!Validate(GameSummaryDto, data)) {
             Logger.log("GuessService.getGameSummary(): got invalid object {0}", data)
             return err(GuessService.unableToLoadGameSummaryError);
         }
@@ -71,7 +72,7 @@ export class GuessService extends GuessServiceShared implements IGuessService {
         }
 
         const data = JSON.parse(result.data!);
-        if (!isImageDto(data)) {
+        if (!Validate(ImageDto, data)) {
             Logger.log("GuessService.getVisualClue(): got invalid object {0}", data);
             return err(GuessService.unableToLoadImageError);
         }

@@ -1,12 +1,13 @@
-import type { GuessDomain } from "$lib/domain";
-import { get, loadAnonPreviousGuesses } from "$lib/middleware";
-import { err, ok, type Result } from "$lib/result";
-import { isoDateNoTime } from "$lib/util";
-import type { IGuessService } from "./IGuessService";
-import { GuessDtoToDomain } from "$lib/mappers";
-import { GuessServiceShared } from "./GuessServiceShared";
-import Logger from "$lib/logger";
-import { isGameSummaryDto, isImageDto, type GameSummaryDto, type ImageDto } from "$lib/dto";
+import type { GuessDomain } from "$lib/domain.ts";
+import { get, loadAnonPreviousGuesses } from "$lib/middleware.ts";
+import { err, ok, type Result } from "$lib/result.ts";
+import { isoDateNoTime } from "$lib/util.ts";
+import type { IGuessService } from "./IGuessService.ts";
+import { GuessDtoToDomain } from "$lib/mappers.ts";
+import { GuessServiceShared } from "./GuessServiceShared.ts";
+import Logger from "$lib/logger.ts";
+import { GameSummaryDto, ImageDto } from "$lib/datamodel/dto.ts";
+import { Validate } from '../business/typing/validations';
 
 export class AnonGuessService extends GuessServiceShared implements IGuessService {
     private readonly anonUserIdKey = 'anonUserId';
@@ -39,7 +40,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
         }
 
         const data = JSON.parse(result.data!);
-        if (!isGameSummaryDto(data)) {
+        if (!Validate(GameSummaryDto, data)) {
             Logger.log("AnonGuessService.getGameSummary(): got invalid object {0}", data)
             return err(GuessServiceShared.unableToLoadGameSummaryError);
         }
@@ -73,7 +74,7 @@ export class AnonGuessService extends GuessServiceShared implements IGuessServic
 
         const data = JSON.parse(result.data!);
 
-        if (!isImageDto(data)) {
+        if (!Validate(ImageDto, data)) {
             Logger.log("AnonGuessService.getVisualClue(): got invalid object {0}", data);
             return err(AnonGuessService.unableToLoadImageError);
         }

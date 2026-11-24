@@ -1,7 +1,7 @@
 import { Validate } from "./validations.ts";
 import { describe, it, beforeEach } from "node:test";
 import { type ValidationErr } from './validations.ts';
-import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestComplex, TestComplexNoReq, TestNumberNoReq, TestMap, TestMapNoReq } from "./types.test.ts";
+import { TestBool, TestBoolNoReq, TestString, TestNumber, TestStringNoReq, TestComplex, TestComplexNoReq, TestNumberNoReq, TestMap, TestMapNoReq, TestSelf } from "./types.test.ts";
 import assert from 'node:assert';
 
 
@@ -12,6 +12,14 @@ const errs = () => currentErrs.join(', ');
 describe("primitive validation", () => {
   describe("handles a valid", () => {
     beforeEach(() => currentErrs = []);
+
+    describe("self validation", () => {
+      const t = true;
+      const f = false;
+
+      assert.strictEqual(Validate(TestSelf, t, errLog), true, errs());
+      assert.strictEqual(Validate(TestSelf, f, errLog), true, errs());
+    });
 
     describe("omitted", () => {
       beforeEach(() => currentErrs = []);

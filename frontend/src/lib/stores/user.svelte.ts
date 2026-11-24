@@ -1,7 +1,7 @@
-import { hasValue } from '$lib/util';
+import { hasValue } from '$lib/util.ts';
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import { clearGameStates } from '$lib/business/game/Game.state.svelte';
+import { clearGameStates } from '$lib/business/game/Game.state.svelte.ts';
 
 type UserStoreData = {
     email: string;
