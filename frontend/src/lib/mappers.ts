@@ -1,13 +1,13 @@
-import { isGuessDto, isPossibleMediaDto, isMediaDto, isCustomGameCreateDto, isCustomGameDto } from "$lib/dto";
-import type { CardDomain, GuessDomain, PossibleMediaDomain, CustomGameCreateDomain, CustomGameDomain } from "$lib/domain";
-import { isPossibleMediaDomain } from "$lib/domain";
-import { err, ok, type Result } from "$lib/result";
+import { MediaDto, CustomGameCreateDto, GuessDto, CustomGameDto } from "$lib/datamodel/dto.ts";
+import { type CardDomain, type GuessDomain, type CustomGameCreateDomain, type CustomGameDomain } from "$lib/domain.ts";
+import { err, ok, type Result } from "$lib/result.ts";
+import { Validate } from "./business/typing/validations.ts";
 
-export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
-    if (!isGuessDto(guess)) {
+export function GuessDtoToDomain(guess: unknown): Result<GuessDomain> {
+    if (!Validate(GuessDto, guess)) {
         return err("Invalid data type");
     }
-    let out = {
+    const out = {
         title: guess.title,
         cards: [],
         win: Object.values(guess.fields).every((x) => x.color === "green"),
@@ -27,9 +27,9 @@ export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
     });
 
     for (const k of sortedKeys) {
-        const v = guess.fields[k];
+        const v = guess.fields.get(k)!;
 
-        let card = {
+        const card = {
             color: v.color === "grey" ? "gray" : v.color,
             data: v.values,
             direction: v.direction,
@@ -43,16 +43,15 @@ export function GuessDtoToDomain(guess: any): Result<GuessDomain> {
     return ok(out);
 }
 
-export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDomain> {
-    if (!isMediaDto(media)) {
-        console.log('failed validate')
+export function MediaDtoToGuessDomain(media: unknown, win: boolean): Result<GuessDomain> {
+    if (!Validate(MediaDto, media)) {
         return err("Invalid data type");
     }
 
-    let o = {} as GuessDomain;
-
-    o.win = win;
-    o.title = media.title;
+    const o = {
+        win: win,
+        title: media.title
+    } as GuessDomain;
 
     const color = win ? "green" : "gray";
 
@@ -104,41 +103,20 @@ export function MediaDtoToGuessDomain(media: any, win: boolean): Result<GuessDom
     return ok(o);
 }
 
-export function PossibleMediaDtoToDomain(possibleMedia: any): Result<PossibleMediaDomain> {
-    if (!isPossibleMediaDto(possibleMedia)) {
-        return err("Invalid data type");
-    }
-
-    if (!isPossibleMediaDomain(possibleMedia)) {
-        return err("Invalid data type");
-    }
-
-    const keys = Object.keys(possibleMedia);
-    const values = Object.values(possibleMedia);
-
-    let o = {} as PossibleMediaDomain
-
-    for (let i = 0; i < keys.length; i++) {
-        o[keys[i]] = values[i]
-    }
-
-    return ok(o)
-}
-
-export function CustomGameCreateDtoToDomain(dto: any): Result<CustomGameCreateDomain> {
-    if (!isCustomGameCreateDto(dto)) {
+export function CustomGameCreateDtoToDomain(dto: unknown): Result<CustomGameCreateDomain> {
+    if (!Validate(CustomGameCreateDto, dto)) {
         return err("Invalid data type");
     }
 
     return ok({ id: dto.id });
 }
 
-export function CustomGameCreateDomainToDto(domain: CustomGameCreateDomain): Result<any> {
+export function CustomGameCreateDomainToDto(domain: CustomGameCreateDomain): Result<CustomGameCreateDto> {
     return ok({ id: domain.id });
 }
 
-export function CustomGameDtoToDomain(dto: any): Result<CustomGameDomain> {
-    if (!isCustomGameDto(dto)) {
+export function CustomGameDtoToDomain(dto: unknown): Result<CustomGameDomain> {
+    if (!Validate(CustomGameDto, dto)) {
         return err("Invalid data type");
     }
 

@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type { HintsResponseDto } from '$lib/dto';
+import { type HintsResponseDto, Hints } from '$lib/datamodel/dto.ts';
 import { getHints, getHintsAnon, getHintsCustomGame } from '$lib/middleware';
 import Logger from '$lib/logger';
 
@@ -114,9 +114,9 @@ function createHintsStore() {
             set({ hints: null, loading: false, error: null });
         },
 
-        getHintsForField(fieldKey: string): HintsResponseDto[string] | null {
+        getHintsForField(fieldKey: string): Hints | null {
             const state = get({ subscribe });
-            return state.hints?.[fieldKey] ?? null;
+            return state.hints?.get(fieldKey) ?? null;
         }
     };
 }

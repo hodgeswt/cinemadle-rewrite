@@ -1,9 +1,10 @@
-import { isFeatureFlagsDto, type FeatureFlagsDto } from "$lib/dto";
-import Logger from "$lib/logger";
-import { get } from "$lib/middleware";
+import { FeatureFlagsDto } from "$lib/datamodel/dto.ts";
+import Logger from "$lib/logger.ts";
+import { get } from "$lib/middleware.ts";
+import { Validate } from "../business/typing/validations.ts";
 
 export class FeatureFlagService {
-    private featureFlags: {[key: string]: boolean} = {}
+    private featureFlags: Map<string, boolean> = new Map<string, boolean>;
 
     private readonly ttl = 1800 * 1000; // ms
 
@@ -14,8 +15,8 @@ export class FeatureFlagService {
         await this.initialize();
         
         if (name in this.featureFlags) {
-            Logger.log("+FeatureFlagService.get({0}): found {1}", name, this.featureFlags[name])
-            return this.featureFlags[name];
+            Logger.log("+FeatureFlagService.get({0}): found {1}", name, this.featureFlags.get(name))
+            return this.featureFlags.get(name) ?? false;
         }
 
         Logger.log("+FeatureFlagService.get({0}): default false", name)
@@ -42,13 +43,13 @@ export class FeatureFlagService {
 
         const data = JSON.parse(result.data!);
 
-        if (!isFeatureFlagsDto(data)) {
+        if (!Validate(FeatureFlagsDto, data)) {
             Logger.log("FeatureFlagService.initialize: bad data: {0}", data);
             Logger.log("-FeatureFlagService.initialize");
             return;
         }
 
-        this.featureFlags = (data as FeatureFlagsDto).featureFlags;
+        this.featureFlags = data.featureFlags;
 
         Logger.log("FeatureFlagService.initialize: got flags {0}", this.featureFlags)
         Logger.log("-FeatureFlagService.initialize");

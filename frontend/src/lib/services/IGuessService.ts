@@ -1,6 +1,6 @@
-import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
-import type { GameSummaryDto, ImageDto } from "$lib/dto";
-import type { Result } from "$lib/result";
+import type { GuessDomain, PossibleMediaDomain } from "$lib/domain.ts";
+import type { GameSummaryDto, ImageDto } from "$lib/datamodel/dto.ts";
+import type { Result } from "$lib/result.ts";
 
 export interface IGuessService {
     guess(guess: string, skipTitleMap?: boolean): Promise<Result<GuessDomain>>;

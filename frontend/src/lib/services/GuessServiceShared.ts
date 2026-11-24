@@ -1,9 +1,9 @@
-import type { GuessDomain, PossibleMediaDomain } from "$lib/domain";
-import type { GameSummaryDto, GuessDto, ImageDto } from "$lib/dto";
-import Logger from "$lib/logger";
-import { getPossibleMovies } from "$lib/middleware";
-import { type Result } from "$lib/result";
-import type { IGuessService } from "./IGuessService";
+import type { GuessDomain, PossibleMediaDomain } from "$lib/domain.ts";
+import type { GameSummaryDto, ImageDto } from "$lib/datamodel/dto.ts";
+import Logger from "$lib/logger.ts";
+import { type Result } from "$lib/result.ts";
+import type { IGuessService } from "./IGuessService.ts";
+import { Api } from "$lib/api/api.ts";
 
 export abstract class GuessServiceShared implements IGuessService {
     static guessError = "error making that guess! try another option.";
@@ -16,7 +16,7 @@ export abstract class GuessServiceShared implements IGuessService {
     protected _guesses: string[] = [];
 
     protected _possibleGuessTitles: string[] = [];
-    protected _possibleGuesses: PossibleMediaDomain = {};
+    protected _possibleGuesses: PossibleMediaDomain = { self: new Map<string, number>() };
 
     constructor() {
         this._initialized = false;
@@ -45,7 +45,7 @@ export abstract class GuessServiceShared implements IGuessService {
         }
         
         Logger.log("GuessServiceShared.initialize()");
-        const result = await getPossibleMovies();
+        const result = await Api.getPossibleMovies();
 
         if (result.ok) {
             Logger.log("GuessServiceShared.initialize(): initialized");
@@ -62,7 +62,7 @@ export abstract class GuessServiceShared implements IGuessService {
     protected getTitle(guess: string): string {
         Logger.log("GuessServiceShared.getTitle({0})", guess);
         return Object.keys(this._possibleGuesses).find(
-            (x) => this._possibleGuesses[x].toString() === guess,
+            (x) => this._possibleGuesses.self.get(x)?.toString() === guess,
         ) ?? "unknown";
     }
 

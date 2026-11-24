@@ -1,10 +1,10 @@
 import {
     post,
-} from "$lib/middleware";
+} from "$lib/middleware.ts";
 
-import { ok, err } from "$lib/result";
-import type { Result } from "$lib/result";
-import { isLoginDto, isSignUpErrorDto, type LoginDto, type SignUpErrorDto } from "./dto";
+import { ok, err, type Result } from "$lib/result.ts";
+import { Validate } from "./business/typing/validations.ts";
+import { LoginDto, SignUpErrorDto } from "./datamodel/dto.ts";
 
 export async function logIn(email: string, password: string): Promise<Result<LoginDto>> {
     const data = await post(
@@ -23,7 +23,7 @@ export async function logIn(email: string, password: string): Promise<Result<Log
     }
 
     const raw = JSON.parse(data.data!)
-    if (!isLoginDto(raw)) {
+    if (!Validate(LoginDto, raw)) {
         return err("invalid data received")
     }
 
@@ -45,8 +45,8 @@ export async function signUp(email: string, password: string): Promise<Result<Si
 
     if (!data.ok) {
         console.error(data.error!);
-        let errData = JSON.parse(data.error!);
-        if (isSignUpErrorDto(errData)) {
+        const errData = JSON.parse(data.error!);
+        if (Validate(SignUpErrorDto, errData)) {
             return ok(errData as SignUpErrorDto);
         }
 
